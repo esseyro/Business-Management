@@ -734,7 +734,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--green)"></span> Sales History</div>
           <div class="inv-table-wrap">
             <table class="inv-table">
-              <thead><tr><th>Date</th><th>Customer</th><th>Served By</th><th>Items</th><th>Discount</th><th>Total</th></tr></thead>
+              <thead><tr><th>Date</th><th>Time</th><th>Customer</th><th>Served By</th><th>Items</th><th>Discount</th><th>Total</th></tr></thead>
               <tbody id="sales-history-tbody"></tbody>
             </table>
           </div>
@@ -842,13 +842,19 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <!-- History with drill-down -->
         <div class="panel" style="margin-top:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
             <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--blue)"></span> Previous Days</div>
-            <select class="search-input" id="drawer-history-range" onchange="renderDrawer()" style="max-width:140px;padding:5px 8px;font-size:12px">
-              <option value="14">Last 14 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="all">All time</option>
-            </select>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select class="search-input" id="drawer-history-range" onchange="renderDrawer()" style="max-width:140px;padding:5px 8px;font-size:12px">
+                <option value="14">Last 14 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all">All time</option>
+              </select>
+              <select class="search-input" id="monthly-export-picker" style="max-width:140px;padding:5px 8px;font-size:12px">
+                <option value="">Select month...</option>
+              </select>
+              <button id="monthly-export-btn" class="action-btn" style="color:var(--green);border-color:var(--green);white-space:nowrap" onclick="exportMonthlyReport()">📊 Monthly Report</button>
+            </div>
           </div>
           <div class="inv-table-wrap">
             <table class="inv-table">
@@ -943,7 +949,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="inv-table-wrap">
           <table class="inv-table">
             <thead><tr>
-              <th>Date</th><th>Customer</th><th>Item Returned</th><th>Qty</th><th>Refund Amount</th><th>Reason</th><th>Status</th><th>Handled By</th>
+              <th>Date</th><th>Customer</th><th>Item Returned</th><th>Qty</th><th>Refund Amount</th><th>Reason</th><th>Status</th><th>Submitted By</th><th>Actions</th>
             </tr></thead>
             <tbody id="ret-tbody"></tbody>
           </table>
@@ -1127,24 +1133,37 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="form-row"><div class="form-label">Cost Price (NKF)</div><input class="form-input" id="f-cost" type="number" placeholder="0.00" min="0" step="0.01"></div>
       </div>
       <div class="form-row-2">
-        <div class="form-row"><div class="form-label">Stock Quantity *</div><input class="form-input" id="f-stock" type="number" placeholder="0" min="0"></div>
-        <div class="form-row"><div class="form-label">Unit</div>
+        <div class="form-row" id="f-stock-row">
+          <div class="form-label" id="f-stock-label">Stock Quantity *</div>
+          <input class="form-input" id="f-stock" type="number" placeholder="0" min="0">
+          <div id="f-stock-display" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:8px 12px;font-size:13px;color:var(--text3)">—</div>
+          <div id="f-stock-hint" style="display:none;font-size:11px;color:var(--text3);margin-top:4px">Use <strong>± Stock</strong> button to change quantities</div>
+        </div>
+        <div class="form-row" id="f-unit-row"><div class="form-label">Unit</div>
           <select class="form-select" id="f-unit" onchange="toggleBoxField()">
             <option value="pcs">pcs (pieces)</option>
             <option value="boxes">boxes</option>
-            <option value="meters">meters</option>
-            <option value="kg">kg</option>
             <option value="rolls">rolls</option>
+            <option value="kg">kg</option>
             <option value="sets">sets</option>
             <option value="pairs">pairs</option>
           </select>
+          <input type="hidden" id="f-unit-readonly-val">
+          <div id="f-unit-readonly" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:8px 12px;font-size:13px;color:var(--text3)">—</div>
         </div>
       </div>
       <div id="box-size-row" class="form-row" style="display:none">
         <div class="form-label">Pieces per Box</div>
         <div style="display:flex;align-items:center;gap:10px">
           <input class="form-input" id="f-pcs-per-box" type="number" placeholder="e.g. 12" min="1" style="max-width:100px">
-          <span style="font-size:12px;color:var(--text3)" id="box-size-hint">Stock in boxes — total pieces calculated automatically</span>
+          <span style="font-size:12px;color:var(--text3)">Stock in boxes — total pieces calculated automatically</span>
+        </div>
+      </div>
+      <div id="roll-size-row" class="form-row" style="display:none">
+        <div class="form-label">Meters per Roll</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input class="form-input" id="f-meters-per-roll" type="number" placeholder="e.g. 100" min="1" style="max-width:120px">
+          <span style="font-size:12px;color:var(--text3)">For cables — stock counted in rolls, description holds meters per roll</span>
         </div>
       </div>
       <div class="form-row"><div class="form-label">Description</div><textarea class="form-textarea" id="f-desc" placeholder="Specifications, brand, wattage, voltage…"></textarea></div>
@@ -1359,20 +1378,30 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 <!-- RETURN MODAL -->
 <div class="modal-overlay" id="modal-return">
-  <div class="modal">
+  <div class="modal" style="max-width:540px">
     <div class="modal-header">
       <div class="modal-title">Record Customer Return</div>
-      <button class="modal-close" onclick="closeModal('modal-return')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-return')">&#x2715;</button>
     </div>
     <div class="modal-body">
       <div class="form-row-2">
-        <div class="form-row"><div class="form-label">Customer Name</div><input class="form-input" id="ret-customer" placeholder="Customer name or Walk-in"></div>
+        <div class="form-row">
+          <div class="form-label">Customer Name *</div>
+          <input class="form-input" id="ret-customer" placeholder="Type name or Walk-in" list="ret-customer-list" autocomplete="off" oninput="validateRetCustomer()">
+          <datalist id="ret-customer-list"></datalist>
+          <div id="ret-customer-err" style="font-size:11px;color:var(--red);margin-top:3px;display:none">Must be a known customer or exactly "Walk-in"</div>
+        </div>
         <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="ret-date" type="date"></div>
       </div>
-      <div class="form-row"><div class="form-label">Item Returned *</div><input class="form-input" id="ret-item" placeholder="Product name"></div>
-      <div class="form-row-2">
-        <div class="form-row"><div class="form-label">Quantity</div><input class="form-input" id="ret-qty" type="number" placeholder="1" min="1" value="1"></div>
-        <div class="form-row"><div class="form-label">Refund Amount (NKF)</div><input class="form-input" id="ret-amount" type="number" placeholder="0.00" min="0"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Items Being Returned *</div>
+      <div id="ret-items-rows"></div>
+      <button onclick="addReturnItemRow()" class="action-btn" style="font-size:12px;margin-bottom:12px">+ Add Another Item</button>
+      <div style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;font-size:13px;color:var(--text2)" id="ret-refund-summary">Estimated refund: NKF 0</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="form-label" style="margin:0;white-space:nowrap">Actual Refund (NKF)</div>
+          <input class="form-input" id="ret-amount" type="number" placeholder="0" min="0" style="max-width:110px;padding:6px 10px">
+        </div>
       </div>
       <div class="form-row"><div class="form-label">Reason for Return</div>
         <select class="form-select" id="ret-reason">
@@ -1385,27 +1414,45 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </select>
       </div>
       <div class="form-row"><div class="form-label">Resolution</div>
-        <select class="form-select" id="ret-status">
+        <select class="form-select" id="ret-status" onchange="onRetStatusChange()">
           <option value="refunded">Refund given</option>
-          <option value="exchanged">Exchanged for new item</option>
+          <option value="exchanged">Exchanged for another item</option>
           <option value="pending">Pending manager decision</option>
         </select>
       </div>
-      <div class="form-row"><div class="form-label">Return item to stock?</div>
+      <div id="ret-exchange-section" style="display:none;background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">&#x1F4E6; Exchange Details</div>
+        <div class="form-row">
+          <div class="form-label">Item given in exchange *</div>
+          <input class="form-input" id="ret-exchange-item-input" placeholder="Type product name..." list="ret-exchange-item-list" oninput="onRetExchangeItemChange()" autocomplete="off">
+          <datalist id="ret-exchange-item-list"></datalist>
+          <input type="hidden" id="ret-exchange-item">
+        </div>
+        <div class="form-row">
+          <div class="form-label">Deduct from location *</div>
+          <select class="form-select" id="ret-exchange-location">
+            <option value="">&#x2014; Select item first &#x2014;</option>
+          </select>
+        </div>
+      </div>
+      <div id="ret-restock-section" class="form-row">
+        <div class="form-label">Condition of returned items</div>
         <select class="form-select" id="ret-restock">
-          <option value="yes">Yes – add back to inventory</option>
-          <option value="no">No – damaged/dispose</option>
+          <option value="yes">Good condition &#x2014; add back to Open/Unlocated</option>
+          <option value="no">Damaged / Dispose &#x2014; do not restock</option>
         </select>
       </div>
-      <div class="form-row"><div class="form-label">Notes</div><textarea class="form-textarea" id="ret-notes" placeholder="Additional details..."></textarea></div>
+      <div class="form-row"><div class="form-label">Notes</div><textarea class="form-textarea" id="ret-notes" placeholder="Additional details..." style="height:50px"></textarea></div>
+      <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.2);border-radius:var(--radius2);padding:8px 12px;font-size:12px;color:var(--text2)">
+        &#x2139;&#xFE0F; Returns need <strong>manager approval</strong> before stock is adjusted.
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-return')">Cancel</button>
-      <button class="btn-save" onclick="saveReturn()">Save Return</button>
+      <button class="btn-save" onclick="saveReturn()">Submit Return</button>
     </div>
   </div>
 </div>
-
 <!-- EDIT STAFF MODAL -->
 <div class="modal-overlay" id="modal-edit-staff">
   <div class="modal" style="max-width:400px">
@@ -1446,7 +1493,15 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       </div>
       <!-- Stock request fields -->
       <div id="req-stock-fields">
-        <div class="form-row"><div class="form-label">Quantity to Add *</div><input class="form-input" id="req-stock-qty" type="number" placeholder="e.g. 50" min="1"></div>
+        <div class="form-row">
+          <div class="form-label">Type</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button type="button" id="req-stock-add-btn" onclick="setReqStockMode('add')" style="padding:8px;border-radius:var(--radius);border:2px solid var(--green);background:rgba(39,174,96,0.15);color:var(--green);font-weight:600;cursor:pointer">+ Add Stock</button>
+            <button type="button" id="req-stock-rem-btn" onclick="setReqStockMode('remove')" style="padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-weight:600;cursor:pointer">− Remove Stock</button>
+          </div>
+        </div>
+        <input type="hidden" id="req-stock-mode" value="add">
+        <div class="form-row"><div class="form-label" id="req-stock-qty-label">Quantity to Add *</div><input class="form-input" id="req-stock-qty" type="number" placeholder="e.g. 50" min="1"></div>
       </div>
       <!-- Price request fields -->
       <div id="req-price-fields" style="display:none">
@@ -1490,14 +1545,20 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     </div>
     <div class="modal-body">
       <input type="hidden" id="move-product-id">
-      <input type="hidden" id="move-from-zone">
       <div id="move-product-info" style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px"></div>
+      <div class="form-row">
+        <div class="form-label">Move from *</div>
+        <select class="form-select" id="move-from-zone" onchange="updateMoveFromInfo()">
+          <option value="">— Select source location —</option>
+        </select>
+        <div id="move-from-info" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+      </div>
       <div class="form-row">
         <div class="form-label">Quantity to move</div>
         <input class="form-input" id="move-qty" type="number" placeholder="0" min="1">
       </div>
       <div class="form-row">
-        <div class="form-label">Move to</div>
+        <div class="form-label">Move to *</div>
         <select class="form-select" id="move-to-zone">
           <option value="">— Select destination —</option>
         </select>
@@ -1512,41 +1573,48 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 <!-- ASSIGN LOCATION MODAL -->
 <div class="modal-overlay" id="modal-assign-loc">
-  <div class="modal" style="max-width:440px">
+  <div class="modal" style="max-width:460px">
     <div class="modal-header">
-      <div class="modal-title">📍 Assign Item Location</div>
+      <div class="modal-title">📍 Assign / Move Stock</div>
       <button class="modal-close" onclick="closeModal('modal-assign-loc')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div class="form-label">Action</div>
-        <select class="form-select" id="asgn-mode">
-          <option value="replace">Set as primary location (replaces current)</option>
-          <option value="add">Also stored here (keep existing + add new)</option>
+        <div class="form-label">Product *</div>
+        <input class="form-input" id="asgn-product" placeholder="Type product name..." list="asgn-product-list" oninput="onAsgnProductChange()">
+        <datalist id="asgn-product-list"></datalist>
+      </div>
+      <!-- Current locations summary -->
+      <div id="asgn-current-loc" style="font-size:12px;color:var(--text3);padding:8px 10px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:10px;display:none"></div>
+      <!-- From location -->
+      <div class="form-row">
+        <div class="form-label">Move from *</div>
+        <select class="form-select" id="asgn-from-zone" onchange="onAsgnFromChange()">
+          <option value="">— Select product first —</option>
+        </select>
+        <div id="asgn-from-info" style="font-size:11px;color:var(--text3);margin-top:4px"></div>
+      </div>
+      <!-- Qty -->
+      <div class="form-row">
+        <div class="form-label">Quantity to move *</div>
+        <input class="form-input" id="asgn-qty" type="number" placeholder="0" min="1">
+      </div>
+      <!-- To location -->
+      <div class="form-row">
+        <div class="form-label">Move to — Location *</div>
+        <select class="form-select" id="asgn-location" onchange="updateAsgnUnits()">
+          <option value="">— Select —</option>
+          <option value="EH_MAIN">Edaga Hamus Main Shop</option>
+          <option value="EH_SECOND">Edaga Hamus Second Shop</option>
+          <option value="MEKZEN">Mekzen</option>
+          <option value="OPEN">⚠ Open / Unlocated</option>
         </select>
       </div>
       <div class="form-row">
-        <div class="form-label">Product *</div>
-        <input class="form-input" id="asgn-product" placeholder="Type product name..." list="asgn-product-list" oninput="filterAsgnProduct()">
-        <datalist id="asgn-product-list"></datalist>
-      </div>
-      <div class="form-row-2">
-        <div class="form-row">
-          <div class="form-label">Location *</div>
-          <select class="form-select" id="asgn-location" onchange="updateAsgnUnits()">
-            <option value="">— Select —</option>
-            <option value="EH_MAIN">Edaga Hamus Main Shop</option>
-            <option value="EH_SECOND">Edaga Hamus Second Shop</option>
-            <option value="MEKZEN">Mekzen</option>
-            <option value="OPEN">⚠ Open / Unlocated</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-label">Unit / Room</div>
-          <select class="form-select" id="asgn-unit" onchange="updateAsgnWalls()">
-            <option value="">— Select location first —</option>
-          </select>
-        </div>
+        <div class="form-label">Unit / Room *</div>
+        <select class="form-select" id="asgn-unit" onchange="updateAsgnWalls()">
+          <option value="">— Select location first —</option>
+        </select>
       </div>
       <div class="form-row-2">
         <div class="form-row">
@@ -1561,19 +1629,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <div class="form-row">
           <div class="form-label">Notes (optional)</div>
-          <input class="form-input" id="asgn-notes" placeholder="e.g. bottom shelf, near door...">
-      </div>
-      <div class="form-row">
-        <div class="form-label">Quantity at this location</div>
-        <input class="form-input" id="asgn-qty" type="number" placeholder="0 (leave empty to use total stock)" min="0">
-      </div>
+          <input class="form-input" id="asgn-notes" placeholder="e.g. bottom shelf...">
         </div>
       </div>
-      <div id="asgn-current-loc" style="font-size:12px;color:var(--text3);padding:8px 10px;background:var(--bg3);border-radius:var(--radius2);margin-top:4px"></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-assign-loc')">Cancel</button>
-      <button class="btn-save" onclick="saveAssignLocation()">Save Location</button>
+      <button class="btn-save" onclick="saveAssignLocation()">⇄ Move Stock</button>
     </div>
   </div>
 </div>
@@ -1605,8 +1667,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       </div>
       <div id="adj-preview" style="text-align:center;padding:10px;font-size:13px;color:var(--text3);min-height:24px"></div>
       <div class="form-row" style="margin-top:4px">
-        <div class="form-label">Reason (optional)</div>
-        <input class="form-input" id="adj-reason" placeholder="e.g. New delivery, damaged, count correction...">
+        <div class="form-label">Reason * <span style="font-size:11px;color:var(--text3)">(required — goes to activity log)</span></div>
+        <input class="form-input" id="adj-reason" placeholder="e.g. New delivery, damaged goods, stock count correction...">
       </div>
     </div>
     <div class="modal-footer">
@@ -1672,6 +1734,25 @@ function load() {
     const d = localStorage.getItem('weyni_db');
     if(d) DB = JSON.parse(d);
   } catch(e){}
+  // Migrate any bad 'Unlocated › Unlocated Items' zone strings to standard '⚠ Open / Unlocated'
+  (DB.products||[]).forEach(p=>{
+    if(p.locations){
+      p.locations.forEach(l=>{
+        if(l.zone&&(l.zone.includes('Unlocated Items')||l.zone==='Unlocated › Unlocated Items')){
+          l.zone='⚠ Open / Unlocated';
+        }
+      });
+      // Merge duplicate unlocated entries
+      const unlocs=p.locations.filter(l=>l.zone.includes('Open / Unlocated'));
+      if(unlocs.length>1){
+        const totalQty=unlocs.reduce((a,l)=>a+(l.qty||0),0);
+        p.locations=p.locations.filter(l=>!l.zone.includes('Open / Unlocated'));
+        p.locations.push({zone:'⚠ Open / Unlocated',qty:totalQty});
+      }
+    }
+    if(p.zone&&p.zone.includes('Unlocated Items')) p.zone='⚠ Open / Unlocated';
+    if(p.zones) p.zones=p.zones.map(z=>z.includes('Unlocated Items')?'⚠ Open / Unlocated':z);
+  });
 }
 
 // ─── SEED DATA ───
@@ -1916,7 +1997,7 @@ function renderPage(page){
   if(page==='dashboard') renderDashboard();
   else if(page==='pos') renderPOS();
   else if(page==='inventory') renderInventory();
-  else if(page==='storage') { renderStorage(); checkOpenZoneItems(); }
+  else if(page==='storage') renderStorage();
   else if(page==='reports') renderReports();
   else if(page==='purchases') renderPurchases();
   else if(page==='loans') renderLoans();
@@ -1927,60 +2008,120 @@ function renderPage(page){
   else if(page==='activity') renderActivity();
   else if(page==='recycle') renderRecycle();
   else if(page==='staff') renderStaff();
+  checkOpenZoneItems();
 }
 
 // ─── DASHBOARD ───
+let dashViewDate = null; // null = today
+
 function renderDashboard(){
   const cur = DB.settings.currency;
+  const isManager = currentUser&&currentUser.role==='Manager';
   const today = todayMinus(0);
-  const todaySales = DB.sales.filter(s=>s.date===today);
-  const todayRev = todaySales.reduce((a,s)=>a+s.total,0);
-  const totalRev = DB.sales.reduce((a,s)=>a+s.total,0);
-  const lowStock = DB.products.filter(p=>isLowStock(p));
-  const noPriceProds = DB.products.filter(p=>!p.price||p.price===0);
-  const totalProfit = DB.sales.reduce((a,s)=>{
-    return a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0);
-  },0);
+  const viewDate = dashViewDate||today;
 
-  // No-price reminder banner on dashboard
+  // No-price reminder banner (manager only)
+  const noPriceProds = DB.products.filter(p=>!p.price||p.price===0);
   let dpBanner=document.getElementById('dash-noprice-banner');
-  if(!dpBanner){
-    dpBanner=document.createElement('div');
-    dpBanner.id='dash-noprice-banner';
-    document.getElementById('page-dashboard').prepend(dpBanner);
-  }
-  dpBanner.innerHTML=noPriceProds.length?`<div style="background:rgba(231,176,0,0.12);border:1px solid rgba(231,176,0,0.35);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:12px">
+  if(!dpBanner){dpBanner=document.createElement('div');dpBanner.id='dash-noprice-banner';document.getElementById('page-dashboard').prepend(dpBanner);}
+  dpBanner.innerHTML=(isManager&&noPriceProds.length)?`<div style="background:rgba(231,176,0,0.12);border:1px solid rgba(231,176,0,0.35);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:12px">
     <span style="font-size:20px">⚠</span>
     <div style="flex:1"><strong>${noPriceProds.length} product${noPriceProds.length>1?'s need':'needs'} a selling price:</strong> <span style="color:var(--text3)">${noPriceProds.map(p=>p.name).join(', ')}</span></div>
     <button onclick="nav('inventory')" class="action-btn" style="white-space:nowrap">Set prices →</button>
   </div>`:'';
 
-  document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-label">Today's Revenue</div><div class="stat-value">${cur} ${todayRev.toLocaleString()}</div><div class="stat-sub">${todaySales.length} sales today</div></div>
-    <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-label">Total Products</div><div class="stat-value">${DB.products.length}</div><div class="stat-sub">${lowStock.length} low stock</div></div>
-    <div class="stat-card green"><div class="stat-icon">📈</div><div class="stat-label">Total Revenue</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div><div class="stat-sub">All time</div></div>
-    <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div><div class="stat-sub">Based on cost prices</div></div>`;
+  // Day picker for employees (and managers too)
+  const session=DB.drawerSessions.find(s=>s.date===viewDate);
+  const dayLabel=viewDate===today?'Today':viewDate;
 
-  const recents = [...DB.sales].reverse().slice(0,5);
-  document.getElementById('recent-sales-list').innerHTML = recents.length?recents.map(s=>`
-    <div class="recent-sale">
-      <div><div class="sale-item-name">${s.customer}</div><div style="font-size:11px;color:var(--text3)">${s.date} · ${s.items.length} item(s)</div></div>
-      <div class="sale-amt">${cur} ${s.total.toLocaleString()}</div>
-    </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">No sales yet</div>';
+  // Build available dates (sessions + days with sales)
+  const allDates=[...new Set([
+    ...DB.drawerSessions.map(s=>s.date),
+    ...DB.sales.map(s=>s.date)
+  ])].sort().reverse().slice(0,30);
 
-  document.getElementById('low-stock-list').innerHTML = lowStock.length?lowStock.slice(0,6).map(p=>`
+  const dayPickerHtml=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button onclick="dashPrevDay()" class="action-btn" style="padding:6px 12px">◀</button>
+    <select onchange="dashSelectDay(this.value)" class="search-input" style="flex:1;max-width:200px;font-weight:600">
+      ${allDates.map(d=>`<option value="${d}" ${d===viewDate?'selected':''}>${d===today?'Today — '+d:d}</option>`).join('')}
+      ${!allDates.includes(today)?`<option value="${today}" ${today===viewDate?'selected':''}>Today — ${today}</option>`:''}
+    </select>
+    <button onclick="dashNextDay()" class="action-btn" style="padding:6px 12px">▶</button>
+    ${viewDate!==today?`<button onclick="dashViewDate=null;renderDashboard()" class="action-btn" style="color:var(--accent);border-color:var(--accent)">Back to Today</button>`:''}
+  </div>`;
+
+  // Day's data
+  const daySales=DB.sales.filter(s=>s.date===viewDate);
+  const dayRev=daySales.reduce((a,s)=>a+s.total,0);
+  const dayExp=(session?.expenses||[]).reduce((a,e)=>a+e.amount,0);
+  const dayStart=session?.startingCash||0;
+  const dayExpected=dayStart+dayRev-dayExp;
+  const dayProfit=daySales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
+
+  // Week data for chart
+  const lowStock=DB.products.filter(p=>isLowStock(p));
+
+  if(isManager){
+    // ── MANAGER DASHBOARD ──
+    const totalRev=DB.sales.reduce((a,s)=>a+s.total,0);
+    const totalProfit=DB.sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
+
+    document.getElementById('dash-stats').innerHTML=`
+      <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-label">${dayLabel} Revenue</div><div class="stat-value">${cur} ${dayRev.toLocaleString()}</div><div class="stat-sub">${daySales.length} sales</div></div>
+      <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-label">Total Products</div><div class="stat-value">${DB.products.length}</div><div class="stat-sub">${lowStock.length} low stock</div></div>
+      <div class="stat-card green"><div class="stat-icon">📈</div><div class="stat-label">All-time Revenue</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div><div class="stat-sub">Based on cost prices</div></div>`;
+
+    document.getElementById('recent-sales-list').innerHTML=`
+      ${dayPickerHtml}
+      ${daySales.length?[...daySales].reverse().map(s=>`
+        <div class="recent-sale">
+          <div><div class="sale-item-name">${s.customer} ${s.time?`<span style="font-size:10px;color:var(--text3);font-weight:400">· ${s.time}</span>`:''}</div><div style="font-size:11px;color:var(--text3)">${s.items.map(i=>i.name+' ×'+i.qty).join(', ')} ${s.servedBy?'· '+s.servedBy:''}</div></div>
+          <div class="sale-amt">${cur} ${s.total.toLocaleString()}</div>
+        </div>`).join('')
+      :'<div style="color:var(--text3);font-size:13px;padding:16px 0;text-align:center">No sales on this day</div>'}
+      ${session?`<div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius2);font-size:12px">
+        <div style="display:flex;justify-content:space-between;color:var(--text3);margin-bottom:4px"><span>Starting float</span><span>${cur} ${dayStart}</span></div>
+        <div style="display:flex;justify-content:space-between;color:var(--green);margin-bottom:4px"><span>+ Sales</span><span>${cur} ${dayRev.toLocaleString()}</span></div>
+        ${dayExp?`<div style="display:flex;justify-content:space-between;color:var(--red);margin-bottom:4px"><span>− Expenses</span><span>${cur} ${dayExp}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:4px"><span>Expected in drawer</span><span style="color:var(--accent)">${cur} ${dayExpected.toLocaleString()}</span></div>
+        ${(session.expenses||[]).length?`<div style="margin-top:6px;color:var(--text3)">Expenses: ${session.expenses.map(e=>e.desc+' ('+cur+' '+e.amount+')').join(' · ')}</div>`:''}
+      </div>`:''}`;
+
+  } else {
+    // ── EMPLOYEE DASHBOARD ──
+    document.getElementById('dash-stats').innerHTML=`
+      <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-label">${dayLabel} Sales</div><div class="stat-value">${cur} ${dayRev.toLocaleString()}</div><div class="stat-sub">${daySales.length} transactions</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🧾</div><div class="stat-label">Items Sold</div><div class="stat-value">${daySales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0)}</div><div class="stat-sub">Units today</div></div>
+      <div class="stat-card green"><div class="stat-icon">👥</div><div class="stat-label">Customers</div><div class="stat-value">${daySales.length}</div><div class="stat-sub">Served today</div></div>
+      <div class="stat-card ${!session?'blue':session.closed?'red':'green'}"><div class="stat-icon">${!session?'⏳':session.closed?'🔒':'🟢'}</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:16px">${!session?'Not opened':session.closed?'Closed':'Open'}</div><div class="stat-sub">${session?'Opened by '+session.openedBy:'Manager opens the day'}</div></div>`;
+
+    document.getElementById('recent-sales-list').innerHTML=`
+      ${dayPickerHtml}
+      ${daySales.length?[...daySales].reverse().map(s=>`
+        <div class="recent-sale">
+          <div>
+            <div class="sale-item-name">${s.customer} ${s.time?`<span style="font-size:10px;color:var(--text3);font-weight:400">· ${s.time}</span>`:''}</div>
+            <div style="font-size:11px;color:var(--text3)">${s.items.map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+            ${s.servedBy?`<div style="font-size:10px;color:var(--blue);margin-top:2px">by ${s.servedBy}</div>`:''}
+          </div>
+          <div class="sale-amt">${cur} ${s.total.toLocaleString()}</div>
+        </div>`).join('')
+      :'<div style="color:var(--text3);font-size:13px;padding:16px 0;text-align:center">No sales on this day</div>'}`;
+  }
+
+  const dueLoanCount=checkLoansDue().length;
+  const loanBadge=document.getElementById('loan-due-badge');
+  if(loanBadge){loanBadge.style.display=dueLoanCount?'inline':'none';loanBadge.textContent=dueLoanCount;}
+  if(isManager) updateStockAlertBadge();
+  document.getElementById('low-stock-list').innerHTML=lowStock.length?lowStock.slice(0,6).map(p=>`
     <div class="low-stock-item">
       <div class="low-stock-name">${p.name}</div>
-      <span class="badge ${p.stock===0?'red':'orange'}">${p.stock} ${p.unit}</span>
+      <span class="badge ${getTotalStock(p)===0?'red':'orange'}">${getTotalStock(p)} ${p.unit}</span>
     </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">✓ All stock levels OK</div>';
 
-  document.getElementById('low-stock-badge').style.display = lowStock.length?'inline':'none';
-  document.getElementById('low-stock-badge').textContent = lowStock.length;
-
-  // Loan due badge
-  const dueLoanCount = checkLoansDue().length;
-  const loanBadge = document.getElementById('loan-due-badge');
-  if(loanBadge){ loanBadge.style.display = dueLoanCount?'inline':'none'; loanBadge.textContent = dueLoanCount; }
+  document.getElementById('low-stock-badge').style.display=lowStock.length?'inline':'none';
+  document.getElementById('low-stock-badge').textContent=lowStock.length;
 
   // Week chart
   const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1989,26 +2130,59 @@ function renderDashboard(){
     const d=todayMinus(i);
     const rev=DB.sales.filter(s=>s.date===d).reduce((a,s)=>a+s.total,0);
     const day=new Date();day.setDate(day.getDate()-i);
-    weekData.push({label:days[day.getDay()],val:rev});
+    weekData.push({label:days[day.getDay()],val:rev,d});
   }
   const maxVal=Math.max(...weekData.map(d=>d.val),1);
   document.getElementById('week-chart').innerHTML=weekData.map(d=>`
-    <div class="bar-wrap">
-      <div class="bar-val">${d.val?cur+' '+Math.round(d.val/100)+'h':''}</div>
-      <div class="bar" style="height:${Math.max((d.val/maxVal)*130,4)}px"></div>
+    <div class="bar-wrap" onclick="dashViewDate='${d.d}';renderDashboard()" style="cursor:pointer" title="${d.d}">
+      <div class="bar-val">${d.val?cur+' '+Math.round(d.val/1000)+'K':''}</div>
+      <div class="bar" style="height:${Math.max((d.val/maxVal)*130,4)}px;${d.d===viewDate?'background:var(--accent)':''}"></div>
       <div class="bar-label">${d.label}</div>
     </div>`).join('');
+}
+
+function dashPrevDay(){
+  const cur=dashViewDate||todayMinus(0);
+  const d=new Date(cur+'T12:00:00');
+  d.setDate(d.getDate()-1);
+  dashViewDate=d.toISOString().slice(0,10);
+  renderDashboard();
+}
+function dashNextDay(){
+  const cur=dashViewDate||todayMinus(0);
+  const d=new Date(cur+'T12:00:00');
+  d.setDate(d.getDate()+1);
+  const next=d.toISOString().slice(0,10);
+  dashViewDate=next;
+  renderDashboard();
+}
+function dashSelectDay(val){
+  dashViewDate=val;
+  renderDashboard();
 }
 
 // ─── POS ───
 function getCategories(){ return [...new Set(DB.products.map(p=>p.cat))].sort(); }
 
 function renderPOS(){
-  // Late night banner
   const cats = getCategories();
   document.getElementById('pos-cats').innerHTML=`<div class="cat-tab active" onclick="setCatFilter('')">All</div>`+cats.map(c=>`<div class="cat-tab" onclick="setCatFilter('${c}')">${c}</div>`).join('');
   updateCustomerList();
   filterPOS();
+  // Show warning if no open session and not manager
+  const isManager=currentUser&&currentUser.role==='Manager';
+  const session=getOrPickSession();
+  let banner=document.getElementById('pos-session-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='pos-session-banner';
+    const posPage=document.getElementById('page-pos');
+    if(posPage) posPage.prepend(banner);
+  }
+  banner.innerHTML=(!isManager&&!session)?`<div style="background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.4);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px">
+    <span style="font-size:20px">🔒</span>
+    <span><strong>Day not opened.</strong> The manager must open today's session before sales can be processed.</span>
+  </div>`:'';
 }
 
 function updateCustomerList(){
@@ -2040,7 +2214,7 @@ function filterPOS(){
       <div class="product-emoji">${emojis[p.cat]||'📦'}</div>
       <div class="product-name-pos">${p.name}</div>
       <div class="product-price-pos">${DB.settings.currency} ${p.price}</div>
-      <div class="product-stock-pos">${getTotalStock(p)} ${p.unit} in stock${p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':''}</div>
+      <div class="product-stock-pos">${getTotalStock(p)} ${p.unit} in stock${p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':''}${p.unit==='rolls'&&p.metersPerRoll?' ('+getTotalStock(p)*p.metersPerRoll+'m total)':''}</div>
     </div>`).join('')||'<div style="color:var(--text3);padding:20px;text-align:center;font-size:13px">No products found</div>';
 }
 
@@ -2117,6 +2291,12 @@ function updateCartTotals(){
 
 function completeSale(){
   if(!cart.length){toast('Cart is empty');return;}
+  const isManager=currentUser&&currentUser.role==='Manager';
+  const session=getActiveSession();
+  if(!isManager&&!session){
+    toast('The manager needs to open the day before sales can be made');return;
+  }
+  const saleDate=activeDrawerDate||todayMinus(0);
   const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
   const mode=document.getElementById('discount-mode').value||'bill';
   const discInput=parseFloat(document.getElementById('discount-amt').value||0)||0;
@@ -2133,7 +2313,7 @@ function completeSale(){
   }
   const total=Math.max(0,sub-discAmt);
   const customer=document.getElementById('sale-customer').value||'Walk-in';
-  const sale={id:Date.now(),date:todayMinus(0),customer,servedBy:currentUser?currentUser.name:'',items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),subtotal:sub,discount:discAmt,discNote,total};
+  const sale={id:Date.now(),date:saleDate,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),customer,servedBy:currentUser?currentUser.name:'',items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),subtotal:sub,discount:discAmt,discNote,total};
   DB.sales.push(sale);
   cart.forEach(c=>{
     const p=DB.products.find(x=>x.id===c.id);
@@ -2213,33 +2393,70 @@ function filterInventory(){
     return mq&&mc;
   });
   const cur=DB.settings.currency;
-  tbody.innerHTML=filtered.map(p=>`
-    <tr>
-      <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.desc?p.desc.substring(0,50):''}${p.sku?' · '+p.sku:''}</div></td>
+  tbody.innerHTML=filtered.map(p=>{
+    const locs=getLocations(p).filter(l=>l.qty>0);
+    const totalStock=getTotalStock(p);
+    const hasUnloc=locs.some(l=>l.zone.includes('Unlocated')&&l.qty>0);
+    return `
+    <tr style="cursor:pointer" onclick="toggleInvDetail(this,${p.id})">
+      <td>
+        <div style="font-weight:500">${p.name}${hasUnloc?` <span style="font-size:10px;background:rgba(230,126,34,0.2);color:#e67e22;padding:1px 6px;border-radius:8px;margin-left:4px">⚠ unlocated</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.desc?p.desc.substring(0,50):''}${p.sku?' · '+p.sku:''}</div>
+      </td>
       <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--text2)">${p.cat}</span></td>
-      <td>${p.price?cur+' '+p.price:'<span class="badge orange" style="cursor:pointer" onclick="editProduct('+p.id+')">⚠ No price</span>'}</td>
+      <td>${p.price?cur+' '+p.price:'<span class="badge orange" style="cursor:pointer" onclick="event.stopPropagation();editProduct('+p.id+')">⚠ No price</span>'}</td>
       <td style="color:var(--text3)">${p.cost?cur+' '+p.cost:'-'}</td>
       <td>
-        <span class="badge ${getTotalStock(p)===0?'red':isLowStock(p)?'orange':'green'}">${getTotalStock(p)} ${p.unit}</span>
-        ${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${getTotalStock(p)*p.pcsPerBox} pcs total</span>`:''}
-        ${getLocations(p).filter(l=>l.qty>0).map(l=>`<div style="font-size:10px;color:var(--text3);white-space:nowrap">${l.zone.split('›').pop().trim()}: ${l.qty}</div>`).join('')}
+        <span class="badge ${totalStock===0?'red':isLowStock(p)?'orange':'green'}">${totalStock} ${p.unit}</span>
+        ${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${totalStock*p.pcsPerBox} pcs total</span>`:''}
+        ${p.unit==='rolls'&&p.metersPerRoll?`<span style="font-size:10px;color:var(--blue);display:block">${totalStock} rolls × ${p.metersPerRoll}m = ${totalStock*p.metersPerRoll}m total</span>`:''}
       </td>
-      <td style="font-size:12px;color:var(--text3)">${(p.zone||'').split('–')[0].trim()||'—'}</td>
-      <td>
+      <td style="font-size:12px;color:var(--text3);max-width:180px">
+        ${locs.map(l=>`<div>${l.zone.replace('⚠ ','')}: <strong>${l.qty}</strong></div>`).join('')||'—'}
+      </td>
+      <td onclick="event.stopPropagation()">
         <button class="action-btn" onclick="editProduct(${p.id})">✏ Edit</button>
-        <button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button>
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button>`:`<button class="action-btn" onclick="showRequestModal('stock');setTimeout(()=>{document.getElementById('req-product').value='${p.name.replace(/'/g,"\\'")}'},100)">± Request</button>`}
         <button class="action-btn del" onclick="deleteProduct(${p.id})">✕</button>
       </td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No products found</td></tr>';
+    </tr>
+    <tr id="inv-detail-${p.id}" style="display:none;background:var(--bg3)">
+      <td colspan="7" style="padding:10px 16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text)">📍 Stock locations for ${p.name}</div>
+        ${locs.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px">
+          ${locs.map(l=>`<div style="background:var(--bg2);border:1px solid ${l.zone.includes('Unlocated')?'rgba(230,126,34,0.4)':'var(--border)'};border-radius:var(--radius2);padding:8px 12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px">${l.zone.replace('⚠ ','')}</div>
+            <div style="font-size:18px;font-weight:700;font-family:var(--font-head);color:${l.zone.includes('Unlocated')?'#e67e22':'var(--accent)'}">${l.qty} ${p.unit}</div>
+            ${l.zone.includes('Unlocated')?'<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠ Needs a location</div>':''}
+          </div>`).join('')}
+        </div>
+        <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:12px">+ Assign / Move Stock</button>`
+        :'<div style="color:var(--text3);font-size:13px">No location assigned yet. <button onclick="openAssignModalFor('+p.id+')" class="action-btn" style="font-size:12px">+ Assign Location</button></div>'}
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No products found</td></tr>';
+}
+
+function toggleInvDetail(row,id){
+  const detail=document.getElementById('inv-detail-'+id);
+  if(detail) detail.style.display=detail.style.display==='none'?'table-row':'none';
 }
 
 function toggleBoxField(){
   const unit=document.getElementById('f-unit').value;
-  const row=document.getElementById('box-size-row');
-  if(row) row.style.display=unit==='boxes'?'block':'none';
+  const boxRow=document.getElementById('box-size-row');
+  const rollRow=document.getElementById('roll-size-row');
+  if(boxRow) boxRow.style.display=unit==='boxes'?'block':'none';
+  if(rollRow) rollRow.style.display=unit==='rolls'?'block':'none';
 }
 
 function showAddProductModal(id){
+  const isManager=currentUser&&currentUser.role==='Manager';
+  if(!isManager){
+    // Employees submit a request to add a product
+    openAddProductRequest();
+    return;
+  }
   document.getElementById('modal-product-title').textContent='Add Product';
   ['name','cat','zone','price','cost','stock','desc','sku'].forEach(f=>{
     const el=document.getElementById('f-'+f);
@@ -2247,20 +2464,123 @@ function showAddProductModal(id){
   });
   document.getElementById('edit-product-id').value='';
   document.getElementById('f-unit').value='pcs';
+  // Show unit dropdown, stock input for new products
+  const unitSelN=document.getElementById('f-unit');
+  const unitRON=document.getElementById('f-unit-readonly');
+  if(unitSelN) unitSelN.style.display='';
+  if(unitRON) unitRON.style.display='none';
+  document.getElementById('f-stock').style.display='';
+  document.getElementById('f-stock-label').textContent='Stock Quantity *';
+  const sd=document.getElementById('f-stock-display');
+  const sh=document.getElementById('f-stock-hint');
+  if(sd){sd.style.display='none';sd.innerHTML='—';}
+  if(sh) sh.style.display='none';
   document.getElementById('f-pcs-per-box').value='';
+  document.getElementById('f-meters-per-roll').value='';
   toggleBoxField();
   openModal('modal-product');
 }
+
+function openAddProductRequest(){
+  let modal=document.getElementById('modal-add-product-req');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-add-product-req';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-add-product-req');});
+  }
+  const cur=DB.settings.currency;
+  modal.innerHTML=`<div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">+ Request New Product</div>
+      <button class="modal-close" onclick="closeModal('modal-add-product-req')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Fill in the product details. Manager will review and approve before it's added.</div>
+      <div class="form-row"><div class="form-label">Product Name *</div><input class="form-input" id="apr-name" placeholder="e.g. LED Bulb 9W"></div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Category</div><select class="form-select" id="apr-cat">${getCategories().map(c=>`<option>${c}</option>`).join('')}<option value="Other">Other</option></select></div>
+        <div class="form-row"><div class="form-label">Unit</div><select class="form-select" id="apr-unit"><option value="pcs">pcs</option><option value="rolls">rolls</option><option value="boxes">boxes</option><option value="kg">kg</option><option value="sets">sets</option></select></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Sell Price (${cur})</div><input class="form-input" id="apr-price" type="number" placeholder="0"></div>
+        <div class="form-row"><div class="form-label">Cost Price (${cur})</div><input class="form-input" id="apr-cost" type="number" placeholder="0"></div>
+      </div>
+      <div class="form-row"><div class="form-label">Initial Quantity</div><input class="form-input" id="apr-stock" type="number" placeholder="0" min="0"></div>
+      <div class="form-row"><div class="form-label">Description</div><input class="form-input" id="apr-desc" placeholder="Specs, brand..."></div>
+      <div class="form-row"><div class="form-label">Reason *</div><textarea class="form-textarea" id="apr-reason" placeholder="Why does this product need to be added?" style="height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-add-product-req')">Cancel</button>
+      <button class="btn-save" onclick="submitAddProductRequest()">Submit Request</button>
+    </div>
+  </div>`;
+  openModal('modal-add-product-req');
+}
+
+function submitAddProductRequest(){
+  const name=document.getElementById('apr-name').value.trim();
+  const reason=document.getElementById('apr-reason').value.trim();
+  if(!name){toast('Product name is required');return;}
+  if(!reason){toast('Please explain why this product should be added');return;}
+  const price=parseFloat(document.getElementById('apr-price').value)||0;
+  const cost=parseFloat(document.getElementById('apr-cost').value)||0;
+  const stock=parseInt(document.getElementById('apr-stock').value)||0;
+  const unit=document.getElementById('apr-unit').value||'pcs';
+  const cat=document.getElementById('apr-cat').value||'Other';
+  const desc=document.getElementById('apr-desc').value.trim();
+  const details=`New product: ${name} | Cat: ${cat} | Unit: ${unit} | Price: ${price} | Cost: ${cost} | Qty: ${stock}${desc?' | '+desc:''}`;
+  if(!DB.requests) DB.requests=[];
+  DB.requests.push({
+    id:Date.now(),date:todayMinus(0),type:'addproduct',product:name,details,reason,
+    submittedBy:currentUser?currentUser.name:'',status:'pending',managerNote:'',
+    extraData:{name,cat,unit,price,cost,stock,desc}
+  });
+  logActivity('inventory',`⚠ New product request from ${currentUser?currentUser.name:'staff'}: ${name} — ${details} | Reason: ${reason}`);
+  if(!DB.stockAlerts) DB.stockAlerts=[];
+  DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:name,action:'add_request',qty:stock,unit,oldStock:null,newStock:null,by:currentUser?currentUser.name:'staff',reason,seen:false,type:'product_edit'});
+  save();closeModal('modal-add-product-req');updateRequestsBadge();updateStockAlertBadge();
+  toast('Request submitted — manager will review');
+}
 function editProduct(id){
   const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const isManager=currentUser&&currentUser.role==='Manager';
+  if(!isManager){
+    // Employees see a request-change modal instead
+    openProductChangeRequest(id);
+    return;
+  }
   document.getElementById('modal-product-title').textContent='Edit Product';
   document.getElementById('edit-product-id').value=id;
   document.getElementById('f-name').value=p.name;
   document.getElementById('f-price').value=p.price;
   document.getElementById('f-cost').value=p.cost||'';
   document.getElementById('f-stock').value=p.stock;
+  document.getElementById('f-stock').style.display='none';
+  document.getElementById('f-stock-label').textContent='Stock (read-only)';
+  const stockDisplay=document.getElementById('f-stock-display');
+  const stockHint=document.getElementById('f-stock-hint');
+  if(stockDisplay){
+    const locs=getLocations(p).filter(l=>l.qty>0);
+    const total=getTotalStock(p);
+    stockDisplay.innerHTML=locs.length
+      ?`<strong>${total} ${p.unit}</strong> — `+locs.map(l=>`${l.zone.replace('⚠ ','').split('›').pop().trim()}: ${l.qty}`).join(', ')
+      :`<strong>${total} ${p.unit}</strong>`;
+    stockDisplay.style.display='block';
+  }
+  if(stockHint) stockHint.style.display='block';
   document.getElementById('f-unit').value=p.unit||'pcs';
+  // In edit mode, unit is read-only
+  const unitSel=document.getElementById('f-unit');
+  const unitReadonly=document.getElementById('f-unit-readonly');
+  if(unitSel&&unitReadonly){
+    unitSel.style.display='none';
+    unitReadonly.style.display='block';
+    unitReadonly.textContent=p.unit||'pcs';
+  }
   document.getElementById('f-pcs-per-box').value=p.pcsPerBox||'';
+  document.getElementById('f-meters-per-roll').value=p.metersPerRoll||'';
   document.getElementById('f-desc').value=p.desc||'';
   document.getElementById('f-sku').value=p.sku||'';
   const catSel=document.getElementById('f-cat');
@@ -2270,30 +2590,138 @@ function editProduct(id){
   toggleBoxField();
   openModal('modal-product');
 }
+
+function openProductChangeRequest(id){
+  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const cur=DB.settings.currency;
+  let modal=document.getElementById('modal-product-change-req');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-product-change-req';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    // Register click-outside to close
+    modal.addEventListener('click',e=>{if(e.target===modal) closeModal('modal-product-change-req');});
+  }
+  modal.innerHTML=`<div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">✏ Request Product Change</div>
+      <button class="modal-close" onclick="closeModal('modal-product-change-req')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px">
+        <strong>${p.name}</strong>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${p.cat} · ${p.unit} · ${p.price?cur+' '+p.price:'No price'}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Fill in only the fields you want changed. Leave blank to keep as is.</div>
+      <div class="form-row"><div class="form-label">New Name</div><input class="form-input" id="pcr-name" placeholder="${p.name}" value=""></div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">New Sell Price (${cur})</div><input class="form-input" id="pcr-price" type="number" placeholder="${p.price||'not set'}"></div>
+        <div class="form-row"><div class="form-label">New Cost Price (${cur})</div><input class="form-input" id="pcr-cost" type="number" placeholder="${p.cost||'not set'}"></div>
+      </div>
+      <div class="form-row"><div class="form-label">New Description</div><textarea class="form-textarea" id="pcr-desc" placeholder="${p.desc||'none'}" style="height:60px"></textarea></div>
+      <div class="form-row"><div class="form-label">Reason for change *</div><textarea class="form-textarea" id="pcr-reason" placeholder="Explain why this change is needed..." style="height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-product-change-req')">Cancel</button>
+      <button class="btn-save" onclick="submitProductChangeRequest(${id})">Submit Request</button>
+    </div>
+  </div>`;
+  openModal('modal-product-change-req');
+}
+
+function submitProductChangeRequest(id){
+  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const reason=document.getElementById('pcr-reason').value.trim();
+  if(!reason){toast('Please explain why you want this change');return;}
+  const newName=document.getElementById('pcr-name').value.trim();
+  const newPrice=document.getElementById('pcr-price').value.trim();
+  const newCost=document.getElementById('pcr-cost').value.trim();
+  const newDesc=document.getElementById('pcr-desc').value.trim();
+  // Build diff summary
+  const changes=[];
+  if(newName&&newName!==p.name) changes.push(`Name: "${p.name}" → "${newName}"`);
+  if(newPrice!==''&&parseFloat(newPrice)!==p.price) changes.push(`Sell price: ${p.price} → ${newPrice}`);
+  if(newCost!==''&&parseFloat(newCost)!==(p.cost||0)) changes.push(`Cost price: ${p.cost||0} → ${newCost}`);
+  if(newDesc&&newDesc!==p.desc) changes.push(`Description updated`);
+  if(!changes.length){toast('No changes entered');return;}
+  const details=changes.join(' | ');
+  if(!DB.requests) DB.requests=[];
+  DB.requests.push({
+    id:Date.now(),date:todayMinus(0),
+    type:'edit',product:p.name,details,reason,
+    submittedBy:currentUser?currentUser.name:'',
+    status:'pending',managerNote:'',
+    extraData:{productId:id,newName,newPrice:newPrice!==''?parseFloat(newPrice):null,newCost:newCost!==''?parseFloat(newCost):null,newDesc}
+  });
+  // Log to activity with full details
+  logActivity('inventory',`⚠ Product edit request from ${currentUser?currentUser.name:'staff'}: ${p.name} — ${details} | Reason: ${reason}`);
+  if(!DB.stockAlerts) DB.stockAlerts=[];
+  DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:p.name,action:'edit_request',qty:null,unit:'',oldStock:null,newStock:null,by:currentUser?currentUser.name:'staff',reason:`${details} | ${reason}`,seen:false,type:'product_edit'});
+  save();
+  closeModal('modal-product-change-req');
+  updateRequestsBadge();
+  toast('Change request submitted — manager will review');
+}
+
 function saveProduct(){
+  const isManager=currentUser&&currentUser.role==='Manager';
   const name=document.getElementById('f-name').value.trim();
   const price=parseFloat(document.getElementById('f-price').value)||0;
   const stock=parseInt(document.getElementById('f-stock').value)||0;
   if(!name){toast('Product name required');return;}
-  const unit=document.getElementById('f-unit').value||'pcs';
+  const unitSel=document.getElementById('f-unit');
+  const unit=(unitSel&&unitSel.style.display!=='none')?unitSel.value||'pcs':document.getElementById('f-unit-readonly').textContent||'pcs';
   const pcsPerBox=unit==='boxes'?parseInt(document.getElementById('f-pcs-per-box').value)||0:0;
+  const metersPerRoll=unit==='rolls'?parseInt(document.getElementById('f-meters-per-roll').value)||0:0;
   const id=parseInt(document.getElementById('edit-product-id').value)||0;
   const data={
     name,cat:document.getElementById('f-cat').value,zone:document.getElementById('f-zone').value,
     price,cost:parseFloat(document.getElementById('f-cost').value)||0,
-    stock,unit,pcsPerBox,
+    unit,pcsPerBox,metersPerRoll,
     desc:document.getElementById('f-desc').value,sku:document.getElementById('f-sku').value,
     needsPrice:price===0
   };
+  // Include stock for new products only — existing stock managed via ± Stock
+  if(!id) data.stock=stock;
+  else data.stock=DB.products.find(x=>x.id===id)?.stock||0; // preserve existing stock
   if(id){
     const idx=DB.products.findIndex(x=>x.id===id);
-    if(idx>=0) DB.products[idx]={...DB.products[idx],...data};
-    logActivity('inventory',`Product edited: ${name}`);
+    if(idx>=0){
+      const old=DB.products[idx];
+      const changes=[];
+      if(data.name!==old.name) changes.push(`Name: "${old.name}" → "${data.name}"`);
+      if(data.price!==(old.price||0)) changes.push(`Sell price: ${old.price||0} → ${data.price}`);
+      if(data.cost!==(old.cost||0)) changes.push(`Cost price: ${old.cost||0} → ${data.cost}`);
+      if(data.unit!==old.unit) changes.push(`Unit: ${old.unit} → ${data.unit}`);
+      if(data.cat!==old.cat) changes.push(`Category: ${old.cat} → ${data.cat}`);
+      if(data.pcsPerBox!==(old.pcsPerBox||0)) changes.push(`Pcs/box: ${old.pcsPerBox||0} → ${data.pcsPerBox}`);
+      if(data.metersPerRoll!==(old.metersPerRoll||0)) changes.push(`Meters/roll: ${old.metersPerRoll||0} → ${data.metersPerRoll}`);
+      if((data.desc||'')!==(old.desc||'')) changes.push(`Description updated`);
+      if((data.sku||'')!==(old.sku||'')) changes.push(`SKU: "${old.sku||''}" → "${data.sku||''}"`);
+      DB.products[idx]={...old,...data};
+      const changeStr=changes.length?changes.join(' | '):'No field changes detected';
+      const who=currentUser?currentUser.name:'Manager';
+      logActivity('inventory',`✏ Product edited by ${who}: ${name} — ${changeStr}`);
+      // Push to alerts panel so manager can track their own edits too
+      if(!DB.stockAlerts) DB.stockAlerts=[];
+      if(changes.length){
+        DB.stockAlerts.push({
+          id:Date.now(),date:todayMinus(0),
+          time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+          product:name,action:'edited',qty:null,unit:'',
+          oldStock:null,newStock:null,
+          by:who,reason:changeStr,seen:false,
+          type:'product_edit'
+        });
+        updateStockAlertBadge();
+      }
+    }
     toast(price===0?'Product updated — remember to set a price':'Product updated');
   } else {
     data.id=Date.now();
     DB.products.push(data);
-    logActivity('inventory',`New product added: ${name}`,price);
+    logActivity('inventory',`New product added by ${currentUser?currentUser.name:'manager'}: ${name} — price: ${price}, unit: ${unit}`);
     toast(price===0?'Product added — price not set yet':'Product added');
   }
   save();
@@ -2335,11 +2763,17 @@ function setAdjMode(mode){
     lbl.textContent='Quantity to Add';
     saveBtn.textContent='+ Add to Stock';saveBtn.style.background='var(--green)';saveBtn.style.border='none';saveBtn.style.color='#fff';
     if(locRow) locRow.style.display='none';
+    // Show info that added items go to Unlocated
+    let addNote=document.getElementById('adj-add-note');
+    if(!addNote){addNote=document.createElement('div');addNote.id='adj-add-note';locRow.parentNode.insertBefore(addNote,locRow);}
+    addNote.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 10px;background:rgba(230,126,34,0.08);border-radius:var(--radius2);margin-bottom:8px">📦 Added stock will go to <strong style="color:#e67e22">Open / Unlocated</strong> — assign a location from Storage after saving</div>';
   } else {
     remBtn.style.cssText='padding:12px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     addBtn.style.cssText='padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     lbl.textContent='Quantity to Remove';
     saveBtn.textContent='− Remove from Stock';saveBtn.style.background='var(--red)';saveBtn.style.border='none';saveBtn.style.color='#fff';
+    const addNote=document.getElementById('adj-add-note');
+    if(addNote) addNote.innerHTML='';
     // Populate location dropdown
     if(locRow){
       locRow.style.display='block';
@@ -2348,7 +2782,7 @@ function setAdjMode(mode){
       const locSel=document.getElementById('adj-location');
       const locs=p?getLocations(p).filter(l=>l.qty>0):[];
       if(locs.length){
-        locSel.innerHTML=locs.map(l=>`<option value="${l.zone}">${l.zone.split('›').pop().trim()} — ${l.qty} ${p.unit}</option>`).join('');
+        locSel.innerHTML=locs.map(l=>`<option value="${l.zone}">${l.zone.replace('⚠ ','')} — ${l.qty} ${p.unit}</option>`).join('');
       } else {
         locSel.innerHTML='<option value="">All stock (no location set)</option>';
       }
@@ -2377,23 +2811,23 @@ function updateAdjPreview(){
     `<span style="color:var(--text3)">${total} ${p.unit}</span> <span style="color:${col}">${adjMode==='add'?'+ '+qty:'− '+qty}</span> → <strong style="color:var(--text)">${newStock} ${p.unit}</strong>${locNote}`;
 }
 function saveStockAdjust(){
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only managers can adjust stock directly');return;}
   const id=parseInt(document.getElementById('adj-product-id').value);
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
+  const reason=document.getElementById('adj-reason').value.trim();
   if(!qty||qty<=0){toast('Enter a valid quantity');return;}
+  if(!reason){toast('Reason is required — explain why the quantity is changing');return;}
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   const totalStock=getTotalStock(p);
   if(adjMode==='remove'&&qty>totalStock){toast(`Cannot remove more than current stock (${totalStock})`);return;}
-  const old=totalStock;
-  const reason=document.getElementById('adj-reason').value;
+  const oldStock=totalStock;
   p.stock=adjMode==='add'?totalStock+qty:totalStock-qty;
   // Sync locations
   if(!p.locations) p.locations=getLocations(p);
   if(adjMode==='add'){
-    // Add to Unlocated so it can be assigned
     const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
     if(unloc){ unloc.qty+=qty; } else { p.locations.push({zone:'⚠ Open / Unlocated',qty}); if(!p.openSince) p.openSince=Date.now(); }
   } else {
-    // Deduct from the location the user chose
     const locSel=document.getElementById('adj-location');
     const chosenZone=locSel?locSel.value:'';
     if(chosenZone){
@@ -2403,25 +2837,24 @@ function saveStockAdjust(){
         loc.qty-=qty;
       }
     } else {
-      // No location set — just deduct from total
       let rem=qty;
-      for(const loc of p.locations){
-        if(rem<=0) break;
-        const take=Math.min(loc.qty||0,rem);
-        loc.qty-=take; rem-=take;
-      }
+      for(const loc of p.locations){if(rem<=0)break;const take=Math.min(loc.qty||0,rem);loc.qty-=take;rem-=take;}
     }
     p.locations=p.locations.filter(l=>l.qty>0);
   }
-  logActivity('inventory',`Stock ${adjMode==='add'?'added':'removed'}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} → ${p.stock} ${p.unit}${reason?' | '+reason:''}`);
+  // Log with full detail — always visible in activity log as alert
+  const who=currentUser?currentUser.name:'Manager';
+  const action=adjMode==='add'?'added':'removed';
+  const logMsg=`⚠ Stock ${action} by ${who}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} ${p.unit} (${oldStock} → ${p.stock}) | Reason: ${reason}`;
+  logActivity('inventory', logMsg);
+  // Push to stockAlerts for dashboard alert
+  if(!DB.stockAlerts) DB.stockAlerts=[];
+  DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:p.name,action,qty,unit:p.unit,oldStock,newStock:p.stock,by:who,reason,seen:false});
   save();
   closeModal('modal-stock-adjust');
   filterInventory();
-  toast(`${p.name}: ${old} → ${p.stock} ${p.unit}`);
-  save();
-  closeModal('modal-stock-adjust');
-  filterInventory(); // instant update without rebuilding whole page
-  toast(`${p.name}: ${old} → ${p.stock} ${p.unit}`);
+  updateStockAlertBadge();
+  toast(`${p.name}: ${oldStock} → ${p.stock} ${p.unit}`);
 }
 
 // ─── STORAGE SYSTEM ───
@@ -2467,8 +2900,9 @@ const WALLS = ['Front','Back','Left','Right'];
 
 // Build a canonical zone string from parts
 function buildZoneStr(locId, unitId, wall, notes){
+  if(!locId||locId==='OPEN') return '⚠ Open / Unlocated';
   const loc = LOCATIONS[locId];
-  if(!loc) return '⚠ Open / Unlocated';
+  if(!loc||loc.temp) return '⚠ Open / Unlocated';
   const unit = loc.units.find(u=>u.id===unitId);
   let s = `${loc.short} › ${unit?unit.label:unitId}`;
   if(wall) s += ` › ${wall} Wall`;
@@ -2506,9 +2940,9 @@ function renderLocTabs(){
   const tabs = document.getElementById('loc-tabs');
   if(!tabs) return;
   tabs.innerHTML = Object.values(LOCATIONS).map(loc=>{
-    const count = DB.products.filter(p=>getProductZones(p).some(z=>z.startsWith(loc.short))).length;
+    const count = DB.products.filter(p=>getLocations(p).some(l=>l.qty>0&&l.zone.startsWith(loc.short))).length;
     const isOpen = loc.temp;
-    const openCount = isOpen ? DB.products.filter(p=>getProductZones(p).some(z=>z.includes('Open / Unlocated'))).length : 0;
+    const openCount = isOpen ? DB.products.filter(p=>getLocations(p).some(l=>l.zone.includes('Open / Unlocated')&&l.qty>0)).length : 0;
     const active = selectedLocId===loc.id;
     return `<button onclick="selectLocation('${loc.id}')" style="
       padding:8px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;
@@ -2539,10 +2973,13 @@ function renderUnitsList(){
   if(title) title.textContent = loc.short;
   const list = document.getElementById('loc-units-list');
   if(!list) return;
+  // OPEN location has no units — the diagram handles the full list directly
+  if(selectedLocId==='OPEN'){
+    list.innerHTML='';
+    return;
+  }
   list.innerHTML = loc.units.map(unit=>{
-    const count = selectedLocId==='OPEN'
-      ? DB.products.filter(p=>getProductZones(p).some(z=>z.includes('Open / Unlocated'))).length
-      : DB.products.filter(p=>getProductZones(p).some(z=>z.includes(unit.label)&&z.startsWith(loc.short))).length;
+    const count = DB.products.filter(p=>getLocations(p).some(l=>l.qty>0&&l.zone.includes(unit.label)&&l.zone.startsWith(loc.short))).length;
     const active = selectedUnitId===unit.id;
     return `<div onclick="selectUnit('${unit.id}')" style="
       display:flex;align-items:center;gap:10px;padding:10px 12px;
@@ -2579,24 +3016,48 @@ function renderWallDiagram(){
   const title = document.getElementById('unit-diagram-title');
   if(title) title.textContent = `${loc.short} › ${unit.label}`;
 
-  // Count items per wall
-  const wallCounts = {};
-  WALLS.forEach(w=>wallCounts[w]=0);
-  wallCounts['No Wall']=0;
-  const unitProds = selectedLocId==='OPEN'
-    ? DB.products.filter(p=>getProductZones(p).some(z=>z.includes('Open / Unlocated')))
-    : DB.products.filter(p=>getProductZones(p).some(z=>z.includes(unit.label)&&z.startsWith(loc.short)));
-
-  unitProds.forEach(p=>{
-    const zones = getProductZones(p);
-    const relevantZone = zones.find(z=>z.includes(unit.label)&&z.startsWith(loc.short))||zones[0]||'';
-    const parsed = parseZoneStr(relevantZone);
-    const w = parsed.wall||'No Wall';
-    wallCounts[w]=(wallCounts[w]||0)+1;
-  });
 
   const countEl = document.getElementById('unit-item-count');
-  if(countEl) countEl.textContent = `${unitProds.length} product type${unitProds.length!==1?'s':''}`;
+  const unitProds = selectedLocId==='OPEN'
+    ? DB.products.filter(p=>getLocations(p).some(l=>l.zone.includes('Open / Unlocated')&&l.qty>0))
+    : DB.products.filter(p=>getLocations(p).some(l=>l.qty>0&&l.zone.includes(unit.label)&&l.zone.startsWith(loc.short)));
+
+  if(countEl) countEl.textContent=`${unitProds.length} product type${unitProds.length!==1?'s':''}`;
+
+  // Open/Unlocated — plain list, no walls
+  if(selectedLocId==='OPEN'){
+    const diag=document.getElementById('wall-diagram-inner');
+    if(diag) diag.innerHTML=unitProds.length
+      ?`<div style="padding:12px;overflow-y:auto;height:100%">
+          <div style="font-size:12px;color:#e67e22;font-weight:600;margin-bottom:10px">⚠ ${unitProds.length} item type${unitProds.length!==1?'s':''} need a permanent location</div>
+          ${unitProds.map(p=>{
+            const ul=getLocations(p).find(l=>l.zone.includes('Unlocated'));
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border-radius:8px;border:1px solid rgba(230,126,34,0.3);margin-bottom:8px">
+              <div style="flex:1;font-size:13px;font-weight:500">${p.name}<div style="font-size:11px;color:var(--text3);font-weight:400">${p.cat}</div></div>
+              <span style="font-size:14px;color:#e67e22;font-weight:700">${ul?ul.qty:0} ${p.unit}</span>
+              <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:12px;padding:5px 12px;border-color:#e67e22;color:#e67e22">Assign →</button>
+            </div>`;
+          }).join('')}
+        </div>`
+      :`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px">
+          <div style="font-size:28px">✓</div>
+          <div style="color:var(--green);font-size:14px;font-weight:600">All items have locations</div>
+        </div>`;
+    const panel=document.getElementById('wall-items-panel');
+    if(panel) panel.innerHTML='';
+    return;
+  }
+
+  // Wall counts for normal units
+  const wallCounts={};
+  WALLS.forEach(w=>wallCounts[w]=0);
+  wallCounts['No Wall']=0;
+  unitProds.forEach(p=>{
+    const locs=getLocations(p);
+    const relevantLoc=locs.find(l=>l.zone.includes(unit.label)&&l.zone.startsWith(loc.short))||locs[0]||{zone:''};
+    const parsed=parseZoneStr(relevantLoc.zone);
+    wallCounts[parsed.wall||'No Wall']=(wallCounts[parsed.wall||'No Wall']||0)+1;
+  });
 
   // Draw the room as HTML/CSS — a box with 4 walls
   const diag = document.getElementById('wall-diagram-inner');
@@ -2823,8 +3284,8 @@ function renderWallItems(unitProds){
 
   const filtered=selectedWall
     ?unitProds.filter(p=>{
-        const zones=getProductZones(p);
-        return zones.some(z=>{const parsed=parseZoneStr(z);return (parsed.wall||'No Wall')===selectedWall;});
+        const locs=getLocations(p);
+        return locs.some(l=>{const parsed=parseZoneStr(l.zone);return (parsed.wall||'No Wall')===selectedWall;});
       })
     :unitProds;
 
@@ -2844,7 +3305,10 @@ function renderWallItems(unitProds){
     <div style="display:flex;flex-direction:column;gap:6px">
       ${filtered.map(p=>{
         const locs=getLocations(p);
-        const currentLoc=locs.find(l=>l.zone.includes(selectedUnitId||''))||locs[0]||{zone:'',qty:0};
+        const loc=LOCATIONS[selectedLocId];
+        const unit=loc&&loc.units.find(u=>u.id===selectedUnitId);
+        const unitLabel=unit?unit.label:'';
+        const currentLoc=locs.find(l=>unitLabel&&l.zone.includes(unitLabel))||locs[0]||{zone:'',qty:0};
         const parsed=parseZoneStr(currentLoc.zone);
         const lowStock=isLowStock(p);
         const otherLocs=locs.filter(l=>l.zone!==currentLoc.zone&&l.qty>0);
@@ -2853,7 +3317,7 @@ function renderWallItems(unitProds){
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:500;color:var(--text)">${p.name}</div>
             <div style="font-size:11px;color:var(--text3)">${parsed.wall?parsed.wall+' Wall':''}${parsed.notes?' · '+parsed.notes:''}</div>
-            ${otherLocs.length?`<div style="font-size:10px;color:var(--blue);margin-top:2px">📍 Also: ${otherLocs.map(l=>l.zone.split('›').pop().trim()+' ('+l.qty+')').join(', ')}</div>`:''}
+            ${otherLocs.length?`<div style="font-size:10px;color:var(--blue);margin-top:2px">📍 Also: ${otherLocs.map(l=>l.zone.replace('⚠ ','')+' ('+l.qty+')').join(', ')}</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <span class="badge ${totalStock===0?'red':lowStock?'orange':'green'}" style="white-space:nowrap;display:block;margin-bottom:3px">${currentLoc.qty||0} ${p.unit} here</span>
@@ -2869,27 +3333,47 @@ function renderWallItems(unitProds){
 }
 
 // ─── MOVE STOCK MODAL ───
-function openMoveModal(productId, fromZone){
+function openMoveModal(productId, preselectedFromZone){
   const p=DB.products.find(x=>x.id===productId);if(!p)return;
-  const locs=getLocations(p);
-  const fromLoc=locs.find(l=>l.zone===fromZone)||{zone:fromZone,qty:0};
+  const locs=getLocations(p).filter(l=>l.qty>0);
   document.getElementById('move-product-id').value=productId;
-  document.getElementById('move-from-zone').value=fromZone;
   document.getElementById('move-qty').value='';
   document.getElementById('move-product-info').innerHTML=`
-    <strong>${p.name}</strong><br>
-    <span style="color:var(--text3)">From: ${fromZone.split('›').pop().trim()}</span>
-    <span style="float:right;color:var(--accent);font-weight:600">${fromLoc.qty} ${p.unit} available</span>`;
-  // Build destination options — all zones except current
-  const locOpts=Object.values(LOCATIONS).flatMap(loc=>loc.units.map(u=>{
-    const zStr=`${loc.short} › ${u.label}`;
-    return zStr===fromZone?null:`<option value="${zStr}">${zStr}</option>`;
-  })).filter(Boolean).join('');
-  document.getElementById('move-to-zone').innerHTML=
-    `<option value="">— Select destination —</option>
-     <option value="⚠ Open / Unlocated">Open / Unlocated</option>
-     ${locOpts}`;
+    <strong>${p.name}</strong>
+    <span style="float:right;color:var(--accent);font-weight:600">Total: ${getTotalStock(p)} ${p.unit}</span>`;
+  // Populate from-zone dropdown with all locations that have stock
+  const fromSel=document.getElementById('move-from-zone');
+  fromSel.innerHTML=`<option value="">— Select source location —</option>`
+    +locs.map(l=>`<option value="${l.zone}" ${l.zone===preselectedFromZone?'selected':''}>${l.zone.replace('⚠ ','')} — ${l.qty} ${p.unit}</option>`).join('');
+  // Build all destination zones
+  const allLocOpts=`<option value="⚠ Open / Unlocated">Open / Unlocated</option>`
+    +Object.values(LOCATIONS).filter(loc=>!loc.temp).flatMap(loc=>
+      loc.units.map(u=>`<option value="${loc.short} › ${u.label}">${loc.short} › ${u.label}</option>`)
+    ).join('');
+  document.getElementById('move-to-zone').innerHTML=`<option value="">— Select destination —</option>${allLocOpts}`;
+  // Update info for preselected zone
+  updateMoveFromInfo();
   openModal('modal-move-stock');
+}
+
+function updateMoveFromInfo(){
+  const id=parseInt(document.getElementById('move-product-id').value);
+  const fromZone=document.getElementById('move-from-zone').value;
+  const infoEl=document.getElementById('move-from-info');
+  const toSel=document.getElementById('move-to-zone');
+  if(!fromZone||!infoEl){return;}
+  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const loc=getLocations(p).find(l=>l.zone===fromZone);
+  if(infoEl) infoEl.textContent=loc?`${loc.qty} ${p.unit} available here`:'';
+  // Filter destination to exclude the selected source
+  const allLocOpts=`<option value="⚠ Open / Unlocated"${fromZone.includes('Unlocated')?' disabled':''}>Open / Unlocated</option>`
+    +Object.values(LOCATIONS).filter(loc=>!loc.temp).flatMap(loc=>
+      loc.units.map(u=>{
+        const zStr=`${loc.short} › ${u.label}`;
+        return `<option value="${zStr}"${zStr===fromZone?' disabled':''}>${zStr}</option>`;
+      })
+    ).join('');
+  toSel.innerHTML=`<option value="">— Select destination —</option>${allLocOpts}`;
 }
 
 function confirmMove(){
@@ -2897,115 +3381,123 @@ function confirmMove(){
   const fromZone=document.getElementById('move-from-zone').value;
   const toZone=document.getElementById('move-to-zone').value;
   const qty=parseInt(document.getElementById('move-qty').value)||0;
+  if(!fromZone){toast('Select where to move from');return;}
   if(!toZone){toast('Select a destination');return;}
+  if(fromZone===toZone){toast('Source and destination are the same');return;}
   if(!qty||qty<=0){toast('Enter quantity to move');return;}
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   const ok=moveStock(id,fromZone,toZone,qty);
-  if(!ok){toast(`Not enough stock at this location`);return;}
+  if(!ok){toast(`Not enough stock at that location`);return;}
   closeModal('modal-move-stock');
   renderStorage();
-  toast(`Moved ${qty} ${p.unit} → ${toZone.split('›').pop().trim()}`);
+  toast(`Moved ${qty} ${p.unit} from ${fromZone.replace('⚠ ','').split('›').pop().trim()} → ${toZone.replace('⚠ ','').split('›').pop().trim()}`);
 }
 
 // ─── ASSIGN LOCATION MODAL ───
 function openAssignModal(){
-  const dl = document.getElementById('asgn-product-list');
-  if(dl) dl.innerHTML = DB.products.map(p=>`<option value="${p.name}">`).join('');
-  document.getElementById('asgn-product').value='';
-  document.getElementById('asgn-notes').value='';
-  document.getElementById('asgn-current-loc').textContent='';
+  const dl=document.getElementById('asgn-product-list');
+  if(dl) dl.innerHTML=DB.products.map(p=>`<option value="${p.name}">`).join('');
+  ['asgn-product','asgn-qty','asgn-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('asgn-wall').value='';
   document.getElementById('asgn-location').value='';
   document.getElementById('asgn-unit').innerHTML='<option value="">— Select location first —</option>';
-  document.getElementById('asgn-wall').value='';
+  document.getElementById('asgn-from-zone').innerHTML='<option value="">— Select product first —</option>';
+  document.getElementById('asgn-from-info').textContent='';
+  const cl=document.getElementById('asgn-current-loc');
+  if(cl){cl.style.display='none';cl.innerHTML='';}
   openModal('modal-assign-loc');
 }
 
 function openAssignModalForWall(){
   openAssignModal();
-  const locSel=document.getElementById('asgn-location');
-  locSel.value=selectedLocId;
-  updateAsgnUnits();
-  setTimeout(()=>{
-    document.getElementById('asgn-unit').value=selectedUnitId;
-    updateAsgnWalls();
-    if(selectedWall) document.getElementById('asgn-wall').value=selectedWall;
-  },50);
+  if(selectedWall) document.getElementById('asgn-wall').value=selectedWall;
 }
 
 function openAssignModalFor(productId){
   openAssignModal();
   const p=DB.products.find(x=>x.id===productId);if(!p)return;
   document.getElementById('asgn-product').value=p.name;
-  const parsed=parseZoneStr(p.zone||'');
-  if(parsed.locId){
-    document.getElementById('asgn-location').value=parsed.locId;
-    updateAsgnUnits();
-    setTimeout(()=>{
-      if(parsed.unitId) document.getElementById('asgn-unit').value=parsed.unitId;
-      updateAsgnWalls();
-      if(parsed.wall) document.getElementById('asgn-wall').value=parsed.wall;
-      if(parsed.notes) document.getElementById('asgn-notes').value=parsed.notes;
-      document.getElementById('asgn-current-loc').textContent='Current: '+p.zone;
-    },50);
+  populateAsgnFromZones(p);
+}
+
+function populateAsgnFromZones(p){
+  const locs=getLocations(p).filter(l=>l.qty>0);
+  const cl=document.getElementById('asgn-current-loc');
+  const fromSel=document.getElementById('asgn-from-zone');
+  if(cl){
+    cl.style.display='block';
+    cl.innerHTML='<strong>Current stock:</strong> '+(locs.length?locs.map(l=>`${l.zone.replace('⚠ ','')} (${l.qty} ${p.unit})`).join(' · '):'No stock recorded');
+  }
+  fromSel.innerHTML=`<option value="">— Where is it moving from? —</option>`
+    +locs.map(l=>`<option value="${l.zone}">${l.zone.replace('⚠ ','')} — ${l.qty} ${p.unit}</option>`).join('');
+  document.getElementById('asgn-from-info').textContent='';
+}
+
+function onAsgnProductChange(){
+  const val=document.getElementById('asgn-product').value;
+  const p=DB.products.find(x=>x.name.toLowerCase()===val.toLowerCase());
+  if(p) populateAsgnFromZones(p);
+  else{
+    document.getElementById('asgn-from-zone').innerHTML='<option value="">— Select product first —</option>';
+    document.getElementById('asgn-from-info').textContent='';
+    const cl=document.getElementById('asgn-current-loc');
+    if(cl) cl.style.display='none';
   }
 }
 
-function filterAsgnProduct(){
-  const val=document.getElementById('asgn-product').value;
-  const p=DB.products.find(x=>x.name.toLowerCase()===val.toLowerCase());
-  if(p) document.getElementById('asgn-current-loc').textContent=p.zone?`Current location: ${p.zone}`:'Not yet assigned';
+function onAsgnFromChange(){
+  const fromZone=document.getElementById('asgn-from-zone').value;
+  const name=document.getElementById('asgn-product').value;
+  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  const infoEl=document.getElementById('asgn-from-info');
+  if(!p||!fromZone){if(infoEl)infoEl.textContent='';return;}
+  const loc=getLocations(p).find(l=>l.zone===fromZone);
+  if(infoEl) infoEl.textContent=loc?`${loc.qty} ${p.unit} available here`:'';
+  if(loc) document.getElementById('asgn-qty').value=loc.qty;
 }
+
+function filterAsgnProduct(){onAsgnProductChange();}
 
 function updateAsgnUnits(){
   const locId=document.getElementById('asgn-location').value;
   const loc=LOCATIONS[locId];
   const sel=document.getElementById('asgn-unit');
-  if(!loc){sel.innerHTML='<option value="">— Select location first —</option>';return;}
+  if(!loc||loc.temp){sel.innerHTML='<option value="">— N/A —</option>';return;}
   sel.innerHTML='<option value="">— Select unit —</option>'+loc.units.map(u=>`<option value="${u.id}">${u.label}</option>`).join('');
 }
 
-function updateAsgnWalls(){
-  // wall dropdown is static, no change needed
-}
+function updateAsgnWalls(){}
 
 function saveAssignLocation(){
   const name=document.getElementById('asgn-product').value.trim();
+  const fromZone=document.getElementById('asgn-from-zone').value;
   const locId=document.getElementById('asgn-location').value;
   const unitId=document.getElementById('asgn-unit').value;
   const wall=document.getElementById('asgn-wall').value;
   const notes=document.getElementById('asgn-notes').value.trim();
-  const mode=document.getElementById('asgn-mode')?document.getElementById('asgn-mode').value:'add';
-  const qtyEl=document.getElementById('asgn-qty');
-  const qty=qtyEl?parseInt(qtyEl.value)||0:0;
+  const qty=parseInt(document.getElementById('asgn-qty').value)||0;
   if(!name){toast('Select a product');return;}
-  if(!locId){toast('Select a location');return;}
+  if(!fromZone){toast('Select where the item is moving FROM');return;}
+  if(!locId){toast('Select a destination location');return;}
+  if(locId!=='OPEN'&&!unitId){toast('Select a unit / room');return;}
+  if(!qty||qty<=0){toast('Enter quantity to move');return;}
   const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(!p){toast('Product not found — check spelling');return;}
-  let newZone;
-  if(locId==='OPEN'){
-    newZone='⚠ Open / Unlocated';
-    if(!p.openSince) p.openSince=Date.now();
-  } else {
-    newZone=buildZoneStr(locId,unitId,wall,notes);
-    delete p.openSince;
-  }
+  if(!p){toast('Product not found');return;}
   if(!p.locations) p.locations=getLocations(p);
-  if(mode==='replace'){
-    // Replace all locations with this one
-    p.locations=[{zone:newZone,qty:qty||getTotalStock(p)}];
-  } else {
-    // Add / update this location
-    addProductZone(p.id,newZone,qty);
+  const fromLoc=p.locations.find(l=>l.zone===fromZone);
+  if(!fromLoc||(fromLoc.qty||0)<qty){
+    toast(`Only ${fromLoc?fromLoc.qty:0} ${p.unit} available at that location`);return;
   }
-  p.zone=newZone; p.zones=p.locations.map(l=>l.zone);
-  logActivity('inventory',`Location assigned: ${p.name} → ${newZone}${qty?' ('+qty+' '+p.unit+')':''}`);
-  save();
+  const toZone=locId==='OPEN'?'⚠ Open / Unlocated':buildZoneStr(locId,unitId,wall,notes);
+  if(fromZone===toZone){toast('Source and destination are the same');return;}
+  const ok=moveStock(p.id,fromZone,toZone,qty);
+  if(!ok){toast('Move failed — check stock availability');return;}
   closeModal('modal-assign-loc');
   renderStorage();
-  toast(`${p.name} assigned to ${newZone.split('›').pop().trim()}`);
+  filterInventory();
+  toast(`Moved ${qty} ${p.unit} of ${p.name} → ${toZone.replace('⚠ ','').split('›').pop().trim()}`);
 }
 
-function selectZone(id){selectedUnitId=id;renderStorage();}
 
 function promptAssignZone(productId){
   openAssignModalFor(productId);
@@ -3073,7 +3565,7 @@ function renderReports(){
           <span style="font-weight:500;font-size:13px">${c.d}</span>
           <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${c.v.toLocaleString()}</span>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">${daySales.length} sale${daySales.length!==1?'s':''} · Customers: ${[...new Set(daySales.map(s=>s.customer))].join(', ')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">${daySales.length} sale${daySales.length!==1?'s':''} · ${[...new Set(daySales.filter(s=>s.customer&&s.customer!=='Walk-in').map(s=>s.customer))].join(', ')||''}${daySales.filter(s=>!s.customer||s.customer==='Walk-in').length?' +'+daySales.filter(s=>!s.customer||s.customer==='Walk-in').length+' walk-in':''}</div>
       </div>`;
     }).join('')||'<div style="color:var(--text3);font-size:13px">No sales in this range</div>'}`;
 
@@ -3203,6 +3695,7 @@ function renderReports(){
   document.getElementById('sales-history-tbody').innerHTML=[...sales].reverse().map(s=>`
     <tr style="cursor:pointer" onclick="toggleSaleRow(this,'${s.id}')">
       <td>${s.date}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.time||'—'}</td>
       <td>${s.customer}</td>
       <td style="font-size:12px;color:var(--text3)">${s.servedBy||'—'}</td>
       <td>${s.items.length} item(s)</td>
@@ -3210,13 +3703,13 @@ function renderReports(){
       <td style="font-family:var(--font-head);color:var(--accent)">${cur} ${s.total.toLocaleString()}</td>
     </tr>
     <tr id="sale-row-${s.id}" style="display:none;background:var(--bg3)">
-      <td colspan="6" style="padding:10px 14px">
+      <td colspan="7" style="padding:10px 14px">
         <table style="width:100%;font-size:12px;border-collapse:collapse">
           ${s.items.map(i=>`<tr><td style="padding:3px 8px 3px 0;color:var(--text2)">${i.name}</td><td style="padding:3px 4px;color:var(--text3)">×${i.qty}</td><td style="padding:3px 0;color:var(--text2);text-align:right">${cur} ${i.price}</td><td style="padding:3px 0 3px 12px;color:var(--accent);text-align:right;font-family:var(--font-head)">${cur} ${(i.qty*i.price).toLocaleString()}</td></tr>`).join('')}
           ${s.discount?`<tr><td colspan="3" style="padding-top:6px;border-top:1px solid var(--border);color:var(--text3)">Discount</td><td style="padding-top:6px;border-top:1px solid var(--border);color:var(--red);text-align:right;font-family:var(--font-head)">− ${cur} ${s.discount}</td></tr>`:''}
         </table>
       </td>
-    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
+    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
 }
 
 function toggleSaleRow(row,id){
@@ -3519,7 +4012,7 @@ function filterPurchases(){
 }
 
 function showAddPurchaseModal(){
-  purLines = [{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:'Zone A – Shelves (Bulbs)'}];
+  purLines = [{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:''}];
   document.getElementById('pur-supplier').value='';
   document.getElementById('pur-date').value=todayMinus(0);
   document.getElementById('pur-notes').value='';
@@ -3530,7 +4023,7 @@ function showAddPurchaseModal(){
 }
 
 function addPurchaseLine(){
-  purLines.push({item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:'Zone A – Shelves (Bulbs)'});
+  purLines.push({item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:''});
   renderPurLines();
 }
 
@@ -3554,6 +4047,7 @@ const ZONE_NAMES=[
 function renderPurLines(){
   const tbody=document.getElementById('pur-lines-body');
   if(!tbody) return;
+  const unitOpts=['pcs','rolls','boxes','kg','sets','pairs'].map(u=>`<option value="${u}">${u}</option>`).join('');
   tbody.innerHTML=purLines.map((l,i)=>`
     <tr id="pur-line-${i}" style="border-bottom:1px solid var(--border)">
       <td style="padding:4px">
@@ -3565,17 +4059,21 @@ function renderPurLines(){
         </select>
       </td>
       <td style="padding:4px"><input class="search-input" style="width:60px;padding:5px 6px;font-size:12px" type="number" value="${l.qty}" placeholder="0" min="0" step="any" oninput="purLines[${i}].qty=parseFloat(this.value)||0;calcPurLineTotal(${i})"></td>
-      <td style="padding:4px"><input class="search-input" style="width:55px;padding:5px 6px;font-size:12px" value="${l.unit}" placeholder="pcs" oninput="purLines[${i}].unit=this.value"></td>
+      <td style="padding:4px">
+        <select class="search-input" style="width:65px;padding:5px 4px;font-size:12px" onchange="purLines[${i}].unit=this.value">
+          ${['pcs','rolls','boxes','kg','sets','pairs'].map(u=>`<option value="${u}"${u===l.unit?' selected':''}>${u}</option>`).join('')}
+        </select>
+      </td>
       <td style="padding:4px"><input class="search-input" style="width:75px;padding:5px 6px;font-size:12px" type="number" value="${l.unitPrice}" placeholder="0.00" step="0.01" oninput="purLines[${i}].unitPrice=parseFloat(this.value)||0;calcPurLineTotal(${i})"></td>
       <td style="padding:4px;font-family:var(--font-head);color:var(--accent);font-size:13px;white-space:nowrap" id="pur-line-total-${i}">NKF ${(l.total||0).toFixed(0)}</td>
       <td style="padding:4px">
         <select class="form-select" style="padding:5px 6px;font-size:11px;min-width:120px" onchange="purLines[${i}].zone=this.value">
-          ${ZONE_NAMES.map(z=>`<option${z===l.zone?' selected':''}>${z}</option>`).join('')}
+          <option value="" ${!l.zone?'selected':''}>⚠ Open / Unlocated</option>
+          ${ZONE_NAMES.map(z=>`<option value="${z}"${z===l.zone?' selected':''}>${z}</option>`).join('')}
         </select>
       </td>
       <td style="padding:4px"><button onclick="removePurLine(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
     </tr>`).join('');
-  // Product name datalist
   let dl=document.getElementById('product-datalist');
   if(!dl){dl=document.createElement('datalist');dl.id='product-datalist';document.body.appendChild(dl);}
   dl.innerHTML=DB.products.map(p=>`<option value="${p.name}">`).join('');
@@ -3623,7 +4121,7 @@ function _doExcelImport(file){
         // Also try to update product description in inventory
         const prod=DB.products.find(p=>p.name.toLowerCase()===name.toLowerCase());
         if(prod&&desc){prod.desc=desc;save();}
-        purLines.push({item:name,cat,qty,unit,unitPrice:up,total:qty*up,zone:'Zone A – Shelves (Bulbs)',desc});
+        purLines.push({item:name,cat,qty,unit,unitPrice:up,total:qty*up,zone:'',desc});
         imported++;
       });
       if(!purLines.length) purLines=[{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:'Zone A – Shelves (Bulbs)'}];
@@ -3746,12 +4244,21 @@ function processNextPurItem(){
   window._purQtyTotal=purchasedQty;
   window._purUnit=l.unit||'pcs';
 
-  // Live qty counter
-  modal.addEventListener('input',()=>{
+  // Live qty counter — cap each input and show running total
+  modal.addEventListener('input',e=>{
+    if(e.target.classList.contains('pur-qty-inp')){
+      const val=parseFloat(e.target.value)||0;
+      const total=window._purQtyTotal;
+      // Calculate what others are using
+      const others=[...document.querySelectorAll('.pur-qty-inp')].filter(el=>el!==e.target).reduce((a,el)=>a+(parseFloat(el.value)||0),0);
+      const max=total-others;
+      if(val>max){e.target.value=max;e.target.style.borderColor='var(--red)';toast(`Max you can assign here is ${max}`);}
+      else{e.target.style.borderColor='';}
+    }
     const used=[...document.querySelectorAll('.pur-qty-inp')].reduce((a,el)=>a+(parseFloat(el.value)||0),0);
     const rem=window._purQtyTotal-used;
     const el=document.getElementById('pur-qty-status');
-    if(el) el.innerHTML=`Assigned: <strong>${used}</strong> \u00b7 Remaining in Unlocated: <strong style="color:${rem<0?'var(--red)':rem>0?'var(--accent)':'var(--green)'}">${rem} ${window._purUnit}</strong>`;
+    if(el) el.innerHTML=`Assigned: <strong>${used}</strong> · Remaining in Unlocated: <strong style="color:${rem<0?'var(--red)':rem>0?'var(--accent)':'var(--green)'}">${rem} ${window._purUnit}</strong>${rem<0?` <span style="color:var(--red);font-weight:600">⚠ Over by ${Math.abs(rem)}!</span>`:''}`;
   });
 }
 
@@ -3791,6 +4298,10 @@ function confirmPurItem(){
   })).filter(a=>a.qty>0&&a.zone&&a.zone!=='');
 
   const assignedTotal=assignments.reduce((a,x)=>a+x.qty,0);
+  if(assignedTotal>purchasedQty){
+    toast(`Cannot assign ${assignedTotal} — only ${purchasedQty} ${l.unit||'pcs'} purchased`);
+    return;
+  }
   const remainder=purchasedQty-assignedTotal;
 
   if(!existing){
@@ -4160,55 +4671,246 @@ function filterReturns(){
     const ms=!sf||r.status===sf;
     return mq&&ms;
   });
-  const statusColors={refunded:'green',exchanged:'blue',pending:'orange'};
+  const isManager=currentUser&&currentUser.role==='Manager';
+  const statusColors={refunded:'green',exchanged:'blue',pending:'orange',pending_approval:'orange',rejected:'red'};
+  const statusLabels={refunded:'Refunded',exchanged:'Exchanged',pending:'Pending',pending_approval:'⏳ Awaiting Approval',rejected:'Rejected'};
   document.getElementById('ret-tbody').innerHTML=filtered.map(r=>`
     <tr>
-      <td>${r.date}</td>
+      <td>${r.date}${r.time?' '+r.time:''}</td>
       <td>${r.customer||'Walk-in'}</td>
-      <td style="font-weight:500">${r.item}</td>
+      <td style="font-weight:500">${r.item}${r.resolution==='exchanged'&&r.exchangeItemName?`<div style="font-size:11px;color:var(--blue)">→ ${r.exchangeItemName}</div>`:''}</td>
       <td>${r.qty||1}</td>
       <td style="font-family:var(--font-head);color:var(--red)">${cur} ${(r.amount||0).toLocaleString()}</td>
       <td style="font-size:12px;color:var(--text3)">${r.reason||'—'}</td>
-      <td><span class="badge ${statusColors[r.status]||'gray'}">${r.status}</span></td>
-      <td style="font-size:12px;color:var(--text3)">${r.handledBy||'—'}</td>
-    </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No returns recorded</td></tr>';
+      <td><span class="badge ${statusColors[r.status]||'gray'}">${statusLabels[r.status]||r.status}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${r.submittedBy||r.handledBy||'—'}</td>
+      <td>
+        ${r.status==='pending_approval'&&isManager?`
+          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="approveReturn(${r.id})">✓ Approve</button>
+          <button class="action-btn del" onclick="rejectReturn(${r.id})">✕ Reject</button>
+        `:''}
+      </td>
+    </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No returns recorded</td></tr>';
+}
+
+function approveReturn(id){
+  const r=(DB.returns||[]).find(x=>x.id===id);if(!r)return;
+  r.status=r.resolution||'refunded';
+  r.approvedBy=currentUser?currentUser.name:'';
+  // Apply stock changes
+  const p=DB.products.find(x=>x.id===r.itemId||x.name===r.item);
+  if(r.resolution==='exchanged'&&r.exchangeItemId&&r.exchangeLocation){
+    // Deduct exchange item from chosen location
+    const ep=DB.products.find(x=>x.id===r.exchangeItemId);
+    if(ep){
+      const ok=moveStock(ep.id,r.exchangeLocation,'⚠ Open / Unlocated',0); // just deduct
+      if(!ep.locations) ep.locations=getLocations(ep);
+      const loc=ep.locations.find(l=>l.zone===r.exchangeLocation);
+      if(loc){ loc.qty=Math.max(0,(loc.qty||0)-r.qty); ep.stock=Math.max(0,getTotalStock(ep)-r.qty);}
+      ep.locations=ep.locations.filter(l=>l.qty>0);
+      logActivity('return',`Exchange approved: ${r.qty} ${ep.unit} of ${ep.name} given to ${r.customer} (deducted from ${r.exchangeLocation.split('›').pop().trim()})`);
+    }
+    // Returned item — goes to unlocated if not damaged (exchange items handled same as refund)
+    if(p&&r.restock==='yes'){
+      if(!p.locations) p.locations=getLocations(p);
+      const ul=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+      if(ul){ul.qty+=r.qty;}else{p.locations.push({zone:'⚠ Open / Unlocated',qty:r.qty});p.openSince=Date.now();}
+      p.stock=getTotalStock(p);
+      logActivity('return',`Returned item to Open/Unlocated: ${p.name} ×${r.qty}`);
+    }
+  } else if(r.restock==='yes'&&p){
+    // Regular return — add to unlocated
+    if(!p.locations) p.locations=getLocations(p);
+    const ul=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+    if(ul){ul.qty+=r.qty;}else{p.locations.push({zone:'⚠ Open / Unlocated',qty:r.qty});p.openSince=Date.now();}
+    p.stock=getTotalStock(p);
+    logActivity('return',`Return approved: ${p.name} ×${r.qty} added to Open/Unlocated`);
+  }
+  logActivity('return',`Return approved by ${r.approvedBy}: ${r.item} from ${r.customer}`);
+  save();renderReturns();checkOpenZoneItems();toast('Return approved ✓');
+}
+
+function rejectReturn(id){
+  const r=(DB.returns||[]).find(x=>x.id===id);if(!r)return;
+  r.status='rejected';
+  r.approvedBy=currentUser?currentUser.name:'';
+  logActivity('return',`Return rejected by ${r.approvedBy}: ${r.item} from ${r.customer}`);
+  save();renderReturns();toast('Return rejected');
 }
 
 function showAddReturnModal(){
-  ['ret-customer','ret-item','ret-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('ret-qty').value='1';
-  document.getElementById('ret-amount').value='';
+  ['ret-customer','ret-notes','ret-amount'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('ret-date').value=todayMinus(0);
+  document.getElementById('ret-reason').value='Defective / Not working';
+  document.getElementById('ret-status').value='refunded';
+  if(document.getElementById('ret-restock')) document.getElementById('ret-restock').value='yes';
+  const exSec=document.getElementById('ret-exchange-section');
+  const reSec=document.getElementById('ret-restock-section');
+  if(exSec) exSec.style.display='none';
+  if(reSec) reSec.style.display='block';
+  // Populate customer datalist — known customers + Walk-in
+  const custDl=document.getElementById('ret-customer-list');
+  if(custDl){
+    const names=['Walk-in',...DB.customers.map(c=>c.name),...new Set(DB.sales.map(s=>s.customer).filter(n=>n&&n!=='Walk-in'))];
+    custDl.innerHTML=[...new Set(names)].map(n=>`<option value="${n}">`).join('');
+  }
+  // Populate exchange item datalist
+  const exDl=document.getElementById('ret-exchange-item-list');
+  if(exDl) exDl.innerHTML=DB.products.map(p=>`<option value="${p.name}">`).join('');
+  const exInput=document.getElementById('ret-exchange-item-input');
+  if(exInput) exInput.value='';
+  document.getElementById('ret-exchange-item').value='';
+  document.getElementById('ret-exchange-location').innerHTML='<option value="">— Select item first —</option>';
+  document.getElementById('ret-customer-err').style.display='none';
+  // Init items rows with one row
+  document.getElementById('ret-items-rows').innerHTML='';
+  document.getElementById('ret-refund-summary').textContent='Estimated refund: NKF 0';
+  addReturnItemRow();
   openModal('modal-return');
 }
 
+function addReturnItemRow(){
+  const container=document.getElementById('ret-items-rows');
+  const idx=container.querySelectorAll('.ret-item-row').length;
+  const prodDlId=`ret-item-dl-${idx}`;
+  const row=document.createElement('div');
+  row.className='ret-item-row';
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  row.innerHTML=`
+    <div style="flex:2;position:relative">
+      <input class="form-input ret-item-name" placeholder="Type product name..." list="${prodDlId}" autocomplete="off" oninput="onRetItemRowChange(this)" style="width:100%">
+      <datalist id="${prodDlId}">${DB.products.map(p=>`<option value="${p.name}">`).join('')}</datalist>
+      <input type="hidden" class="ret-item-id">
+    </div>
+    <input class="form-input ret-item-qty" type="number" placeholder="Qty" min="1" value="1" style="width:65px;padding:8px" oninput="calcRetRefund()">
+    <span class="ret-item-price" style="font-size:12px;color:var(--text3);white-space:nowrap;min-width:70px"></span>
+    <button onclick="removeReturnItemRow(this)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;flex-shrink:0">\u2715</button>`;
+  container.appendChild(row);
+}
+
+function removeReturnItemRow(btn){
+  const row=btn.closest('.ret-item-row');
+  const container=document.getElementById('ret-items-rows');
+  if(container.querySelectorAll('.ret-item-row').length>1) row.remove();
+  else toast('Need at least one item');
+  calcRetRefund();
+}
+
+function onRetItemRowChange(input){
+  const row=input.closest('.ret-item-row');
+  const p=DB.products.find(x=>x.name===input.value.trim());
+  const hiddenId=row.querySelector('.ret-item-id');
+  const priceSpan=row.querySelector('.ret-item-price');
+  if(p){
+    hiddenId.value=p.id;
+    priceSpan.textContent=`NKF ${p.price||0}/unit`;
+  } else {
+    hiddenId.value='';
+    priceSpan.textContent='';
+  }
+  calcRetRefund();
+}
+
+function calcRetRefund(){
+  let total=0;
+  document.querySelectorAll('#ret-items-rows .ret-item-row').forEach(row=>{
+    const pid=parseInt(row.querySelector('.ret-item-id').value);
+    const qty=parseInt(row.querySelector('.ret-item-qty').value)||1;
+    const p=DB.products.find(x=>x.id===pid);
+    if(p) total+=p.price*qty;
+  });
+  const sumEl=document.getElementById('ret-refund-summary');
+  if(sumEl) sumEl.textContent=`Estimated refund: NKF ${total.toLocaleString()}`;
+  const amtEl=document.getElementById('ret-amount');
+  if(amtEl&&!amtEl.value) amtEl.placeholder=total.toFixed(0);
+}
+
+function validateRetCustomer(){
+  const val=document.getElementById('ret-customer').value.trim();
+  const errEl=document.getElementById('ret-customer-err');
+  const known=['Walk-in',...DB.customers.map(c=>c.name),...DB.sales.map(s=>s.customer)];
+  const valid=!val||known.includes(val);
+  if(errEl) errEl.style.display=(!valid&&val)?'block':'none';
+}
+
+function onRetStatusChange(){
+  const status=document.getElementById('ret-status').value;
+  const exSec=document.getElementById('ret-exchange-section');
+  const reSec=document.getElementById('ret-restock-section');
+  if(exSec) exSec.style.display=status==='exchanged'?'block':'none';
+  if(reSec) reSec.style.display=status==='exchanged'?'none':'block';
+}
+
+function onRetExchangeItemChange(){
+  const input=document.getElementById('ret-exchange-item-input');
+  const p=DB.products.find(x=>x.name===input.value.trim());
+  document.getElementById('ret-exchange-item').value=p?p.id:'';
+  const locSel=document.getElementById('ret-exchange-location');
+  if(!p){locSel.innerHTML='<option value="">— Select item first —</option>';return;}
+  const locs=getLocations(p).filter(l=>l.qty>0);
+  locSel.innerHTML=locs.length
+    ?locs.map(l=>`<option value="${l.zone}">${l.zone.replace('\u26a0 ','')} \u2014 ${l.qty} ${p.unit}</option>`).join('')
+    :'<option value="">No stock available</option>';
+}
+
 function saveReturn(){
-  const item=document.getElementById('ret-item').value.trim();
-  if(!item){toast('Item name required');return;}
-  const restock=document.getElementById('ret-restock').value;
-  const qty=parseInt(document.getElementById('ret-qty').value)||1;
+  const customer=document.getElementById('ret-customer').value.trim();
+  if(!customer){toast('Enter customer name or Walk-in');return;}
+  const known=['Walk-in',...DB.customers.map(c=>c.name),...new Set(DB.sales.map(s=>s.customer))];
+  if(!known.includes(customer)){toast('Customer must be a known name or "Walk-in"');return;}
+  const status=document.getElementById('ret-status').value;
+  const restock=document.getElementById('ret-restock')?document.getElementById('ret-restock').value:'yes';
+
+  // Collect items
+  const returnItems=[];
+  let valid=true;
+  document.querySelectorAll('#ret-items-rows .ret-item-row').forEach(row=>{
+    const pid=parseInt(row.querySelector('.ret-item-id').value);
+    const name=row.querySelector('.ret-item-name').value.trim();
+    const qty=parseInt(row.querySelector('.ret-item-qty').value)||1;
+    if(!pid&&name){toast(`"${name}" not found — select from the suggestions`);valid=false;return;}
+    if(!pid){toast('Select a product for each return row');valid=false;return;}
+    const p=DB.products.find(x=>x.id===pid);
+    returnItems.push({itemId:pid,item:p?p.name:name,qty});
+  });
+  if(!valid||!returnItems.length) return;
+
+  // Validate exchange
+  let exchangeItemId=null,exchangeLocation=null,exchangeItemName='';
+  if(status==='exchanged'){
+    exchangeItemId=parseInt(document.getElementById('ret-exchange-item').value);
+    exchangeLocation=document.getElementById('ret-exchange-location').value;
+    if(!exchangeItemId){toast('Select the item given in exchange');return;}
+    if(!exchangeLocation){toast('Select which location to deduct the exchange item from');return;}
+    const ep=DB.products.find(x=>x.id===exchangeItemId);
+    const totalQty=returnItems.reduce((a,x)=>a+x.qty,0);
+    const eloc=ep&&getLocations(ep).find(l=>l.zone===exchangeLocation);
+    if(!eloc||(eloc.qty||0)<totalQty){toast(`Not enough stock at that location (${eloc?eloc.qty:0} available)`);return;}
+    exchangeItemName=ep?ep.name:'';
+  }
+
+  const amount=parseFloat(document.getElementById('ret-amount').value)||0;
   const r={
     id:Date.now(),
     date:document.getElementById('ret-date').value||todayMinus(0),
-    customer:document.getElementById('ret-customer').value||'Walk-in',
-    item,qty,
-    amount:parseFloat(document.getElementById('ret-amount').value)||0,
+    time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    customer,
+    item:returnItems.map(x=>x.item+' x'+x.qty).join(', '),
+    items:returnItems,
+    qty:returnItems.reduce((a,x)=>a+x.qty,0),
+    amount,
     reason:document.getElementById('ret-reason').value,
-    status:document.getElementById('ret-status').value,
+    status:'pending_approval',resolution:status,
+    restock:status==='exchanged'?'no':restock,
+    exchangeItemId,exchangeLocation,exchangeItemName,
     notes:document.getElementById('ret-notes').value,
-    handledBy:currentUser?currentUser.name:''
+    submittedBy:currentUser?currentUser.name:'',approvedBy:''
   };
   if(!DB.returns) DB.returns=[];
   DB.returns.push(r);
-  if(restock==='yes'){
-    const prod=DB.products.find(p=>p.name.toLowerCase()===item.toLowerCase());
-    if(prod){prod.stock+=qty;toast('Item returned to stock');}
-  }
-  logActivity('return',`Return: ${item} from ${r.customer} (${r.reason})`,r.amount);
-  save();
-  closeModal('modal-return');
-  renderReturns();
-  toast('Return recorded');
+  logActivity('return',`\u26a0 Return submitted by ${r.submittedBy}: ${r.item} from ${customer} \u2014 ${r.reason} \u2192 ${status} (awaiting approval)`,amount);
+  save();closeModal('modal-return');renderReturns();
+  toast('Return submitted \u2014 awaiting manager approval');
 }
 
 // ─── ACTIVITY LOG ───
@@ -4222,7 +4924,6 @@ function logActivity(type, detail, amount=0){
     type, detail,
     amount:amount||0
   });
-  // Keep last 1000 entries
   if(DB.activityLog.length>1000) DB.activityLog=DB.activityLog.slice(-1000);
 }
 
@@ -4331,40 +5032,64 @@ function updatePurGrandTotal(){
 // ─── OPEN ZONE REMINDER ───
 // Check every 10 minutes if any items are in the Open/Unlocated zone
 function checkOpenZoneItems(){
-  const openItems = DB.products.filter(p=>getProductZones(p).some(z=>z.includes('Open / Unlocated')));
+  if(!DB.products) return;
+  const openItems=DB.products.filter(p=>getLocations(p).some(l=>l.zone.includes('Open / Unlocated')&&l.qty>0));
+  const badge=document.getElementById('open-zone-badge');
+
   if(!openItems.length){
-    const badge=document.getElementById('open-zone-badge');
     if(badge) badge.style.display='none';
+    // Remove global banner if exists
+    const gb=document.getElementById('global-unlocated-banner');
+    if(gb) gb.style.display='none';
     return;
   }
-  openItems.forEach(p=>{
-    if(!p.openSince) { p.openSince = Date.now(); save(); return; }
-    const hoursInOpen = (Date.now() - p.openSince) / (1000*60*60);
-    if(hoursInOpen >= 2) showOpenZoneAlert(openItems);
-  });
-  DB.products.filter(p=>!getProductZones(p).some(z=>z.includes('Open / Unlocated'))).forEach(p=>{
-    if(p.openSince){ delete p.openSince; }
-  });
-}
 
-function showOpenZoneAlert(items){
-  const names = items.map(p=>`• ${p.name} (${p.stock} ${p.unit})`).join('\n');
-  // Show a persistent banner on storage page badge
-  const badge = document.getElementById('open-zone-badge');
-  if(badge){ badge.style.display='inline'; badge.textContent='⚠'; }
-  // If on storage page, show banner
+  // Always show storage nav badge
+  if(badge){ badge.style.display='inline'; badge.textContent=openItems.length; }
+
+  // Show/create global banner at top of every page
+  let gb=document.getElementById('global-unlocated-banner');
+  if(!gb){
+    gb=document.createElement('div');
+    gb.id='global-unlocated-banner';
+    gb.style.cssText='position:sticky;top:0;z-index:100;background:rgba(230,126,34,0.95);color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:12px;cursor:pointer';
+    gb.onclick=()=>nav('storage');
+    // Insert after topbar
+    const topbar=document.querySelector('.topbar');
+    if(topbar) topbar.insertAdjacentElement('afterend',gb);
+    else document.body.prepend(gb);
+  }
+  const totalUnloc=openItems.reduce((a,p)=>{
+    const ul=getLocations(p).find(l=>l.zone.includes('Open / Unlocated'));
+    return a+(ul?ul.qty:0);
+  },0);
+  gb.style.display='flex';
+  gb.innerHTML=`<span style="font-size:18px">⚠</span>
+    <span>${openItems.length} item type${openItems.length!==1?'s':''} (${totalUnloc} units) in Open/Unlocated — tap to assign locations</span>
+    <span style="margin-left:auto;font-size:11px;opacity:0.85">Go to Storage →</span>`;
+
+  // Also update storage page banner if on that page
   if(currentPage==='storage'){
-    let banner = document.getElementById('open-zone-banner');
+    let banner=document.getElementById('open-zone-banner');
     if(!banner){
-      banner = document.createElement('div');
-      banner.id = 'open-zone-banner';
-      banner.style.cssText='background:rgba(230,126,34,0.15);border:1px solid #e67e22;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--text)';
+      banner=document.createElement('div');
+      banner.id='open-zone-banner';
+      banner.style.cssText='background:rgba(230,126,34,0.12);border:1px solid #e67e22;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px';
       document.getElementById('page-storage').prepend(banner);
     }
-    banner.innerHTML=`🔔 <strong style="color:#e67e22">⚠ ${items.length} item(s) still in Open/Unlocated zone!</strong><br>
-      ${items.map(p=>`<span style="color:var(--text2)">• ${p.name} — in open zone for ${Math.round((Date.now()-p.openSince)/(1000*60))} min</span>`).join('<br>')}
-      <br><span style="font-size:11px;color:var(--text3)">Please assign a permanent storage location.</span>`;
+    banner.innerHTML=`<strong style="color:#e67e22">⚠ ${openItems.length} item type${openItems.length!==1?'s':''} need location assignment:</strong><br>
+      ${openItems.map(p=>{
+        const ul=getLocations(p).find(l=>l.zone.includes('Open / Unlocated'));
+        return `<span style="display:inline-flex;align-items:center;gap:6px;margin:3px 0;color:var(--text2);font-size:12px">
+          • ${p.name} — <strong>${ul?ul.qty:0} ${p.unit}</strong>
+          <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:11px;padding:2px 8px">Assign →</button>
+        </span><br>`;
+      }).join('')}`;
   }
+
+  DB.products.filter(p=>!getLocations(p).some(l=>l.zone.includes('Open / Unlocated'))).forEach(p=>{
+    if(p.openSince) delete p.openSince;
+  });
 }
 
 // Mark an item as assigned (clear openSince)
@@ -4459,7 +5184,7 @@ function renderRequests(){
     document.getElementById('my-requests-list').innerHTML = myReqs.length
       ? myReqs.map(r=>`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2);border:1px solid var(--border);margin-bottom:6px">
-          <span style="font-size:18px">${r.type==='stock'?'📦':r.type==='price'?'💰':'🗑️'}</span>
+          <span style="font-size:18px">${r.type==='stock'?'📦':r.type==='price'?'💰':r.type==='edit'?'✏️':r.type==='addproduct'?'➕':'🗑️'}</span>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:500">${r.product}</div>
             <div style="font-size:11px;color:var(--text3)">${r.details} · ${r.date}</div>
@@ -4483,7 +5208,7 @@ function filterRequests(){
     <tr style="${r.status==='pending'?'background:rgba(45,156,219,0.04)':''}">
       <td style="font-size:12px;color:var(--text3)">${r.date}</td>
       <td style="font-weight:500">${r.submittedBy}</td>
-      <td><span class="badge ${r.type==='stock'?'green':r.type==='price'?'orange':'red'}">${r.type==='stock'?'📦 Stock':r.type==='price'?'💰 Price':'🗑 Delete'}</span></td>
+      <td><span class="badge ${r.type==='stock'?'green':r.type==='price'?'orange':r.type==='edit'?'blue':r.type==='addproduct'?'green':'red'}">${r.type==='stock'?'📦 Stock':r.type==='price'?'💰 Price':r.type==='edit'?'✏ Edit':r.type==='addproduct'?'➕ New Product':'🗑 Delete'}</span></td>
       <td>${r.product}</td>
       <td style="font-size:12px;color:var(--text2)">${r.details}</td>
       <td style="font-size:12px;color:var(--text3);max-width:150px">${r.reason}</td>
@@ -4504,6 +5229,16 @@ function updateRequestsBadge(){
   if(badge){badge.style.display=pending?'inline':'none';badge.textContent=pending;}
 }
 
+function setReqStockMode(mode){
+  document.getElementById('req-stock-mode').value=mode;
+  const addBtn=document.getElementById('req-stock-add-btn');
+  const remBtn=document.getElementById('req-stock-rem-btn');
+  const lbl=document.getElementById('req-stock-qty-label');
+  if(addBtn) addBtn.style.cssText=mode==='add'?'padding:8px;border-radius:var(--radius);border:2px solid var(--green);background:rgba(39,174,96,0.15);color:var(--green);font-weight:600;cursor:pointer':'padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-weight:600;cursor:pointer';
+  if(remBtn) remBtn.style.cssText=mode==='remove'?'padding:8px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-weight:600;cursor:pointer':'padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-weight:600;cursor:pointer';
+  if(lbl) lbl.textContent=mode==='add'?'Quantity to Add *':'Quantity to Remove *';
+}
+
 function showRequestModal(type){
   document.getElementById('req-type').value=type;
   document.getElementById('req-product').value='';
@@ -4511,7 +5246,8 @@ function showRequestModal(type){
   document.getElementById('req-stock-qty').value='';
   document.getElementById('req-new-price').value='';
   document.getElementById('req-new-cost').value='';
-  const titles={stock:'Request Stock Increase',price:'Request Price Change',delete:'Request Item Removal',purchase:'Request to Buy Product'};
+  setReqStockMode('add'); // reset to add mode
+  const titles={stock:'Request Stock Change',price:'Request Price Change',delete:'Request Item Removal',purchase:'Request External Purchase'};
   document.getElementById('req-modal-title').textContent=titles[type]||'Submit Request';
   document.getElementById('req-stock-fields').style.display=type==='stock'?'block':'none';
   document.getElementById('req-price-fields').style.display=type==='price'?'block':'none';
@@ -4539,8 +5275,9 @@ function submitRequest(){
   let details='';
   if(type==='stock'){
     const qty=parseInt(document.getElementById('req-stock-qty').value)||0;
+    const stockMode=(document.getElementById('req-stock-mode')||{}).value||'add';
     if(!qty){toast('Enter quantity');return;}
-    details=`Add ${qty} ${p.unit}`;
+    details=`${stockMode==='add'?'Add':'Remove'} ${qty} ${p.unit}`;
   } else if(type==='price'){
     const newPrice=parseFloat(document.getElementById('req-new-price').value)||0;
     const newCost=parseFloat(document.getElementById('req-new-cost').value)||0;
@@ -4577,13 +5314,14 @@ function submitRequest(){
     managerNote:'',
     extraData:{
       qty:parseInt(document.getElementById('req-stock-qty').value)||0,
+      stockMode:(document.getElementById('req-stock-mode')||{}).value||'add',
       newPrice:parseFloat(document.getElementById('req-new-price').value)||0,
       newCost:parseFloat(document.getElementById('req-new-cost').value)||0,
       buyQty:parseInt(document.getElementById('req-buy-qty').value)||1,
       buyPrice:parseFloat(document.getElementById('req-buy-price').value)||0,
     }
   });
-  logActivity('inventory',`Request submitted: ${type} for ${product} — ${details}`);
+  logActivity('inventory',`⚠ Request by ${currentUser?currentUser.name:'staff'}: ${type==='stock'?'Stock change':'Change'} for ${product} — ${details} | Reason: ${reason}`);
   save();
   closeModal('modal-request');
   renderRequests();
@@ -4605,8 +5343,29 @@ function handleRequest(id,action){
   if(action==='approved'){
     const p=DB.products.find(x=>x.name===r.product);
     if(r.type==='stock'){
-      const p=DB.products.find(x=>x.name===r.product);
-      if(p){p.stock+=r.extraData.qty||0;logActivity('inventory',`Stock increase approved: ${p.name} +${r.extraData.qty} (by ${r.submittedBy})`);}
+      const prod=DB.products.find(x=>x.name===r.product);
+      if(prod){
+        const qty=r.extraData.qty||0;
+        const mode=r.extraData.stockMode||'add';
+        if(mode==='remove'){
+          const total=getTotalStock(prod);
+          if(qty>total){toast(`Cannot remove ${qty} — only ${total} in stock`);return;}
+          prod.stock=Math.max(0,total-qty);
+          // Deduct from locations (largest first)
+          if(prod.locations){
+            let rem=qty;
+            for(const loc of prod.locations){if(rem<=0)break;const take=Math.min(loc.qty||0,rem);loc.qty-=take;rem-=take;}
+            prod.locations=prod.locations.filter(l=>l.qty>0);
+          }
+          logActivity('inventory',`Stock removed (approved): ${prod.name} −${qty} (by ${r.submittedBy})`);
+        } else {
+          prod.stock=(prod.stock||0)+qty;
+          if(!prod.locations) prod.locations=getLocations(prod);
+          const unloc=prod.locations.find(l=>l.zone.includes('Open / Unlocated'));
+          if(unloc){unloc.qty+=qty;}else{prod.locations.push({zone:'⚠ Open / Unlocated',qty});if(!prod.openSince)prod.openSince=Date.now();}
+          logActivity('inventory',`Stock added (approved): ${prod.name} +${qty} (by ${r.submittedBy})`);
+        }
+      }
     } else if(r.type==='price'){
       const p=DB.products.find(x=>x.name===r.product);
       if(p){
@@ -4625,6 +5384,22 @@ function handleRequest(id,action){
       sendToRecycleBin('product',r.product,currentUser?currentUser.name:'',`Deleted via request by ${r.submittedBy}`);
       DB.products=DB.products.filter(x=>x.name!==r.product);
       logActivity('inventory',`Product deleted (approved): ${r.product} (by ${r.submittedBy})`);
+    } else if(r.type==='addproduct'){
+      const d=r.extraData;
+      const newProd={id:Date.now(),name:d.name,cat:d.cat||'Other',price:d.price||0,cost:d.cost||0,stock:d.stock||0,unit:d.unit||'pcs',desc:d.desc||'',sku:'',pcsPerBox:0,metersPerRoll:0,needsPrice:!d.price,zone:'',zones:[],locations:[]};
+      if(d.stock>0){newProd.locations=[{zone:'⚠ Open / Unlocated',qty:d.stock}];newProd.openSince=Date.now();}
+      DB.products.push(newProd);
+      logActivity('inventory',`New product approved: ${d.name} (added by ${currentUser?currentUser.name:''}, requested by ${r.submittedBy})`);
+    } else if(r.type==='edit'){
+      const prod=DB.products.find(x=>x.id===r.extraData.productId||x.name===r.product);
+      if(prod){
+        const changes=[];
+        if(r.extraData.newName&&r.extraData.newName!==prod.name){changes.push(`Name: "${prod.name}"→"${r.extraData.newName}"`);prod.name=r.extraData.newName;}
+        if(r.extraData.newPrice!==null&&r.extraData.newPrice!==undefined){changes.push(`Price: ${prod.price}→${r.extraData.newPrice}`);prod.price=r.extraData.newPrice;}
+        if(r.extraData.newCost!==null&&r.extraData.newCost!==undefined){changes.push(`Cost: ${prod.cost||0}→${r.extraData.newCost}`);prod.cost=r.extraData.newCost;}
+        if(r.extraData.newDesc){prod.desc=r.extraData.newDesc;changes.push('Description updated');}
+        logActivity('inventory',`Product edit approved: ${r.product} — ${changes.join(' | ')} (requested by ${r.submittedBy}, approved by ${currentUser?currentUser.name:''})`);
+      }
     }
   }
   save();
@@ -4641,13 +5416,38 @@ function handleRequest(id,action){
 // product.locations = [{zone:'EH Main › Sales Room', qty:50}, {zone:'Mekzen › Large Unit', qty:30}]
 // product.stock = sum of all location qtys (computed)
 
+function cleanLocations(p){
+  // Remove any location entries with qty <= 0
+  if(p.locations) p.locations=p.locations.filter(l=>(l.qty||0)>0);
+  // Clear openSince if no unlocated qty remaining
+  if(p.openSince&&!p.locations.some(l=>l.zone.includes('Unlocated')&&l.qty>0)){
+    delete p.openSince;
+  }
+}
+
 function getLocations(p){
-  // Migrate old zone/zones to new locations array
-  if(p.locations&&p.locations.length) return p.locations;
-  // Migrate from old zones array
+  if(p.locations&&p.locations.length){
+    const totalQty=p.locations.reduce((a,l)=>a+(l.qty||0),0);
+    if(totalQty===0&&p.stock>0){
+      // Find unlocated entry first, otherwise use first location
+      const unloc=p.locations.find(l=>l.zone.includes('Unlocated'));
+      if(unloc){ unloc.qty=p.stock; }
+      else { p.locations[0].qty=p.stock; }
+    }
+    return p.locations;
+  }
+  // Migrate from old zones/zone string
   const oldZones=p.zones&&p.zones.length?p.zones:(p.zone?[p.zone]:[]);
   if(oldZones.length){
-    p.locations=oldZones.map(z=>({zone:z,qty:0}));
+    const perZone=Math.floor((p.stock||0)/oldZones.length);
+    const rem=(p.stock||0)%oldZones.length;
+    p.locations=oldZones.map((z,i)=>({zone:z,qty:perZone+(i===0?rem:0)}));
+    return p.locations;
+  }
+  // No location — put in unlocated
+  if((p.stock||0)>0){
+    p.locations=[{zone:'⚠ Open / Unlocated',qty:p.stock}];
+    if(!p.openSince) p.openSince=Date.now();
     return p.locations;
   }
   return [];
@@ -4700,6 +5500,7 @@ function moveStock(productId, fromZone, toZone, qty){
   else { p.locations.push({zone:toZone,qty}); }
   p.zone=p.locations[0]?.zone||'';
   p.zones=p.locations.map(l=>l.zone);
+  cleanLocations(p);
   // Clear openSince if moved out of Unlocated
   if(!p.locations.some(l=>l.zone.includes('Open / Unlocated'))) delete p.openSince;
   logActivity('inventory',`Moved: ${p.name} ${qty} ${p.unit} from ${fromZone.split('›').pop().trim()} → ${toZone.split('›').pop().trim()} (by ${currentUser?currentUser.name:''})`);
@@ -4728,18 +5529,44 @@ function getTodaySession(){
   return DB.drawerSessions.find(x=>x.date===today&&!x.closed)||null;
 }
 
+let activeDrawerDate = null; // which day is currently being worked on
+
+function getActiveSession(){
+  // Returns the session for the active date if it's open
+  const date = activeDrawerDate || todayMinus(0);
+  return (DB.drawerSessions||[]).find(x=>x.date===date&&!x.closed&&!x.locked)||null;
+}
+
 function getOrPickSession(){
-  // Returns the active (open, not locked) session or null
-  return (DB.drawerSessions||[]).find(x=>!x.closed&&!x.locked)||null;
+  return getActiveSession();
+}
+
+function getSessionForDate(dateStr){
+  return (DB.drawerSessions||[]).find(x=>x.date===dateStr)||null;
+}
+
+function setActiveDate(dateStr){
+  activeDrawerDate=dateStr;
+  renderDrawer();
 }
 
 function openSessionForDate(dateStr){
   if(!DB.drawerSessions) DB.drawerSessions=[];
-  const existing=DB.drawerSessions.find(x=>x.date===dateStr&&!x.closed);
-  if(existing) return existing;
+  const existing=DB.drawerSessions.find(x=>x.date===dateStr);
+  if(existing&&!existing.closed){
+    activeDrawerDate=dateStr;
+    return existing;
+  }
+  if(existing&&existing.closed){
+    toast('That day is closed — scroll down to Previous Days and click 🔓 Reopen');
+    // Scroll history into view
+    setTimeout(()=>{const h=document.querySelector('.panel-title');const panels=document.querySelectorAll('#page-drawer .panel');const hist=panels[panels.length-1];if(hist)hist.scrollIntoView({behavior:'smooth',block:'start'});},300);
+    return null;
+  }
   const s={id:Date.now(),date:dateStr,openedBy:currentUser?currentUser.name:'',
     openedAt:Date.now(),startingCash:DRAWER_START,expenses:[],closed:false,closedBy:'',closedAt:''};
   DB.drawerSessions.push(s);
+  activeDrawerDate=dateStr;
   logActivity('inventory',`Day opened by ${s.openedBy} for ${dateStr}`);
   save();
   return s;
@@ -4751,40 +5578,69 @@ function renderDrawer(){
   const today=todayMinus(0);
   const tomorrow=todayMinus(-1);
   const yesterday=todayMinus(1);
+  const isManager=currentUser&&currentUser.role==='Manager';
 
-  const activeSession=getOrPickSession();
+  // Auto-set activeDrawerDate to most recent open session if not set
+  if(!activeDrawerDate){
+    const openSessions=(DB.drawerSessions||[]).filter(x=>!x.closed&&!x.locked).sort((a,b)=>b.date.localeCompare(a.date));
+    if(openSessions.length) activeDrawerDate=openSessions[0].date;
+  }
 
-  if(!activeSession){
+  const activeSession=getActiveSession();
+  const openSessions=(DB.drawerSessions||[]).filter(x=>!x.closed&&!x.locked);
+
+  // If manager and no active session, show day picker
+  if(!activeSession&&isManager){
     document.getElementById('drawer-session-info').innerHTML='';
     document.getElementById('drawer-expenses-list').innerHTML='';
     document.getElementById('drawer-eod-summary').innerHTML='';
     const statsEl=document.getElementById('drawer-stats');
+    // Show open sessions to switch to + option to open new
+    const openSessionBtns=openSessions.length?`
+      <div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">📂 Already open days — click to switch:</div>
+        ${openSessions.map(s=>`<button onclick="activeDrawerDate='${s.date}';renderDrawer()" style="display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:8px;border-radius:var(--radius);border:2px solid var(--green);background:rgba(39,174,96,0.08);cursor:pointer">
+          <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase">OPEN</div>
+          <div style="font-size:16px;font-weight:600">${formatDisplayDate(s.date)} <span style="font-size:12px;color:var(--text3)">${s.date}</span></div>
+          <div style="font-size:11px;color:var(--text3)">Opened by ${s.openedBy}</div>
+        </button>`).join('')}
+      </div>`:'' ;
     if(statsEl) statsEl.innerHTML=`
       <div style="max-width:480px;margin:0 auto;padding:10px 0 20px">
-        <div style="text-align:center;margin-bottom:28px">
-          <div style="font-size:40px;margin-bottom:10px">\u{1F4C5}</div>
-          <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:8px">Which day are you opening?</div>
-          <div style="font-size:14px;color:var(--text3)">Choose carefully — all sales and expenses will be recorded for this day</div>
+        ${openSessionBtns}
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">Open a new day</div>
+          <div style="font-size:13px;color:var(--text3)">All sales will record to this day until closed</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <button onclick="openSessionForDate('${today}');renderDrawer()" style="padding:22px 24px;border-radius:var(--radius);border:3px solid var(--accent);background:rgba(245,166,35,0.08);cursor:pointer;text-align:left;width:100%;transition:all 0.15s">
-            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">TODAY</div>
-            <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.1">${formatDisplayDate(today)}</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:4px">${today}</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onclick="openSessionForDate('${today}');renderDrawer()" style="padding:18px 24px;border-radius:var(--radius);border:3px solid var(--accent);background:rgba(245,166,35,0.08);cursor:pointer;text-align:left;width:100%">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">TODAY — ${today}</div>
+            <div style="font-size:20px;font-weight:700;color:var(--text)">${formatDisplayDate(today)}</div>
           </button>
-          <button onclick="openSessionForDate('${tomorrow}');renderDrawer()" style="padding:22px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">TOMORROW</div>
-            <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.1">${formatDisplayDate(tomorrow)}</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:4px">${tomorrow} \u2014 for sales that come in after closing today</div>
+          <button onclick="openSessionForDate('${tomorrow}');renderDrawer()" style="padding:18px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">TOMORROW — ${tomorrow}</div>
+            <div style="font-size:20px;font-weight:700;color:var(--text)">${formatDisplayDate(tomorrow)}</div>
           </button>
-          <button onclick="openSessionForDate('${yesterday}');renderDrawer()" style="padding:22px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">YESTERDAY</div>
-            <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.1">${formatDisplayDate(yesterday)}</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:4px">${yesterday} \u2014 if you forgot to log yesterday</div>
+          <button onclick="openSessionForDate('${yesterday}');renderDrawer()" style="padding:18px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">YESTERDAY — ${yesterday}</div>
+            <div style="font-size:20px;font-weight:700;color:var(--text)">${formatDisplayDate(yesterday)}</div>
           </button>
         </div>
       </div>`;
-    // Still render history below
+    renderDrawerHistory(cur,today);
+    return;
+  }
+
+  if(!activeSession&&!isManager){
+    document.getElementById('drawer-session-info').innerHTML='';
+    document.getElementById('drawer-expenses-list').innerHTML='';
+    document.getElementById('drawer-eod-summary').innerHTML='';
+    const statsEl=document.getElementById('drawer-stats');
+    if(statsEl) statsEl.innerHTML=`<div style="text-align:center;padding:40px 20px">
+      <div style="font-size:40px;margin-bottom:12px">🔒</div>
+      <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px">No active session</div>
+      <div style="font-size:13px;color:var(--text3)">The manager needs to open the day before sales can be tracked.</div>
+    </div>`;
     renderDrawerHistory(cur,today);
     return;
   }
@@ -4803,20 +5659,28 @@ function renderDrawer(){
   const totalExpenses=(session.expenses||[]).reduce((a,e)=>a+e.amount,0);
   const expectedInDrawer=session.startingCash+salesRevenue-totalExpenses;
 
+  // Other open sessions (not the current one)
+  const otherOpen=(DB.drawerSessions||[]).filter(x=>!x.closed&&!x.locked&&x.date!==sessionDate);
+
   const statsEl=document.getElementById('drawer-stats');
   if(statsEl) statsEl.innerHTML=`
+    ${otherOpen.length&&isManager?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px">
+      <span style="color:var(--text3);margin-right:8px">Other open days:</span>
+      ${otherOpen.map(s=>`<button onclick="activeDrawerDate='${s.date}';renderDrawer()" style="margin:2px 4px;padding:3px 10px;border-radius:20px;border:1px solid var(--green);background:rgba(39,174,96,0.1);color:var(--green);cursor:pointer;font-size:12px">${s.date} ↗</button>`).join('')}
+      ${isManager?`<button onclick="activeDrawerDate=null;renderDrawer()" style="margin:2px 4px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text3);cursor:pointer;font-size:12px">+ Open new day</button>`:''}
+    </div>`:''}
     <div style="background:${dayBg};border:2px solid ${dayColor};border-radius:var(--radius);padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div>
-        <div style="font-size:11px;font-weight:700;color:${dayColor};text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">${dayLabel}</div>
+        <div style="font-size:11px;font-weight:700;color:${dayColor};text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">${dayLabel} — ACTIVE</div>
         <div style="font-size:26px;font-weight:700;color:var(--text);line-height:1.1">${formatDisplayDate(sessionDate)}</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:3px">${sessionDate} · Opened by ${session.openedBy||'\u2014'}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">${sessionDate} · Opened by ${session.openedBy||'—'} · Sales record to this day</div>
       </div>
     </div>
     <div class="stats-row" style="margin-bottom:16px">
-      <div class="stat-card orange"><div class="stat-icon">\u{1F4B5}</div><div class="stat-label">Starting Cash</div><div class="stat-value">${cur} ${session.startingCash.toLocaleString()}</div><div class="stat-sub">Daily float</div></div>
-      <div class="stat-card green"><div class="stat-icon">\u{1F6D2}</div><div class="stat-label">Sales Revenue</div><div class="stat-value">${cur} ${salesRevenue.toLocaleString()}</div><div class="stat-sub">${sessionSales.length} sale${sessionSales.length!==1?'s':''}</div></div>
-      <div class="stat-card red"><div class="stat-icon">\u{1F4B8}</div><div class="stat-label">Expenses</div><div class="stat-value">${cur} ${totalExpenses.toLocaleString()}</div><div class="stat-sub">${(session.expenses||[]).length} item${(session.expenses||[]).length!==1?'s':''}</div></div>
-      <div class="stat-card blue"><div class="stat-icon">\u{1F3E6}</div><div class="stat-label">Expected in Drawer</div><div class="stat-value">${cur} ${expectedInDrawer.toLocaleString()}</div><div class="stat-sub">Should be in till</div></div>
+      <div class="stat-card orange"><div class="stat-icon">💵</div><div class="stat-label">Starting Cash</div><div class="stat-value">${cur} ${session.startingCash.toLocaleString()}</div><div class="stat-sub">Daily float</div></div>
+      <div class="stat-card green"><div class="stat-icon">🛒</div><div class="stat-label">Sales Revenue</div><div class="stat-value">${cur} ${salesRevenue.toLocaleString()}</div><div class="stat-sub">${sessionSales.length} sale${sessionSales.length!==1?'s':''}</div></div>
+      <div class="stat-card red"><div class="stat-icon">💸</div><div class="stat-label">Expenses</div><div class="stat-value">${cur} ${totalExpenses.toLocaleString()}</div><div class="stat-sub">${(session.expenses||[]).length} item${(session.expenses||[]).length!==1?'s':''}</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🏦</div><div class="stat-label">Expected in Drawer</div><div class="stat-value">${cur} ${expectedInDrawer.toLocaleString()}</div><div class="stat-sub">Should be in till</div></div>
     </div>`;
 
   document.getElementById('drawer-session-info').innerHTML=`
@@ -4832,10 +5696,13 @@ function renderDrawer(){
 
   document.getElementById('drawer-expenses-list').innerHTML=(session.expenses||[]).length
     ?(session.expenses||[]).map((e,i)=>`
-      <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:4px;border:1px solid var(--border)">
-        <span style="flex:1;font-size:13px">${e.desc}</span>
-        <span style="font-family:var(--font-head);color:var(--red)">\u2212 ${cur} ${e.amount}</span>
-        <button onclick="removeExpense(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:0.6">\u2715</button>
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:4px;border:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px">${e.desc}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${e.by?'by '+e.by:''}${e.time?' · '+e.time:''}</div>
+        </div>
+        <span style="font-family:var(--font-head);color:var(--red);white-space:nowrap">− ${cur} ${e.amount}</span>
+        <button onclick="removeExpense(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:0.6">✕</button>
       </div>`).join('')
     :'<div style="color:var(--text3);font-size:12px;padding:8px 0">No expenses recorded yet</div>';
 
@@ -4850,7 +5717,6 @@ function renderDrawer(){
   // Show/hide close day button based on role
   const closBtn=document.getElementById('close-day-btn');
   if(closBtn){
-    const isManager=currentUser&&currentUser.role==='Manager';
     closBtn.style.display=isManager?'':'none';
     let note=document.getElementById('close-day-note');
     if(!isManager){
@@ -4860,14 +5726,85 @@ function renderDrawer(){
     } else if(note){ note.remove(); }
   }
 
+  // Hide financial panels from employees
+  const panelsForManagerOnly=['drawer-session-info','drawer-expenses-list','drawer-eod-summary','drawer-weekly'];
+  panelsForManagerOnly.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.closest('.panel')?el.closest('.panel').style.display=isManager?'':'none':el.style.display=isManager?'':'none';
+  });
+  // Hide switch day button and expense input row for employees
+  const switchBtn=document.querySelector('[onclick="switchDrawerDay()"]');
+  if(switchBtn) switchBtn.style.display=isManager?'':'none';
+  const expRow=document.getElementById('exp-desc');
+  if(expRow&&expRow.parentNode&&expRow.parentNode.parentNode) expRow.parentNode.parentNode.style.display=isManager?'':'none';
+  // Hide export button for employees
+  const exportBtn=document.getElementById('monthly-export-btn');
+  if(exportBtn) exportBtn.style.display=isManager?'':'none';
+  const monthPicker=document.getElementById('monthly-export-picker');
+  if(monthPicker) monthPicker.style.display=isManager?'':'none';
+
+  // Show employee-only sales summary if not manager
+  let empSalesPanel=document.getElementById('emp-sales-panel');
+  if(!isManager){
+    if(!empSalesPanel){
+      empSalesPanel=document.createElement('div');
+      empSalesPanel.id='emp-sales-panel';
+      empSalesPanel.className='panel';
+      empSalesPanel.style.marginTop='16px';
+      const drawerPage=document.getElementById('page-drawer');
+      if(drawerPage) drawerPage.insertBefore(empSalesPanel,drawerPage.children[1]);
+    }
+    empSalesPanel.style.display='block';
+    const daySales=DB.sales.filter(s=>s.date===sessionDate);
+    empSalesPanel.innerHTML=`<div class="panel-title" style="margin-bottom:12px"><span class="dot" style="background:var(--green)"></span> Today's Sales — ${formatDisplayDate(sessionDate)}</div>
+      ${daySales.length?[...daySales].reverse().map(s=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <div style="flex:1">
+            <div style="font-weight:500">${s.customer}</div>
+            <div style="font-size:11px;color:var(--text3)">${s.items.map(i=>i.name+' ×'+i.qty).join(', ')}${s.servedBy?' · by '+s.servedBy:''}</div>
+          </div>
+          <span style="font-size:11px;color:var(--text3)">${s.time||''}</span>
+          <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${s.total.toLocaleString()}</span>
+        </div>`).join('')
+      :`<div style="color:var(--text3);font-size:13px;padding:16px 0;text-align:center">No sales recorded yet today</div>`}
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:600;border-top:1px solid var(--border);margin-top:4px">
+        <span>${daySales.length} sale${daySales.length!==1?'s':''}</span>
+        <span style="color:var(--accent);font-family:var(--font-head)">${cur} ${daySales.reduce((a,s)=>a+s.total,0).toLocaleString()}</span>
+      </div>`;
+  } else if(empSalesPanel){
+    empSalesPanel.style.display='none';
+  }
+
   renderDrawerHistory(cur,today);
 }
 
 function renderDrawerHistory(cur,today){
   const rangeEl=document.getElementById('drawer-history-range');
   const range=rangeEl?rangeEl.value:'14';
-  let past=[...DB.drawerSessions].filter(s=>s.date!==today).reverse();
+  // Deduplicate by date — keep most recent session per date
+  const byDate={};
+  DB.drawerSessions.forEach(s=>{
+    if(!byDate[s.date]||s.id>byDate[s.date].id) byDate[s.date]=s;
+  });
+  let past=Object.values(byDate).sort((a,b)=>b.date.localeCompare(a.date));
+
+  // Populate month picker with available months
+  const monthPicker=document.getElementById('monthly-export-picker');
+  if(monthPicker){
+    const months=[...new Set(
+      [...DB.drawerSessions,...DB.sales].map(x=>x.date?x.date.slice(0,7):null).filter(Boolean)
+    )].sort().reverse();
+    const cur_val=monthPicker.value;
+    monthPicker.innerHTML='<option value="">Select month...</option>'
+      +months.map(m=>{
+        const [y,mo]=m.split('-');
+        const label=new Date(y,parseInt(mo)-1,1).toLocaleDateString([],{month:'long',year:'numeric'});
+        return `<option value="${m}" ${m===cur_val?'selected':''}>${label}</option>`;
+      }).join('');
+  }
+
   if(range!=='all') past=past.slice(0,parseInt(range));
+  const isManagerH=currentUser&&currentUser.role==='Manager';
   const tbody=document.getElementById('drawer-history-tbody');
   if(!tbody) return;
   tbody.innerHTML=past.map(s=>{
@@ -4878,6 +5815,15 @@ function renderDrawerHistory(cur,today){
     const hasActual=typeof actual==='number';
     const diff=hasActual?actual-expected:null;
     const imbalance=hasActual&&Math.abs(diff)>1;
+    if(!isManagerH){
+      // Employees see only date, sales count, sales total, status
+      const daySales=DB.sales.filter(x=>x.date===s.date);
+      return `<tr>
+        <td style="font-weight:500">${s.date}</td>
+        <td style="color:var(--green)">${daySales.length} sales · ${cur} ${rev.toLocaleString()}</td>
+        <td><span class="badge ${s.closed?'gray':'green'}">${s.closed?'Closed':'Open'}</span></td>
+      </tr>`;
+    }
     return `<tr style="${imbalance?'background:rgba(231,76,60,0.06)':''}">
       <td style="font-weight:500">${s.date}</td>
       <td style="font-size:12px">${s.openedBy||'—'}</td>
@@ -4892,7 +5838,7 @@ function renderDrawerHistory(cur,today){
       <td style="font-size:12px;color:var(--text3)">${s.closedBy||'—'}</td>
       <td>
         <button class="action-btn" style="font-size:11px" onclick="showDayDetail('${s.date}')">📋 View</button>
-        ${s.locked&&currentUser&&currentUser.role==='Manager'?`<button class="action-btn" style="font-size:11px;color:var(--green);border-color:var(--green)" onclick="reopenDay('${s.date}')">🔓 Reopen</button>`:''}
+        ${s.closed&&currentUser&&currentUser.role==='Manager'?`<button class="action-btn" style="font-size:11px;color:var(--green);border-color:var(--green)" onclick="reopenDay('${s.date}')">🔓 Reopen</button>`:''}
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">No previous sessions</td></tr>';
@@ -4935,6 +5881,7 @@ function showDayDetail(date){
       <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--accent)"></span> Day Detail — ${date}</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${s.locked&&isManager?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="reopenDay('${date}')">🔓 Reopen This Day</button>`:''}
+        <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="exportDayFull('${date}')">📊 Export to Excel</button>
         <button onclick="document.getElementById('drawer-day-detail').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
       </div>
     </div>
@@ -4978,7 +5925,180 @@ function saveActualCash(date){
   if(isNaN(amt)){toast('Enter a valid amount');return;}
   s.actualCash=amt;
   save();showDayDetail(date);renderDrawer();
-  toast('Cash count saved');
+  toast('Cash count saved ✓');
+}
+
+function exportMonthlyReport(){
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only managers can export reports');return;}
+  const picker=document.getElementById('monthly-export-picker');
+  const month=picker?picker.value:'';
+  if(!month){toast('Select a month first');return;}
+  const [year,mo]=month.split('-');
+  const monthLabel=new Date(year,parseInt(mo)-1,1).toLocaleDateString([],{month:'long',year:'numeric'});
+  const cur='NKF';
+  const shopName=DB.settings.shopName||'Weyni General Electric Shop';
+
+  // All days in this month that have sessions or sales
+  const allDates=[...new Set([
+    ...DB.drawerSessions.map(s=>s.date),
+    ...DB.sales.map(s=>s.date)
+  ])].filter(d=>d.startsWith(month)).sort();
+
+  // ── SHEET 1: Monthly Summary ──
+  const rows=[];
+  rows.push([shopName]);
+  rows.push([`Monthly Report — ${monthLabel}`]);
+  rows.push([`Generated: ${new Date().toLocaleDateString()}`]);
+  rows.push([]);
+
+  // Month totals
+  const monthSales=DB.sales.filter(s=>s.date.startsWith(month));
+  const monthRev=monthSales.reduce((a,s)=>a+s.total,0);
+  const monthSessions=DB.drawerSessions.filter(s=>s.date.startsWith(month));
+  const monthExp=monthSessions.reduce((a,s)=>a+(s.expenses||[]).reduce((b,e)=>b+e.amount,0),0);
+  const monthProfit=monthSales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
+
+  rows.push(['MONTHLY SUMMARY']);
+  rows.push(['Total Revenue',`${cur} ${monthRev.toLocaleString()}`]);
+  rows.push(['Total Expenses',`${cur} ${monthExp.toLocaleString()}`]);
+  rows.push(['Net (Revenue - Expenses)',`${cur} ${(monthRev-monthExp).toLocaleString()}`]);
+  rows.push(['Est. Profit',`${cur} ${Math.round(monthProfit).toLocaleString()}`]);
+  rows.push(['Total Transactions',monthSales.length]);
+  rows.push(['Days Operated',allDates.length]);
+  rows.push(['Avg Revenue/Day',`${cur} ${allDates.length?Math.round(monthRev/allDates.length).toLocaleString():'0'}`]);
+  rows.push([]);
+
+  // Top products this month
+  const itemRevs={};
+  monthSales.forEach(s=>s.items.forEach(i=>{itemRevs[i.name]=(itemRevs[i.name]||0)+i.qty*i.price;}));
+  const topProds=Object.entries(itemRevs).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  rows.push(['TOP 10 PRODUCTS']);
+  rows.push(['Product','Revenue ('+cur+')']);
+  topProds.forEach(([n,v])=>rows.push([n,Math.round(v).toLocaleString()]));
+  rows.push([]);
+
+  // Staff performance
+  const staffRev={};const staffCount={};
+  monthSales.forEach(s=>{const w=s.servedBy||'Unknown';staffRev[w]=(staffRev[w]||0)+s.total;staffCount[w]=(staffCount[w]||0)+1;});
+  rows.push(['STAFF PERFORMANCE']);
+  rows.push(['Name','Transactions','Revenue ('+cur+')']);
+  Object.entries(staffRev).sort((a,b)=>b[1]-a[1]).forEach(([n,v])=>rows.push([n,staffCount[n],Math.round(v).toLocaleString()]));
+  rows.push([]);
+
+  // ── SHEET 2 separator: Daily Breakdown ──
+  rows.push(['═══ DAILY BREAKDOWN ═══']);
+  rows.push(['Date','Day','Opened By','Closed By','Transactions','Revenue ('+cur+')','Expenses ('+cur+')','Expected ('+cur+')','Actual Counted ('+cur+')','Difference ('+cur+')','Status']);
+
+  allDates.forEach(date=>{
+    const s=DB.drawerSessions.find(x=>x.date===date);
+    const daySales=DB.sales.filter(x=>x.date===date);
+    const rev=daySales.reduce((a,x)=>a+x.total,0);
+    const exp=s?(s.expenses||[]).reduce((a,e)=>a+e.amount,0):0;
+    const start=s?s.startingCash:0;
+    const expected=start+rev-exp;
+    const actual=s&&s.actualCash!=null?s.actualCash:'';
+    const diff=actual!==''?actual-expected:'';
+    const dayOfWeek=new Date(date+'T12:00:00').toLocaleDateString([],{weekday:'long'});
+    const status=s?s.closed?'Closed':'Open':'Sales only';
+    rows.push([date,dayOfWeek,s?s.openedBy:'—',s&&s.closedBy?s.closedBy:'—',daySales.length,rev.toFixed(0),exp.toFixed(0),expected.toFixed(0),actual!==''?actual:'Not counted',diff!==''?(diff>=0?'+':'')+diff.toFixed(0):'—',status]);
+  });
+
+  // Daily totals row
+  const totalRev=allDates.reduce((a,d)=>a+DB.sales.filter(x=>x.date===d).reduce((b,s)=>b+s.total,0),0);
+  const totalExp=allDates.reduce((a,d)=>{const s=DB.drawerSessions.find(x=>x.date===d);return a+(s?(s.expenses||[]).reduce((b,e)=>b+e.amount,0):0);},0);
+  rows.push(['TOTAL','','','',monthSales.length,totalRev.toFixed(0),totalExp.toFixed(0),'','','','']);
+  rows.push([]);
+
+  // ── SHEET 3 separator: All Transactions ──
+  rows.push(['═══ ALL TRANSACTIONS ═══']);
+  rows.push(['Date','Time','Customer','Served By','Items','Discount ('+cur+')','Total ('+cur+')']);
+  [...monthSales].sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')).forEach(sale=>{
+    rows.push([sale.date,sale.time||'—',sale.customer,sale.servedBy||'—',sale.items.map(i=>i.name+' x'+i.qty).join('; '),sale.discount?sale.discount.toFixed(0):'0',sale.total.toFixed(0)]);
+  });
+  rows.push(['','','','','','TOTAL',totalRev.toFixed(0)]);
+  rows.push([]);
+
+  // ── All expenses this month ──
+  const allExpenses=[];
+  monthSessions.forEach(s=>(s.expenses||[]).forEach(e=>allExpenses.push({date:s.date,...e})));
+  if(allExpenses.length){
+    rows.push(['═══ ALL EXPENSES ═══']);
+    rows.push(['Date','Description','Amount ('+cur+')','Recorded By','Time']);
+    allExpenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>rows.push([e.date,e.desc,e.amount,e.by||'—',e.time||'—']));
+    rows.push(['','TOTAL EXPENSES',monthExp.toFixed(0),'','']);
+  }
+
+  // Download as CSV with BOM
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c===null||c===undefined?'':c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${month}-monthly-report.csv`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast(`${monthLabel} report downloaded ✓`);
+}
+function exportDayFull(date){
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only managers can export reports');return;}
+  const s=DB.drawerSessions.find(x=>x.date===date);
+  const sales=DB.sales.filter(x=>x.date===date);
+  const expenses=(s&&s.expenses)||[];
+  const rev=sales.reduce((a,x)=>a+x.total,0);
+  const exp=expenses.reduce((a,e)=>a+e.amount,0);
+  const expected=s?(s.startingCash+rev-exp):0;
+  const actual=s&&s.actualCash!=null?s.actualCash:null;
+  const diff=actual!=null?actual-expected:null;
+  exportDayAsCSV(date,s,sales,expenses,rev,exp,expected,actual,diff,'NKF');
+}
+
+
+function exportDayAsCSV(date,s,sales,expenses,rev,exp,expected,actual,diff,cur){
+  // Build a comprehensive CSV that Excel can open
+  const rows=[];
+  const shopName=DB.settings.shopName||'Weyni General Electric Shop';
+  rows.push([shopName]);
+  rows.push([`Day Report — ${date}`]);
+  rows.push([`Opened by: ${s?s.openedBy:'—'}`,`Closed by: ${s&&s.closedBy?s.closedBy:'Open'}`]);
+  rows.push([]);
+  rows.push(['CASH SUMMARY']);
+  rows.push(['Starting Float',`${cur} ${s?s.startingCash:0}`]);
+  rows.push(['Total Sales Revenue',`${cur} ${rev.toLocaleString()}`]);
+  rows.push(['Total Expenses',`${cur} ${exp.toLocaleString()}`]);
+  rows.push(['Expected in Drawer',`${cur} ${expected.toLocaleString()}`]);
+  if(actual!=null){
+    rows.push(['Actual Cash Counted',`${cur} ${actual}`]);
+    rows.push(['Difference',`${cur} ${diff>=0?'+':''}${diff!=null?diff.toFixed(0):'—'}`]);
+  }
+  rows.push([]);
+  rows.push(['SALES ('+sales.length+' transactions)']);
+  rows.push(['Time','Customer','Served By','Items','Discount','Total ('+cur+')']);
+  sales.forEach(sale=>{
+    rows.push([
+      sale.time||'—',
+      sale.customer,
+      sale.servedBy||'—',
+      sale.items.map(i=>i.name+' x'+i.qty).join('; '),
+      sale.discount?sale.discount.toFixed(0):'0',
+      sale.total.toFixed(0)
+    ]);
+  });
+  rows.push(['','','','','TOTAL',rev.toFixed(0)]);
+  if(expenses.length){
+    rows.push([]);
+    rows.push(['EXPENSES ('+expenses.length+')']);
+    rows.push(['Description','Amount ('+cur+')','Recorded By','Time']);
+    expenses.forEach(e=>{rows.push([e.desc,e.amount,e.by||'—',e.time||'—']);});
+    rows.push(['','TOTAL EXPENSES',exp.toFixed(0)]);
+  }
+  // Convert to CSV with BOM for Excel UTF-8
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`${date}-day-report.csv`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Downloaded! Open in Excel ✓');
 }
 
 function renderWeeklyAnalysis(cur){
@@ -5022,37 +6142,28 @@ function renderWeeklyAnalysis(cur){
 
 function switchDrawerDay(){
   if(!currentUser||currentUser.role!=='Manager'){toast('Only manager can switch days');return;}
-  // Close current open session if any, then show the day picker
-  const session=getOrPickSession();
-  if(session){
-    session.closed=true;
-    session.closedBy=currentUser?currentUser.name:'';
-    session.closedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    logActivity('inventory',`Day switched by ${session.closedBy} — session for ${session.date} closed`);
-    save();
-  }
-  renderDrawer(); // no open session → shows day picker
+  activeDrawerDate=null;
+  renderDrawer();
 }
 
 function closeDay(){
-  if(!currentUser||currentUser.role!=='Manager'){
-    toast('Only the manager can close the day');return;
-  }
-  const session=getOrPickSession();
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only the manager can close the day');return;}
+  const session=getActiveSession();
   if(!session){toast('No open session to close');return;}
   const cur='NKF';
   const sessionDate=session.date;
-  const rev=DB.sales.filter(s=>s.date===sessionDate&&(!session.openedAt||s.id>=session.openedAt)).reduce((a,s)=>a+s.total,0);
+  const rev=DB.sales.filter(s=>s.date===sessionDate).reduce((a,s)=>a+s.total,0);
   const exp=(session.expenses||[]).reduce((a,e)=>a+e.amount,0);
   const expected=session.startingCash+rev-exp;
   session.closed=true;
-  session.locked=true; // manager-locked: requires explicit reopen
+  session.locked=true;
   session.closedBy=currentUser.name;
   session.closedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  activeDrawerDate=null; // clear so manager picks next day
   logActivity('inventory',`Day closed & locked by ${session.closedBy} for ${sessionDate}. Revenue: ${cur} ${rev}. Expected: ${cur} ${expected}`);
   save();
   renderDrawer();
-  toast(`Day closed ✓  Expected in drawer: ${cur} ${expected.toLocaleString()}`);
+  toast(`Day ${sessionDate} closed ✓  Expected in drawer: ${cur} ${expected.toLocaleString()}`);
 }
 
 
@@ -5064,17 +6175,16 @@ function closeDay(){
 function reopenDay(date){
   if(!currentUser||currentUser.role!=='Manager'){toast('Only manager can reopen a day');return;}
   const s=DB.drawerSessions.find(x=>x.date===date&&x.closed);
-  if(!s){toast('Session not found');return;}
-  // Close any other open session first
-  DB.drawerSessions.filter(x=>!x.closed&&x.date!==date).forEach(x=>{x.closed=true;x.closedBy='System (auto)';x.closedAt='';});
+  if(!s){toast('Session not found or already open');return;}
   s.closed=false;
   s.locked=false;
   s.reopenedBy=currentUser.name;
   s.reopenedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  activeDrawerDate=date;
   logActivity('inventory',`Day ${date} reopened by ${currentUser.name}`);
   save();
   renderDrawer();
-  toast(`Day ${date} is now open — all sales and expenses restored`);
+  toast(`Day ${date} reopened ✓ — now active`);
 }
 
 // ─── RECYCLE BIN ───
@@ -5145,7 +6255,64 @@ function permDeleteFromBin(id){
   save(); renderRecycle(); toast('Permanently deleted');
 }
 
-// ─── INIT ───
+function updateStockAlertBadge(){
+  if(!DB.stockAlerts) DB.stockAlerts=[];
+  if(!currentUser||currentUser.role!=='Manager') return;
+  let alertPanel=document.getElementById('stock-adj-alerts');
+  if(!alertPanel){
+    alertPanel=document.createElement('div');
+    alertPanel.id='stock-adj-alerts';
+    const dash=document.getElementById('page-dashboard');
+    if(dash) dash.prepend(alertPanel);
+  }
+
+  const unseen=DB.stockAlerts.filter(a=>!a.seen);
+  const dueLoan=checkLoansDue();
+  const hasAnything=unseen.length||dueLoan.length;
+
+  alertPanel.innerHTML=hasAnything?`<div style="background:rgba(155,89,182,0.1);border:1px solid rgba(155,89,182,0.4);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-weight:600;font-size:13px;color:#9b59b6">⚠ ${unseen.length+dueLoan.length} item${unseen.length+dueLoan.length!==1?'s':''} need attention</span>
+      ${unseen.length?`<button onclick="markAllStockAlertsSeen()" style="font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid rgba(155,89,182,0.4);background:none;color:#9b59b6;cursor:pointer">✓ Dismiss all changes</button>`:''}
+    </div>
+
+    ${dueLoan.map(l=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(155,89,182,0.15);font-size:12px">
+      <span style="color:var(--red);font-weight:700;font-size:14px;flex-shrink:0">💳</span>
+      <div style="flex:1">
+        <strong>${l.borrower}</strong> — loan follow-up overdue
+        <div style="color:var(--text3);margin-top:2px">NKF ${l.amount.toLocaleString()} · Due: ${l.nextFollowup}</div>
+      </div>
+      <button onclick="nav('loans')" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;flex-shrink:0;white-space:nowrap">→ Go to Loans</button>
+    </div>`).join('')}
+
+    ${unseen.map(a=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(155,89,182,0.15);font-size:12px">
+      <span style="color:#9b59b6;font-weight:700;font-size:14px;flex-shrink:0">${a.type==='product_edit'?(a.action==='add_request'?'➕':'✏'):(a.action==='added'?'▲':'▼')}</span>
+      <div style="flex:1">
+        <strong>${a.product}</strong>
+        ${a.type==='product_edit'
+          ?`<span style="color:var(--text3)"> — ${a.action==='add_request'?'New product request':a.reason}</span>`
+          :`<span style="color:var(--text3)"> — ${a.action} ${a.qty} ${a.unit} (${a.oldStock}→${a.newStock})</span>`
+        }
+        <div style="color:var(--text3);margin-top:2px">by <em>${a.by}</em> · ${a.date} ${a.time}${a.type!=='product_edit'?' · '+a.reason:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button onclick="${a.action==='add_request'||a.type==='product_edit'?`nav('requests')`:`nav('inventory')`};markStockAlertSeen(${a.id})" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;white-space:nowrap">${a.action==='add_request'?'→ Review':'→ View'}</button>
+        <button onclick="markStockAlertSeen(${a.id})" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text3)">✕</button>
+      </div>
+    </div>`).join('')}
+  </div>`:'';
+}
+
+function markStockAlertSeen(id){
+  const a=(DB.stockAlerts||[]).find(x=>x.id===id);
+  if(a) a.seen=true;
+  save(); updateStockAlertBadge();
+}
+
+function markAllStockAlertsSeen(){
+  (DB.stockAlerts||[]).forEach(a=>a.seen=true);
+  save(); updateStockAlertBadge();
+}
 load();
 // Force NKF — override any old ETB/ERN saved in localStorage
 DB.settings.currency = 'NKF';
@@ -5156,6 +6323,7 @@ if(!DB.activityLog) DB.activityLog=[];
 if(!DB.requests) DB.requests=[];
 if(!DB.drawerSessions) DB.drawerSessions=[];
 if(!DB.recycleBin) DB.recycleBin=[];
+if(!DB.stockAlerts) DB.stockAlerts=[];
 
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
 if(!DB.settings.lang) DB.settings.lang='en';
