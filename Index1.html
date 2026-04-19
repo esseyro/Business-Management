@@ -527,6 +527,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="nav-item" onclick="nav('drawer')"><span class="icon">💵</span> Cash Drawer</div>
       <div class="nav-item" onclick="nav('returns')"><span class="icon">↩️</span> Returns</div>
       <div class="nav-item" onclick="nav('activity')"><span class="icon">📋</span> Activity Log</div>
+      <div class="nav-item" onclick="nav('recycle')"><span class="icon">🗑️</span> Recycle Bin</div>
       <div class="nav-item" onclick="nav('staff')"><span class="icon">👷</span> Staff</div>
       <div class="nav-item" onclick="nav('settings')"><span class="icon">⚙️</span> Settings</div>
     </div>
@@ -590,14 +591,18 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
             <div class="cart-items" id="cart-items"><div class="cart-empty">Add products to start a sale</div></div>
             <div class="cart-footer">
               <div class="cart-line"><span>Subtotal</span><span id="cart-subtotal">NKF 0.00</span></div>
-              <div class="cart-discount-row">
-                <select class="discount-input" id="discount-mode" onchange="updateCartTotals()" style="flex:0 0 auto;max-width:130px">
-                  <option value="bill">Discount on bill</option>
-                  <option value="per-item">Per item discount</option>
-                </select>
-                <input class="discount-input" type="number" placeholder="0.00" id="discount-amt" oninput="updateCartTotals()" min="0" step="0.01" style="flex:1">
-                <input class="discount-input" type="text" placeholder="Customer name" id="sale-customer" style="flex:2" list="customer-datalist" oninput="updateCustomerList()">
+              <!-- Customer name — own row -->
+              <div style="margin:8px 0">
+                <input class="discount-input" type="text" placeholder="Customer name (optional)" id="sale-customer" style="width:100%;box-sizing:border-box" list="customer-datalist" oninput="updateCustomerList()">
                 <datalist id="customer-datalist"></datalist>
+              </div>
+              <!-- Discount — own row -->
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <select class="discount-input" id="discount-mode" onchange="updateCartTotals()" style="flex:0 0 auto;max-width:140px">
+                  <option value="bill">Discount on bill</option>
+                  <option value="per-item">Per item</option>
+                </select>
+                <input class="discount-input" type="number" placeholder="Amount (NKF)" id="discount-amt" oninput="updateCartTotals()" min="0" step="0.01" style="flex:1">
               </div>
               <div class="cart-line" id="discount-row-line" style="display:none"><span id="discount-row-label">Discount</span><span id="cart-discount-amt">NKF 0.00</span></div>
               <div class="cart-total-line"><span>Total</span><span id="cart-total">NKF 0.00</span></div>
@@ -666,22 +671,70 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
       <!-- REPORTS -->
       <div id="page-reports" class="page">
-        <div class="stats-row" id="report-stats"></div>
-        <div class="report-grid">
-          <div class="panel">
-            <div class="panel-title"><span class="dot"></span> Daily Revenue (Last 7 Days)</div>
-            <div class="bar-chart" id="rev-chart"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title"><span class="dot" style="background:var(--blue)"></span> Top Selling Products</div>
-            <div id="top-products-list"></div>
+        <!-- Summary stat cards -->
+        <div class="stats-row" id="report-stats" style="margin-bottom:20px"></div>
+        <!-- Date range filter -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text3)">Range:</span>
+          <button class="action-btn" id="rng-7" onclick="setReportRange(7)">7 days</button>
+          <button class="action-btn" id="rng-30" onclick="setReportRange(30)">30 days</button>
+          <button class="action-btn" id="rng-90" onclick="setReportRange(90)">90 days</button>
+          <button class="action-btn" id="rng-0" onclick="setReportRange(0)">All time</button>
+        </div>
+        <!-- Revenue by day -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:12px"><span class="dot"></span> Revenue by Day</div>
+          <div class="bar-chart" id="rev-chart"></div>
+          <div id="rev-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+            <div id="rev-detail-content"></div>
           </div>
         </div>
+        <!-- Top Products -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--blue)"></span> Top Products <span style="font-size:11px;font-weight:400;color:var(--text3)">— tap any item for details</span></div>
+          <div id="top-products-list"></div>
+          <div id="products-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+            <div id="products-detail-content"></div>
+          </div>
+        </div>
+        <!-- Dead Stock -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--red)"></span> Dead Stock — Not Sold Recently</div>
+          <div id="deadstock-summary"></div>
+          <div id="deadstock-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+            <div id="deadstock-detail-content"></div>
+          </div>
+        </div>
+        <!-- Customers -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--green)"></span> Top Customers <span style="font-size:11px;font-weight:400;color:var(--text3)">— tap any name for details</span></div>
+          <div id="top-customers-list"></div>
+          <div id="customers-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+            <div id="customers-detail-content"></div>
+          </div>
+        </div>
+        <!-- Profit breakdown -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--accent)"></span> Profit Breakdown by Category</div>
+          <div id="profit-summary"></div>
+          <div id="profit-detail" style="margin-top:10px">
+            <div id="profit-detail-content"></div>
+          </div>
+        </div>
+        <!-- Staff sales -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--purple)"></span> Staff Performance</div>
+          <div id="staff-perf-list"></div>
+          <div id="staff-detail" style="margin-top:10px">
+            <div id="staff-detail-content"></div>
+          </div>
+        </div>
+        <!-- Full sales history -->
         <div class="panel">
-          <div class="panel-title"><span class="dot" style="background:var(--green)"></span> Sales History</div>
-          <div class="inv-table-wrap" style="margin-top:10px">
+          <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--green)"></span> Sales History</div>
+          <div class="inv-table-wrap">
             <table class="inv-table">
-              <thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th></tr></thead>
+              <thead><tr><th>Date</th><th>Customer</th><th>Served By</th><th>Items</th><th>Discount</th><th>Total</th></tr></thead>
               <tbody id="sales-history-tbody"></tbody>
             </table>
           </div>
@@ -760,7 +813,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
       <!-- CASH DRAWER / END OF DAY -->
       <div id="page-drawer" class="page">
-        <div id="drawer-late-night-bar"></div>
         <div class="stats-row" id="drawer-stats" style="margin-bottom:20px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <!-- Left: Day session -->
@@ -782,7 +834,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <div class="panel">
             <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--green)"></span> End of Day Summary</div>
             <div id="drawer-eod-summary"></div>
-            <button class="pay-btn" onclick="closeDay()" style="margin-top:16px">✓ Close Day</button>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn-cancel" onclick="switchDrawerDay()" style="flex:1">⇄ Switch Day</button>
+              <button class="pay-btn" id="close-day-btn" onclick="closeDay()" style="flex:2">✓ Close Day</button>
+            </div>
           </div>
         </div>
         <!-- History with drill-down -->
@@ -830,9 +885,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
               <div style="font-size:12px;color:var(--text3)">Suggest a new selling or cost price for a product</div>
             </div>
             <div class="panel" style="cursor:pointer" onclick="showRequestModal('purchase')">
-              <div style="font-size:28px;margin-bottom:8px">🛒</div>
-              <div class="panel-title" style="margin-bottom:4px"><span class="dot" style="background:var(--blue)"></span> Request to Buy Product</div>
-              <div style="font-size:12px;color:var(--text3)">Request to personally buy an item from the shop (manager approval needed)</div>
+              <div style="font-size:28px;margin-bottom:8px">🛍️</div>
+              <div class="panel-title" style="margin-bottom:4px"><span class="dot" style="background:var(--blue)"></span> Request External Purchase</div>
+              <div style="font-size:12px;color:var(--text3)">Request to buy something from an outside supplier using shop funds (manager approval needed)</div>
             </div>
             <div class="panel" style="cursor:pointer" onclick="showRequestModal('delete')">
               <div style="font-size:28px;margin-bottom:8px">🗑️</div>
@@ -891,6 +946,19 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
               <th>Date</th><th>Customer</th><th>Item Returned</th><th>Qty</th><th>Refund Amount</th><th>Reason</th><th>Status</th><th>Handled By</th>
             </tr></thead>
             <tbody id="ret-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RECYCLE BIN -->
+      <div id="page-recycle" class="page">
+        <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2)">
+          🗑️ Items deleted by any staff member are kept here. Only managers can restore or permanently delete them.
+        </div>
+        <div class="inv-table-wrap">
+          <table class="inv-table">
+            <thead><tr><th>Date</th><th>Type</th><th>Name / Details</th><th>Deleted By</th><th>Reason</th><th>Actions</th></tr></thead>
+            <tbody id="recycle-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1393,14 +1461,15 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           ⚠ This will request the manager to permanently delete this product from the system.
         </div>
       </div>
-      <!-- Employee purchase fields -->
+      <!-- Employee external purchase fields -->
       <div id="req-purchase-fields" style="display:none">
+        <div class="form-row"><div class="form-label">What to buy *</div><input class="form-input" id="req-buy-item" placeholder="Item name / description"></div>
         <div class="form-row-2">
-          <div class="form-row"><div class="form-label">Quantity *</div><input class="form-input" id="req-buy-qty" type="number" placeholder="1" min="1" value="1"></div>
-          <div class="form-row"><div class="form-label">Pay price (NKF)</div><input class="form-input" id="req-buy-price" type="number" placeholder="Market price or discount..."></div>
+          <div class="form-row"><div class="form-label">Quantity</div><input class="form-input" id="req-buy-qty" type="number" placeholder="1" min="1" value="1"></div>
+          <div class="form-row"><div class="form-label">Estimated cost (NKF)</div><input class="form-input" id="req-buy-price" type="number" placeholder="0"></div>
         </div>
         <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.2);border-radius:var(--radius2);padding:8px 12px;font-size:12px;color:var(--text2)">
-          🛒 Manager will decide final price and approve. Item will be deducted from stock on approval.
+          🛍️ This is for buying from an <strong>external supplier</strong> using shop funds. If approved, the amount is logged as an expense from the cash drawer.
         </div>
       </div>
       <div class="form-row"><div class="form-label">Reason / Notes *</div><textarea class="form-textarea" id="req-reason" placeholder="Explain why you're making this request..."></textarea></div>
@@ -1408,6 +1477,35 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-request')">Cancel</button>
       <button class="btn-save" onclick="submitRequest()">📬 Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE STOCK MODAL -->
+<div class="modal-overlay" id="modal-move-stock">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">⇄ Move Stock</div>
+      <button class="modal-close" onclick="closeModal('modal-move-stock')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="move-product-id">
+      <input type="hidden" id="move-from-zone">
+      <div id="move-product-info" style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px"></div>
+      <div class="form-row">
+        <div class="form-label">Quantity to move</div>
+        <input class="form-input" id="move-qty" type="number" placeholder="0" min="1">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Move to</div>
+        <select class="form-select" id="move-to-zone">
+          <option value="">— Select destination —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-move-stock')">Cancel</button>
+      <button class="btn-save" onclick="confirmMove()">⇄ Confirm Move</button>
     </div>
   </div>
 </div>
@@ -1464,6 +1562,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="form-row">
           <div class="form-label">Notes (optional)</div>
           <input class="form-input" id="asgn-notes" placeholder="e.g. bottom shelf, near door...">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Quantity at this location</div>
+        <input class="form-input" id="asgn-qty" type="number" placeholder="0 (leave empty to use total stock)" min="0">
+      </div>
         </div>
       </div>
       <div id="asgn-current-loc" style="font-size:12px;color:var(--text3);padding:8px 10px;background:var(--bg3);border-radius:var(--radius2);margin-top:4px"></div>
@@ -1495,6 +1598,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="form-row">
         <div class="form-label" id="adj-qty-label">Quantity to Add</div>
         <input class="form-input" id="adj-qty" type="number" placeholder="0" min="1" step="1" style="font-size:20px;font-family:var(--font-head);text-align:center;padding:12px" oninput="updateAdjPreview()">
+      </div>
+      <div id="adj-location-row" class="form-row" style="display:none">
+        <div class="form-label">Remove from which location?</div>
+        <select class="form-select" id="adj-location" onchange="updateAdjPreview()"></select>
       </div>
       <div id="adj-preview" style="text-align:center;padding:10px;font-size:13px;color:var(--text3);min-height:24px"></div>
       <div class="form-row" style="margin-top:4px">
@@ -1543,7 +1650,8 @@ let DB = {
   returns: [],
   activityLog: [],
   requests: [],
-  drawerSessions: []
+  drawerSessions: [],
+  recycleBin: []
 };
 let cart = [];
 let currentPage = 'dashboard';
@@ -1762,11 +1870,10 @@ function renderSidebarLang(){
 // "Bulk" categories are ones sold by meter or in large quantities
 const BULK_CATS = ['Cables & Wiring','Conduit & Fittings'];
 function isLowStock(p){
-  const isBulk = BULK_CATS.includes(p.cat) || (p.unit && ['meters','meter','m','kg'].includes(p.unit.toLowerCase()));
-  const threshold = isBulk
-    ? (DB.settings.lowStockBig||100)
-    : (DB.settings.lowStock||10);
-  return p.stock <= threshold;
+  const isBulk=BULK_CATS.includes(p.cat)||(p.unit&&['meters','meter','m','kg'].includes(p.unit.toLowerCase()));
+  const threshold=isBulk?(DB.settings.lowStockBig||100):(DB.settings.lowStock||10);
+  const stock=getTotalStock(p);
+  return stock>0&&stock<=threshold;
 }
 
 // ─── SAVE SETTINGS ───
@@ -1791,7 +1898,7 @@ function nav(page){
   navItems.forEach(n=>{ if(n.textContent.toLowerCase().includes(pageNav[page]||page)) n.classList.add('active'); });
   document.getElementById('page-'+page).classList.add('active');
   currentPage = page;
-  const titles = {dashboard:'Dashboard',pos:'Point of Sale',inventory:'Products & Inventory',storage:'Storage Room View',reports:'Reports & Analytics',purchases:'Purchases & Stock Bought',loans:'Loans & Credit',customers:'Customers',requests:'Requests',drawer:'Cash Drawer & End of Day',returns:'Returns & Refunds',activity:'Activity Log',staff:'Staff',settings:'Settings'};
+  const titles = {dashboard:'Dashboard',pos:'Point of Sale',inventory:'Products & Inventory',storage:'Storage Room View',reports:'Reports & Analytics',purchases:'Purchases & Stock Bought',loans:'Loans & Credit',customers:'Customers',requests:'Requests',drawer:'Cash Drawer & End of Day',returns:'Returns & Refunds',activity:'Activity Log',recycle:'Recycle Bin',staff:'Staff',settings:'Settings'};
   document.getElementById('page-title').textContent = titles[page]||page;
   const actions = {dashboard:'+ New Product',pos:'Clear Cart',inventory:'+ Add Product',storage:'',reports:'Export Report',purchases:'+ Record Purchase',loans:'+ New Loan',customers:'+ Add Customer',requests:'',drawer:'',returns:'+ Record Return',activity:'',staff:'+ Add Staff',settings:''};
   document.getElementById('topbar-action').textContent = actions[page]||'';
@@ -1818,6 +1925,7 @@ function renderPage(page){
   else if(page==='requests') renderRequests();
   else if(page==='drawer') renderDrawer();
   else if(page==='activity') renderActivity();
+  else if(page==='recycle') renderRecycle();
   else if(page==='staff') renderStaff();
 }
 
@@ -1897,18 +2005,6 @@ function getCategories(){ return [...new Set(DB.products.map(p=>p.cat))].sort();
 
 function renderPOS(){
   // Late night banner
-  let lnBanner=document.getElementById('late-night-banner');
-  if(DB.settings.lateNightUntil && DB.settings.lateNightUntil===todayMinus(-1)){
-    if(!lnBanner){
-      lnBanner=document.createElement('div');
-      lnBanner.id='late-night-banner';
-      lnBanner.style.cssText='background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.4);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--text)';
-      document.getElementById('page-pos').prepend(lnBanner);
-    }
-    lnBanner.innerHTML=`🌙 <strong>Late Night Mode</strong> — Sales are being recorded on <strong>${DB.settings.lateNightUntil}</strong> (tomorrow's account). <button onclick="endLateNight()" style="background:none;border:1px solid rgba(155,89,182,0.5);color:var(--text2);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;margin-left:8px">Turn off</button>`;
-  } else if(lnBanner){
-    lnBanner.remove();
-  }
   const cats = getCategories();
   document.getElementById('pos-cats').innerHTML=`<div class="cat-tab active" onclick="setCatFilter('')">All</div>`+cats.map(c=>`<div class="cat-tab" onclick="setCatFilter('${c}')">${c}</div>`).join('');
   updateCustomerList();
@@ -1936,7 +2032,7 @@ function filterPOS(){
   const filtered=DB.products.filter(p=>{
     const matchCat=!posFilter.cat||p.cat===posFilter.cat;
     const matchQ=!posFilter.q||p.name.toLowerCase().includes(posFilter.q.toLowerCase());
-    return matchCat&&matchQ&&p.stock>0;
+    return matchCat&&matchQ&&getTotalStock(p)>0;
   });
   const emojis={'Bulbs & Lighting':'💡','Chandeliers & Decorative':'🔆','Cables & Wiring':'🔌','Switches & Sockets':'🔘','Solar Equipment':'☀️','Inverters & Batteries':'🔋','Circuit Breakers':'⚡','Tools':'🔧','Conduit & Fittings':'🔩','Meters & Testers':'📏','Other':'📦'};
   document.getElementById('pos-products').innerHTML=filtered.map(p=>`
@@ -1944,16 +2040,16 @@ function filterPOS(){
       <div class="product-emoji">${emojis[p.cat]||'📦'}</div>
       <div class="product-name-pos">${p.name}</div>
       <div class="product-price-pos">${DB.settings.currency} ${p.price}</div>
-      <div class="product-stock-pos">${p.stock} ${p.unit} in stock${p.unit==='boxes'&&p.pcsPerBox?' ('+p.stock*p.pcsPerBox+' pcs)':''}</div>
+      <div class="product-stock-pos">${getTotalStock(p)} ${p.unit} in stock${p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':''}</div>
     </div>`).join('')||'<div style="color:var(--text3);padding:20px;text-align:center;font-size:13px">No products found</div>';
 }
 
 function addToCart(id){
   const p=DB.products.find(x=>x.id===id);
-  if(!p||p.stock<=0){toast('Out of stock!');return;}
+  if(!p||getTotalStock(p)<=0){toast('Out of stock!');return;}
   const ex=cart.find(c=>c.id===id);
   if(ex){
-    if(ex.qty>=p.stock){toast('Max stock reached');return;}
+    if(ex.qty>=getTotalStock(p)){toast('Max stock reached');return;}
     ex.qty++;
   } else {
     cart.push({id,name:p.name,price:p.price,qty:1,unit:p.unit});
@@ -1986,7 +2082,7 @@ function changeQty(i,d){
   const p=DB.products.find(x=>x.id===cart[i].id);
   cart[i].qty+=d;
   if(cart[i].qty<=0){cart.splice(i,1);}
-  else if(p&&cart[i].qty>p.stock){cart[i].qty=p.stock;toast('Max stock reached');}
+  else if(p&&cart[i].qty>getTotalStock(p)){cart[i].qty=getTotalStock(p);toast('Max stock reached');}
   renderCart();
 }
 function removeFromCart(i){cart.splice(i,1);renderCart();}
@@ -2037,13 +2133,26 @@ function completeSale(){
   }
   const total=Math.max(0,sub-discAmt);
   const customer=document.getElementById('sale-customer').value||'Walk-in';
-  // Late night mode: sales after close go on tomorrow's account
-  const saleDate = (DB.settings.lateNightUntil && DB.settings.lateNightUntil===todayMinus(-1))
-    ? DB.settings.lateNightUntil
-    : todayMinus(0);
-  const sale={id:Date.now(),date:saleDate,customer,items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),subtotal:sub,discount:discAmt,discNote,total};
+  const sale={id:Date.now(),date:todayMinus(0),customer,servedBy:currentUser?currentUser.name:'',items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),subtotal:sub,discount:discAmt,discNote,total};
   DB.sales.push(sale);
-  cart.forEach(c=>{const p=DB.products.find(x=>x.id===c.id);if(p)p.stock-=c.qty;});
+  cart.forEach(c=>{
+    const p=DB.products.find(x=>x.id===c.id);
+    if(p){
+      p.stock=Math.max(0,(getTotalStock(p)||p.stock||0)-c.qty);
+      // Deduct from Sales Room first, then other locations
+      if(p.locations&&p.locations.length){
+        let rem=c.qty;
+        const salesRoomLoc=p.locations.find(l=>l.zone.includes('Sales Room'));
+        if(salesRoomLoc){ const take=Math.min(salesRoomLoc.qty||0,rem); salesRoomLoc.qty-=take; rem-=take; }
+        for(const loc of p.locations){
+          if(rem<=0) break;
+          if(loc.zone.includes('Sales Room')) continue;
+          const take=Math.min(loc.qty||0,rem); loc.qty-=take; rem-=take;
+        }
+        p.locations=p.locations.filter(l=>l.qty>0);
+      }
+    }
+  });
   const cust=DB.customers.find(c=>c.name===customer);
   if(cust){cust.totalSpent=(cust.totalSpent||0)+total;cust.visits=(cust.visits||0)+1;}
   logSaleActivity(sale);
@@ -2075,44 +2184,47 @@ function printReceipt(){window.print();}
 
 // ─── INVENTORY ───
 function renderInventory(){
-  const cats=getCategories();
   const sel=document.getElementById('inv-filter-cat');
+  if(!sel) return; // page not active yet
+  const cats=getCategories();
   sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-  // Reminder banner for products with no price
   const noPriceProd=DB.products.filter(p=>!p.price||p.price===0);
   let banner=document.getElementById('no-price-banner');
   if(!banner){
     banner=document.createElement('div');
     banner.id='no-price-banner';
-    document.getElementById('page-inventory').prepend(banner);
+    const pg=document.getElementById('page-inventory');
+    if(pg) pg.prepend(banner);
   }
-  if(noPriceProd.length){
-    banner.innerHTML=`<div style="background:rgba(231,176,0,0.12);border:1px solid rgba(231,176,0,0.35);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--text)">
-      ⚠ <strong>${noPriceProd.length} product${noPriceProd.length>1?'s':''}</strong> still need a selling price set:
-      <span style="color:var(--text3)">${noPriceProd.map(p=>p.name).join(', ')}</span>
-    </div>`;
-  } else {
-    banner.innerHTML='';
-  }
+  banner.innerHTML=noPriceProd.length?`<div style="background:rgba(231,176,0,0.12);border:1px solid rgba(231,176,0,0.35);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--text)">
+    ⚠ <strong>${noPriceProd.length} product${noPriceProd.length>1?'s':''}</strong> still need a selling price:
+    <span style="color:var(--text3)">${noPriceProd.map(p=>p.name).join(', ')}</span>
+  </div>`:'';
   filterInventory();
 }
 function filterInventory(){
+  const tbody=document.getElementById('inv-tbody');
+  if(!tbody) return;
   const q=(document.getElementById('inv-search')||{}).value||'';
   const cat=(document.getElementById('inv-filter-cat')||{}).value||'';
   const filtered=DB.products.filter(p=>{
-    const mq=!q||p.name.toLowerCase().includes(q.toLowerCase())||p.sku.toLowerCase().includes(q.toLowerCase());
+    const mq=!q||p.name.toLowerCase().includes(q.toLowerCase())||(p.sku||'').toLowerCase().includes(q.toLowerCase());
     const mc=!cat||p.cat===cat;
     return mq&&mc;
   });
   const cur=DB.settings.currency;
-  document.getElementById('inv-tbody').innerHTML=filtered.map(p=>`
+  tbody.innerHTML=filtered.map(p=>`
     <tr>
-      <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.desc?p.desc.substring(0,50)+'...':''} ${p.sku?'· '+p.sku:''}</div></td>
-      <td><span class="inv-table .cat-pill" style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--text2)">${p.cat}</span></td>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.desc?p.desc.substring(0,50):''}${p.sku?' · '+p.sku:''}</div></td>
+      <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--text2)">${p.cat}</span></td>
       <td>${p.price?cur+' '+p.price:'<span class="badge orange" style="cursor:pointer" onclick="editProduct('+p.id+')">⚠ No price</span>'}</td>
       <td style="color:var(--text3)">${p.cost?cur+' '+p.cost:'-'}</td>
-      <td><span class="badge ${p.stock===0?'red':isLowStock(p)?'orange':'green'}">${p.stock} ${p.unit}</span>${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${p.stock*p.pcsPerBox} pcs total</span>`:''}</td>
-      <td style="font-size:12px;color:var(--text3)">${p.zone.split('–')[0].trim()}</td>
+      <td>
+        <span class="badge ${getTotalStock(p)===0?'red':isLowStock(p)?'orange':'green'}">${getTotalStock(p)} ${p.unit}</span>
+        ${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${getTotalStock(p)*p.pcsPerBox} pcs total</span>`:''}
+        ${getLocations(p).filter(l=>l.qty>0).map(l=>`<div style="font-size:10px;color:var(--text3);white-space:nowrap">${l.zone.split('›').pop().trim()}: ${l.qty}</div>`).join('')}
+      </td>
+      <td style="font-size:12px;color:var(--text3)">${(p.zone||'').split('–')[0].trim()||'—'}</td>
       <td>
         <button class="action-btn" onclick="editProduct(${p.id})">✏ Edit</button>
         <button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button>
@@ -2189,18 +2301,20 @@ function saveProduct(){
   renderInventory();
 }
 function deleteProduct(id){
-  if(!confirm('Delete this product?'))return;
   const p=DB.products.find(x=>x.id===id);
-  if(p) logActivity('inventory',`Product deleted: ${p.name}`);
+  if(!p) return;
+  sendToRecycleBin('product', {...p}, currentUser?currentUser.name:'', 'Deleted from inventory');
+  logActivity('inventory',`Product deleted: ${p.name}`);
   DB.products=DB.products.filter(p=>p.id!==id);
-  save();renderInventory();toast('Deleted');
+  save(); filterInventory(); toast(`"${p.name}" moved to Recycle Bin`);
 }
 let adjMode='add';
 function adjustStock(id){
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   document.getElementById('adj-product-id').value=id;
   document.getElementById('adj-product-name').textContent=p.name;
-  document.getElementById('adj-product-stock').textContent=`Current stock: ${p.stock} ${p.unit}`;
+  const total=getTotalStock(p);
+  document.getElementById('adj-product-stock').textContent=`Total stock: ${total} ${p.unit}`;
   document.getElementById('adj-qty').value='';
   document.getElementById('adj-reason').value='';
   document.getElementById('adj-preview').textContent='';
@@ -2214,16 +2328,31 @@ function setAdjMode(mode){
   const remBtn=document.getElementById('adj-btn-remove');
   const lbl=document.getElementById('adj-qty-label');
   const saveBtn=document.getElementById('adj-save-btn');
+  const locRow=document.getElementById('adj-location-row');
   if(mode==='add'){
     addBtn.style.cssText='padding:12px;border-radius:var(--radius);border:2px solid var(--green);background:rgba(39,174,96,0.15);color:var(--green);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     remBtn.style.cssText='padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     lbl.textContent='Quantity to Add';
     saveBtn.textContent='+ Add to Stock';saveBtn.style.background='var(--green)';saveBtn.style.border='none';saveBtn.style.color='#fff';
+    if(locRow) locRow.style.display='none';
   } else {
     remBtn.style.cssText='padding:12px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     addBtn.style.cssText='padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     lbl.textContent='Quantity to Remove';
     saveBtn.textContent='− Remove from Stock';saveBtn.style.background='var(--red)';saveBtn.style.border='none';saveBtn.style.color='#fff';
+    // Populate location dropdown
+    if(locRow){
+      locRow.style.display='block';
+      const id=parseInt(document.getElementById('adj-product-id').value);
+      const p=DB.products.find(x=>x.id===id);
+      const locSel=document.getElementById('adj-location');
+      const locs=p?getLocations(p).filter(l=>l.qty>0):[];
+      if(locs.length){
+        locSel.innerHTML=locs.map(l=>`<option value="${l.zone}">${l.zone.split('›').pop().trim()} — ${l.qty} ${p.unit}</option>`).join('');
+      } else {
+        locSel.innerHTML='<option value="">All stock (no location set)</option>';
+      }
+    }
   }
   updateAdjPreview();
 }
@@ -2231,25 +2360,67 @@ function updateAdjPreview(){
   const id=parseInt(document.getElementById('adj-product-id').value);
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
+  const total=getTotalStock(p);
   if(!qty){document.getElementById('adj-preview').textContent='';return;}
-  const newStock=adjMode==='add'?p.stock+qty:Math.max(0,p.stock-qty);
+  const newStock=adjMode==='add'?total+qty:Math.max(0,total-qty);
   const col=adjMode==='add'?'var(--green)':'var(--red)';
+  // Show per-location context for remove
+  let locNote='';
+  if(adjMode==='remove'){
+    const locSel=document.getElementById('adj-location');
+    if(locSel&&locSel.value){
+      const loc=getLocations(p).find(l=>l.zone===locSel.value);
+      if(loc) locNote=`<div style="font-size:11px;color:var(--text3);margin-top:4px">${loc.zone.split('›').pop().trim()}: ${loc.qty} → ${Math.max(0,loc.qty-qty)}</div>`;
+    }
+  }
   document.getElementById('adj-preview').innerHTML=
-    `<span style="color:var(--text3)">${p.stock} ${p.unit}</span> <span style="color:${col}">${adjMode==='add'?'+ '+qty:'− '+qty}</span> → <strong style="color:var(--text)">${newStock} ${p.unit}</strong>`;
+    `<span style="color:var(--text3)">${total} ${p.unit}</span> <span style="color:${col}">${adjMode==='add'?'+ '+qty:'− '+qty}</span> → <strong style="color:var(--text)">${newStock} ${p.unit}</strong>${locNote}`;
 }
 function saveStockAdjust(){
   const id=parseInt(document.getElementById('adj-product-id').value);
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
   if(!qty||qty<=0){toast('Enter a valid quantity');return;}
   const p=DB.products.find(x=>x.id===id);if(!p)return;
-  if(adjMode==='remove'&&qty>p.stock){toast(`Cannot remove more than current stock (${p.stock})`);return;}
-  const old=p.stock;
+  const totalStock=getTotalStock(p);
+  if(adjMode==='remove'&&qty>totalStock){toast(`Cannot remove more than current stock (${totalStock})`);return;}
+  const old=totalStock;
   const reason=document.getElementById('adj-reason').value;
-  p.stock=adjMode==='add'?p.stock+qty:p.stock-qty;
+  p.stock=adjMode==='add'?totalStock+qty:totalStock-qty;
+  // Sync locations
+  if(!p.locations) p.locations=getLocations(p);
+  if(adjMode==='add'){
+    // Add to Unlocated so it can be assigned
+    const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+    if(unloc){ unloc.qty+=qty; } else { p.locations.push({zone:'⚠ Open / Unlocated',qty}); if(!p.openSince) p.openSince=Date.now(); }
+  } else {
+    // Deduct from the location the user chose
+    const locSel=document.getElementById('adj-location');
+    const chosenZone=locSel?locSel.value:'';
+    if(chosenZone){
+      const loc=p.locations.find(l=>l.zone===chosenZone);
+      if(loc){
+        if(qty>loc.qty){toast(`Only ${loc.qty} ${p.unit} at that location`);return;}
+        loc.qty-=qty;
+      }
+    } else {
+      // No location set — just deduct from total
+      let rem=qty;
+      for(const loc of p.locations){
+        if(rem<=0) break;
+        const take=Math.min(loc.qty||0,rem);
+        loc.qty-=take; rem-=take;
+      }
+    }
+    p.locations=p.locations.filter(l=>l.qty>0);
+  }
   logActivity('inventory',`Stock ${adjMode==='add'?'added':'removed'}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} → ${p.stock} ${p.unit}${reason?' | '+reason:''}`);
   save();
   closeModal('modal-stock-adjust');
-  renderInventory();
+  filterInventory();
+  toast(`${p.name}: ${old} → ${p.stock} ${p.unit}`);
+  save();
+  closeModal('modal-stock-adjust');
+  filterInventory(); // instant update without rebuilding whole page
   toast(`${p.name}: ${old} → ${p.stock} ${p.unit}`);
 }
 
@@ -2647,48 +2818,93 @@ function getSalesRoomWallHit(mx, my, W, H){
 }
 
 function renderWallItems(unitProds){
-  const panel = document.getElementById('wall-items-panel');
+  const panel=document.getElementById('wall-items-panel');
   if(!panel) return;
 
-  const filtered = selectedWall
-    ? unitProds.filter(p=>{
-        const zones = getProductZones(p);
-        return zones.some(z=>{ const parsed=parseZoneStr(z); return (parsed.wall||'No Wall')===selectedWall; });
+  const filtered=selectedWall
+    ?unitProds.filter(p=>{
+        const zones=getProductZones(p);
+        return zones.some(z=>{const parsed=parseZoneStr(z);return (parsed.wall||'No Wall')===selectedWall;});
       })
-    : unitProds;
+    :unitProds;
 
   if(!filtered.length){
-    panel.innerHTML = selectedWall
-      ? `<div style="color:var(--text3);font-size:13px;padding:12px 0">No items on ${selectedWall} Wall — <button onclick="openAssignModalForWall()" class="action-btn" style="font-size:11px">+ Assign item here</button></div>`
-      : `<div style="color:var(--text3);font-size:13px;padding:12px 0">No items in this unit yet. <button onclick="openAssignModal()" class="action-btn" style="font-size:11px">+ Assign item</button></div>`;
+    panel.innerHTML=selectedWall
+      ?`<div style="color:var(--text3);font-size:13px;padding:12px 0">No items on ${selectedWall} Wall — <button onclick="openAssignModalForWall()" class="action-btn" style="font-size:11px">+ Assign item here</button></div>`
+      :`<div style="color:var(--text3);font-size:13px;padding:12px 0">No items in this unit yet. <button onclick="openAssignModal()" class="action-btn" style="font-size:11px">+ Assign item</button></div>`;
     return;
   }
 
-  const title = selectedWall ? `${selectedWall} Wall` : 'All items in this unit';
-  panel.innerHTML = `
+  const title=selectedWall?`${selectedWall} Wall`:'All items in this unit';
+  panel.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:13px;font-weight:500;color:var(--text)">${title} <span style="color:var(--text3);font-size:11px">(${filtered.length} item type${filtered.length!==1?'s':''})</span></div>
+      <div style="font-size:13px;font-weight:500;color:var(--text)">${title} <span style="color:var(--text3);font-size:11px">(${filtered.length} type${filtered.length!==1?'s':''})</span></div>
       <button onclick="openAssignModalForWall()" class="action-btn" style="font-size:11px">+ Add item</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px">
       ${filtered.map(p=>{
-        const allZones = getProductZones(p);
-        const currentZone = allZones.find(z=>z.includes(selectedUnitId||''))||allZones[0]||'';
-        const parsed = parseZoneStr(currentZone);
-        const lowStock = isLowStock(p);
-        const otherZones = allZones.filter(z=>z!==currentZone);
-        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2);border:1px solid ${lowStock?'rgba(231,76,60,0.3)':'var(--border)'}">
+        const locs=getLocations(p);
+        const currentLoc=locs.find(l=>l.zone.includes(selectedUnitId||''))||locs[0]||{zone:'',qty:0};
+        const parsed=parseZoneStr(currentLoc.zone);
+        const lowStock=isLowStock(p);
+        const otherLocs=locs.filter(l=>l.zone!==currentLoc.zone&&l.qty>0);
+        const totalStock=getTotalStock(p);
+        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2);border:1px solid ${p.stock===0||totalStock===0?'rgba(231,76,60,0.3)':lowStock?'rgba(231,76,60,0.2)':'var(--border)'}">
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:500;color:var(--text)">${p.name}</div>
-            <div style="font-size:11px;color:var(--text3)">${parsed.wall?parsed.wall+' Wall':'No wall assigned'}${parsed.notes?' · '+parsed.notes:''}</div>
-            ${otherZones.length?`<div style="font-size:10px;color:var(--blue);margin-top:2px">📍 Also at: ${otherZones.map(z=>z.split('›').slice(-1)[0].trim()).join(', ')}</div>`:''}
+            <div style="font-size:11px;color:var(--text3)">${parsed.wall?parsed.wall+' Wall':''}${parsed.notes?' · '+parsed.notes:''}</div>
+            ${otherLocs.length?`<div style="font-size:10px;color:var(--blue);margin-top:2px">📍 Also: ${otherLocs.map(l=>l.zone.split('›').pop().trim()+' ('+l.qty+')').join(', ')}</div>`:''}
           </div>
-          <span class="badge ${p.stock===0?'red':lowStock?'orange':'green'}" style="white-space:nowrap">${p.stock} ${p.unit}</span>
-          <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:11px;padding:3px 8px">✏ Edit</button>
-          ${allZones.length>1?`<button onclick="removeProductZone(${p.id},'${currentZone.replace(/'/g,'\\\'')}')" class="action-btn del" style="font-size:11px;padding:3px 8px" title="Remove from this location">✕</button>`:''}
+          <div style="text-align:right;flex-shrink:0">
+            <span class="badge ${totalStock===0?'red':lowStock?'orange':'green'}" style="white-space:nowrap;display:block;margin-bottom:3px">${currentLoc.qty||0} ${p.unit} here</span>
+            <span style="font-size:10px;color:var(--text3)">Total: ${totalStock}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <button onclick="openMoveModal(${p.id},'${currentLoc.zone.replace(/'/g,"\\'")}')" class="action-btn" style="font-size:11px;padding:3px 8px">⇄ Move</button>
+            <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:11px;padding:3px 8px">✏ Edit</button>
+          </div>
         </div>`;
       }).join('')}
     </div>`;
+}
+
+// ─── MOVE STOCK MODAL ───
+function openMoveModal(productId, fromZone){
+  const p=DB.products.find(x=>x.id===productId);if(!p)return;
+  const locs=getLocations(p);
+  const fromLoc=locs.find(l=>l.zone===fromZone)||{zone:fromZone,qty:0};
+  document.getElementById('move-product-id').value=productId;
+  document.getElementById('move-from-zone').value=fromZone;
+  document.getElementById('move-qty').value='';
+  document.getElementById('move-product-info').innerHTML=`
+    <strong>${p.name}</strong><br>
+    <span style="color:var(--text3)">From: ${fromZone.split('›').pop().trim()}</span>
+    <span style="float:right;color:var(--accent);font-weight:600">${fromLoc.qty} ${p.unit} available</span>`;
+  // Build destination options — all zones except current
+  const locOpts=Object.values(LOCATIONS).flatMap(loc=>loc.units.map(u=>{
+    const zStr=`${loc.short} › ${u.label}`;
+    return zStr===fromZone?null:`<option value="${zStr}">${zStr}</option>`;
+  })).filter(Boolean).join('');
+  document.getElementById('move-to-zone').innerHTML=
+    `<option value="">— Select destination —</option>
+     <option value="⚠ Open / Unlocated">Open / Unlocated</option>
+     ${locOpts}`;
+  openModal('modal-move-stock');
+}
+
+function confirmMove(){
+  const id=parseInt(document.getElementById('move-product-id').value);
+  const fromZone=document.getElementById('move-from-zone').value;
+  const toZone=document.getElementById('move-to-zone').value;
+  const qty=parseInt(document.getElementById('move-qty').value)||0;
+  if(!toZone){toast('Select a destination');return;}
+  if(!qty||qty<=0){toast('Enter quantity to move');return;}
+  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const ok=moveStock(id,fromZone,toZone,qty);
+  if(!ok){toast(`Not enough stock at this location`);return;}
+  closeModal('modal-move-stock');
+  renderStorage();
+  toast(`Moved ${qty} ${p.unit} → ${toZone.split('›').pop().trim()}`);
 }
 
 // ─── ASSIGN LOCATION MODAL ───
@@ -2758,7 +2974,9 @@ function saveAssignLocation(){
   const unitId=document.getElementById('asgn-unit').value;
   const wall=document.getElementById('asgn-wall').value;
   const notes=document.getElementById('asgn-notes').value.trim();
-  const mode=document.getElementById('asgn-mode')?document.getElementById('asgn-mode').value:'replace';
+  const mode=document.getElementById('asgn-mode')?document.getElementById('asgn-mode').value:'add';
+  const qtyEl=document.getElementById('asgn-qty');
+  const qty=qtyEl?parseInt(qtyEl.value)||0:0;
   if(!name){toast('Select a product');return;}
   if(!locId){toast('Select a location');return;}
   const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
@@ -2771,19 +2989,20 @@ function saveAssignLocation(){
     newZone=buildZoneStr(locId,unitId,wall,notes);
     delete p.openSince;
   }
-  if(mode==='add'){
-    addProductZone(p.id, newZone);
-    toast(`${p.name} also stored at: ${newZone}`);
+  if(!p.locations) p.locations=getLocations(p);
+  if(mode==='replace'){
+    // Replace all locations with this one
+    p.locations=[{zone:newZone,qty:qty||getTotalStock(p)}];
   } else {
-    if(!p.zones) p.zones=[];
-    p.zones=[newZone];
-    p.zone=newZone;
-    logActivity('inventory',`Location set: ${p.name} → ${newZone}`);
-    save();
-    toast(`${p.name} assigned to: ${newZone}`);
+    // Add / update this location
+    addProductZone(p.id,newZone,qty);
   }
+  p.zone=newZone; p.zones=p.locations.map(l=>l.zone);
+  logActivity('inventory',`Location assigned: ${p.name} → ${newZone}${qty?' ('+qty+' '+p.unit+')':''}`);
+  save();
   closeModal('modal-assign-loc');
   renderStorage();
+  toast(`${p.name} assigned to ${newZone.split('›').pop().trim()}`);
 }
 
 function selectZone(id){selectedUnitId=id;renderStorage();}
@@ -2793,51 +3012,311 @@ function promptAssignZone(productId){
 }
 
 // ─── REPORTS ───
+let reportDays=30;
+function setReportRange(days){
+  reportDays=days;
+  ['7','30','90','0'].forEach(d=>{
+    const btn=document.getElementById('rng-'+d);
+    if(btn) btn.style.background=String(days)===d?'var(--accent)':'';
+    if(btn) btn.style.color=String(days)===d?'#000':'';
+  });
+  renderReports();
+}
+
+function getReportSales(){
+  if(!reportDays) return DB.sales;
+  const cutoff=todayMinus(reportDays-1);
+  return DB.sales.filter(s=>s.date>=cutoff);
+}
+
+function toggleReportSection(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+}
+
 function renderReports(){
   const cur=DB.settings.currency;
-  const totalRev=DB.sales.reduce((a,s)=>a+s.total,0);
+  const sales=getReportSales();
+  const totalRev=sales.reduce((a,s)=>a+s.total,0);
   const today=todayMinus(0);
   const todayRev=DB.sales.filter(s=>s.date===today).reduce((a,s)=>a+s.total,0);
-  const totalProfit=DB.sales.reduce((a,s)=>{return a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0);},0);
+  const totalProfit=sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
+  const label=reportDays?`Last ${reportDays} days`:'All time';
 
+  // Stat cards
   document.getElementById('report-stats').innerHTML=`
     <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-label">Today</div><div class="stat-value">${cur} ${todayRev.toLocaleString()}</div></div>
-    <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">Total Sales</div><div class="stat-value">${DB.sales.length}</div></div>
-    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Total Revenue</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div></div>
-    <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div></div>`;
+    <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">Sales (${label})</div><div class="stat-value">${sales.length}</div></div>
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Revenue (${label})</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div></div>
+    <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit (${label})</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div></div>`;
 
-  // Rev chart
+  // ── REVENUE BY DAY ──
+  const days=Math.min(reportDays||30,30);
   let chartData=[];
-  for(let i=6;i>=0;i--){const d=todayMinus(i);chartData.push({d,v:DB.sales.filter(s=>s.date===d).reduce((a,s)=>a+s.total,0)});}
+  for(let i=days-1;i>=0;i--){const d=todayMinus(i);chartData.push({d,v:DB.sales.filter(s=>s.date===d).reduce((a,s)=>a+s.total,0)});}
   const maxV=Math.max(...chartData.map(x=>x.v),1);
   document.getElementById('rev-chart').innerHTML=chartData.map(c=>`
-    <div class="bar-wrap">
+    <div class="bar-wrap" onclick="showDayRevDetail('${c.d}')" style="cursor:pointer" title="${c.d}">
       <div class="bar-val">${c.v?cur+' '+Math.round(c.v/1000)+'K':''}</div>
-      <div class="bar" style="height:${Math.max((c.v/maxV)*130,4)}px"></div>
+      <div class="bar" style="height:${Math.max((c.v/maxV)*130,4)}px;${c.d===today?'background:var(--accent)':''}"></div>
       <div class="bar-label">${c.d.slice(5)}</div>
     </div>`).join('');
 
-  // Top products
-  const counts={};
-  DB.sales.forEach(s=>s.items.forEach(i=>{counts[i.name]=(counts[i.name]||0)+i.qty*i.price;}));
-  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  document.getElementById('top-products-list').innerHTML=top.map(([n,v],i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="font-family:var(--font-head);font-size:16px;color:var(--text3);min-width:20px">${i+1}</span>
-      <span style="flex:1;font-size:13px">${n}</span>
-      <span style="font-family:var(--font-head);color:var(--accent);font-size:14px">${cur} ${Math.round(v).toLocaleString()}</span>
-    </div>`).join('');
+  document.getElementById('rev-detail-content').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Click a bar above to see that day's sales. Or see all daily totals:</div>
+    ${chartData.filter(c=>c.v>0).reverse().map(c=>{
+      const daySales=DB.sales.filter(s=>s.date===c.d);
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:500;font-size:13px">${c.d}</span>
+          <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${c.v.toLocaleString()}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">${daySales.length} sale${daySales.length!==1?'s':''} · Customers: ${[...new Set(daySales.map(s=>s.customer))].join(', ')}</div>
+      </div>`;
+    }).join('')||'<div style="color:var(--text3);font-size:13px">No sales in this range</div>'}`;
 
-  // Sales history
-  document.getElementById('sales-history-tbody').innerHTML=[...DB.sales].reverse().map(s=>`
-    <tr>
+  // ── TOP PRODUCTS ──
+  const itemRevs={};
+  const itemQtys={};
+  sales.forEach(s=>s.items.forEach(i=>{
+    itemRevs[i.name]=(itemRevs[i.name]||0)+i.qty*i.price;
+    itemQtys[i.name]=(itemQtys[i.name]||0)+i.qty;
+  }));
+  const topProds=Object.entries(itemRevs).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('top-products-list').innerHTML=topProds.map(([n,v],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showProductDetail('${n.replace(/'/g,"\\'")}')">
+      <span style="font-family:var(--font-head);font-size:15px;color:var(--text3);min-width:20px">${i+1}</span>
+      <span style="flex:1;font-size:13px">${n}</span>
+      <span style="font-size:11px;color:var(--text3)">${itemQtys[n]} sold</span>
+      <span style="font-family:var(--font-head);color:var(--accent);font-size:14px">${cur} ${Math.round(v).toLocaleString()}</span>
+      <span style="color:var(--text3);font-size:12px">▾</span>
+    </div>`).join('')||'<div style="color:var(--text3);font-size:13px;padding:12px 0">No sales yet</div>';
+  document.getElementById('products-detail-content').innerHTML='<div style="color:var(--text3);font-size:13px">Click any product above to see its detail</div>';
+
+  // ── DEAD STOCK ──
+  const soldNames=new Set(sales.flatMap(s=>s.items.map(i=>i.name)));
+  const dead=DB.products.filter(p=>!soldNames.has(p.name)&&p.stock>0);
+  document.getElementById('deadstock-summary').innerHTML=dead.length
+    ?`<span style="font-size:13px;color:var(--text3)">${dead.length} product${dead.length!==1?'s':''} with stock but no sales in this period</span>`
+    :'<span style="font-size:13px;color:var(--green)">✓ All stocked products have sold recently</span>';
+  document.getElementById('deadstock-detail-content').innerHTML=dead.length
+    ?dead.map(p=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${p.name}</div>
+          <div style="font-size:11px;color:var(--text3)">${p.cat} · ${p.zone||'No location'}</div>
+        </div>
+        <span class="badge orange">${p.stock} ${p.unit} in stock</span>
+        <span style="font-size:12px;color:var(--text3)">${p.price?cur+' '+p.price:'No price'}</span>
+      </div>`).join('')
+    :'<div style="color:var(--green);font-size:13px">No dead stock!</div>';
+
+  // ── TOP CUSTOMERS ──
+  const custSpend={};
+  const custCount={};
+  sales.forEach(s=>{
+    if(s.customer&&s.customer!=='Walk-in'){
+      custSpend[s.customer]=(custSpend[s.customer]||0)+s.total;
+      custCount[s.customer]=(custCount[s.customer]||0)+1;
+    }
+  });
+  const topCusts=Object.entries(custSpend).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  document.getElementById('top-customers-list').innerHTML=topCusts.map(([n,v],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showCustomerDetail('${n.replace(/'/g,"\\'")}')">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:var(--accent)">${n.charAt(0)}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${n}</div>
+        <div style="font-size:11px;color:var(--text3)">${custCount[n]} purchase${custCount[n]!==1?'s':''}</div>
+      </div>
+      <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(v).toLocaleString()}</span>
+      <span style="color:var(--text3);font-size:12px">▾</span>
+    </div>`).join('')||'<div style="color:var(--text3);font-size:13px;padding:8px 0">No named customers yet — add customer names when making sales</div>';
+  document.getElementById('customers-detail-content').innerHTML='<div style="color:var(--text3);font-size:13px">Click a customer above to see their purchase history</div>';
+
+  // ── PROFIT BY CATEGORY ──
+  const catRev={};const catCost={};const catCount={};
+  sales.forEach(s=>s.items.forEach(i=>{
+    const p=DB.products.find(pp=>pp.name===i.name);
+    const cat=p?p.cat:'Other';
+    catRev[cat]=(catRev[cat]||0)+i.qty*i.price;
+    catCost[cat]=(catCost[cat]||0)+i.qty*(p&&p.cost?p.cost:0);
+    catCount[cat]=(catCount[cat]||0)+i.qty;
+  }));
+  const cats=Object.entries(catRev).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('profit-summary').innerHTML=cats.slice(0,3).map(([c,r])=>{
+    const profit=r-(catCost[c]||0);
+    const margin=r>0?Math.round(profit/r*100):0;
+    return `<span style="display:inline-block;margin:3px 6px 3px 0;padding:3px 10px;background:var(--bg3);border-radius:20px;font-size:12px">${c}: <strong style="color:var(--accent)">${margin}% margin</strong></span>`;
+  }).join('');
+  document.getElementById('profit-detail-content').innerHTML=`
+    <div class="inv-table-wrap">
+      <table class="inv-table">
+        <thead><tr><th>Category</th><th>Units Sold</th><th>Revenue</th><th>Est. Cost</th><th>Est. Profit</th><th>Margin</th></tr></thead>
+        <tbody>${cats.map(([c,r])=>{
+          const profit=r-(catCost[c]||0);
+          const margin=r>0?Math.round(profit/r*100):0;
+          return `<tr>
+            <td style="font-weight:500">${c}</td>
+            <td>${catCount[c]}</td>
+            <td style="color:var(--green)">${cur} ${Math.round(r).toLocaleString()}</td>
+            <td style="color:var(--red)">${cur} ${Math.round(catCost[c]||0).toLocaleString()}</td>
+            <td style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(profit).toLocaleString()}</td>
+            <td><span class="badge ${margin>30?'green':margin>10?'orange':'red'}">${margin}%</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // ── STAFF PERFORMANCE ──
+  const staffSales={};const staffRev={};
+  sales.forEach(s=>{
+    const who=s.servedBy||s.openedBy||'Unknown';
+    staffSales[who]=(staffSales[who]||0)+1;
+    staffRev[who]=(staffRev[who]||0)+s.total;
+  });
+  const staffList=Object.entries(staffRev).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('staff-perf-list').innerHTML=staffList.length
+    ?staffList.map(([name,rev])=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--blue)">${name.charAt(0)}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${name}</div><div style="font-size:11px;color:var(--text3)">${staffSales[name]} sales</div></div>
+        <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(rev).toLocaleString()}</span>
+      </div>`).join('')
+    :'<div style="color:var(--text3);font-size:13px;padding:8px 0">Staff sales tracking will show once sales are logged with staff names</div>';
+  document.getElementById('staff-detail-content').innerHTML=`
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Sales are attributed to whoever was logged in when the sale was made.</div>
+    <div class="inv-table-wrap">
+      <table class="inv-table">
+        <thead><tr><th>Staff Member</th><th>Sales Count</th><th>Total Revenue</th><th>Avg per Sale</th></tr></thead>
+        <tbody>${staffList.map(([name,rev])=>`<tr>
+          <td style="font-weight:500">${name}</td>
+          <td>${staffSales[name]}</td>
+          <td style="color:var(--green)">${cur} ${Math.round(rev).toLocaleString()}</td>
+          <td>${cur} ${Math.round(rev/staffSales[name]).toLocaleString()}</td>
+        </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3)">No data</td></tr>'}</tbody>
+      </table>
+    </div>`;
+
+  // ── SALES HISTORY TABLE ──
+  document.getElementById('sales-history-tbody').innerHTML=[...sales].reverse().map(s=>`
+    <tr style="cursor:pointer" onclick="toggleSaleRow(this,'${s.id}')">
       <td>${s.date}</td>
       <td>${s.customer}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.servedBy||'—'}</td>
       <td>${s.items.length} item(s)</td>
       <td>${s.discount?cur+' '+s.discount.toFixed(0):'-'}</td>
       <td style="font-family:var(--font-head);color:var(--accent)">${cur} ${s.total.toLocaleString()}</td>
-    </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
+    </tr>
+    <tr id="sale-row-${s.id}" style="display:none;background:var(--bg3)">
+      <td colspan="6" style="padding:10px 14px">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          ${s.items.map(i=>`<tr><td style="padding:3px 8px 3px 0;color:var(--text2)">${i.name}</td><td style="padding:3px 4px;color:var(--text3)">×${i.qty}</td><td style="padding:3px 0;color:var(--text2);text-align:right">${cur} ${i.price}</td><td style="padding:3px 0 3px 12px;color:var(--accent);text-align:right;font-family:var(--font-head)">${cur} ${(i.qty*i.price).toLocaleString()}</td></tr>`).join('')}
+          ${s.discount?`<tr><td colspan="3" style="padding-top:6px;border-top:1px solid var(--border);color:var(--text3)">Discount</td><td style="padding-top:6px;border-top:1px solid var(--border);color:var(--red);text-align:right;font-family:var(--font-head)">− ${cur} ${s.discount}</td></tr>`:''}
+        </table>
+      </td>
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
 }
+
+function toggleSaleRow(row,id){
+  const detail=document.getElementById('sale-row-'+id);
+  if(detail) detail.style.display=detail.style.display==='none'?'table-row':'none';
+}
+
+function showDayRevDetail(date){
+  const cur=DB.settings.currency;
+  const detail=document.getElementById('rev-detail');
+  const content=document.getElementById('rev-detail-content');
+  if(detail.style.display!=='none'&&content.dataset.current===date){detail.style.display='none';content.dataset.current='';return;}
+  content.dataset.current=date;
+  const daySales=DB.sales.filter(s=>s.date===date);
+  const total=daySales.reduce((a,s)=>a+s.total,0);
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <strong style="font-size:14px">${date} — ${cur} ${total.toLocaleString()} · ${daySales.length} sale${daySales.length!==1?'s':''}</strong>
+      <button onclick="document.getElementById('rev-detail').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+    </div>
+    ${daySales.length?daySales.map(s=>`
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <span style="font-size:13px;font-weight:500;flex:1">${s.customer}</span>
+          <span style="font-size:11px;color:var(--text3)">${s.servedBy||''}</span>
+          <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${s.total.toLocaleString()}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${s.items.map(i=>i.name+' ×'+i.qty).join(' · ')}</div>
+      </div>`).join(''):'<div style="color:var(--text3);font-size:13px">No sales this day</div>'}`;
+  detail.style.display='block';
+}
+
+
+function showProductDetail(name){
+  const cur=DB.settings.currency;
+  const detail=document.getElementById('products-detail');
+  const content=document.getElementById('products-detail-content');
+  if(detail.style.display!=='none'&&content.dataset.current===name){detail.style.display='none';content.dataset.current='';return;}
+  content.dataset.current=name;
+  const prodSales=getReportSales().filter(s=>s.items.some(i=>i.name===name));
+  const totalQty=prodSales.reduce((a,s)=>a+s.items.filter(i=>i.name===name).reduce((b,i)=>b+i.qty,0),0);
+  const totalRev=prodSales.reduce((a,s)=>a+s.items.filter(i=>i.name===name).reduce((b,i)=>b+i.qty*i.price,0),0);
+  const prod=DB.products.find(p=>p.name===name);
+  const profit=prod&&prod.cost?totalRev-totalQty*prod.cost:null;
+  const custFreq={};
+  prodSales.forEach(s=>{custFreq[s.customer]=(custFreq[s.customer]||0)+1;});
+  const topCust=Object.entries(custFreq).sort((a,b)=>b[1]-a[1])[0];
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <strong style="font-size:14px">${name}</strong>
+      <button onclick="document.getElementById('products-detail').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Sold</div><div style="font-size:20px;font-weight:600">${totalQty}</div></div>
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Revenue</div><div style="font-size:18px;font-weight:600;color:var(--accent)">${cur} ${Math.round(totalRev).toLocaleString()}</div></div>
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Est. Profit</div><div style="font-size:18px;font-weight:600;color:var(--green)">${profit!==null?cur+' '+Math.round(profit).toLocaleString():'--'}</div></div>
+    </div>
+    ${topCust?`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Top buyer: <strong style="color:var(--text)">${topCust[0]}</strong> (${topCust[1]}×)</div>`:''}
+    ${[...prodSales].reverse().slice(0,8).map(s=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--text3)">${s.date}</span><span>${s.customer}</span>
+      <span style="color:var(--text3);font-size:11px">${s.servedBy||''}</span>
+      <span style="color:var(--accent)">×${s.items.find(i=>i.name===name)?.qty}</span></div>`).join('')}`;
+  detail.style.display='block';
+}
+
+function showCustomerDetail(name){
+  const cur=DB.settings.currency;
+  const detail=document.getElementById('customers-detail');
+  const content=document.getElementById('customers-detail-content');
+  if(detail.style.display!=='none'&&content.dataset.current===name){detail.style.display='none';content.dataset.current='';return;}
+  content.dataset.current=name;
+  const custSales=getReportSales().filter(s=>s.customer===name);
+  const total=custSales.reduce((a,s)=>a+s.total,0);
+  const lastSale=custSales.length?[...custSales].reverse()[0].date:'--';
+  const allItems={};
+  custSales.forEach(s=>s.items.forEach(i=>{allItems[i.name]=(allItems[i.name]||0)+i.qty;}));
+  const favItem=Object.entries(allItems).sort((a,b)=>b[1]-a[1])[0];
+  content.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <strong style="font-size:14px">${name}</strong>
+      <button onclick="document.getElementById('customers-detail').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Visits</div><div style="font-size:20px;font-weight:600">${custSales.length}</div></div>
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Total spent</div><div style="font-size:18px;font-weight:600;color:var(--accent)">${cur} ${total.toLocaleString()}</div></div>
+      <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Last visit</div><div style="font-size:14px;font-weight:600">${lastSale}</div></div>
+    </div>
+    ${favItem?`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Favourite: <strong style="color:var(--text)">${favItem[0]}</strong> (${favItem[1]}×)</div>`:''}
+    ${[...custSales].reverse().map(s=>`
+      <div style="padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:12px;color:var(--text3)">${s.date}</span>
+          <span style="font-size:11px;color:var(--text3)">${s.servedBy||''}</span>
+          <span style="font-family:var(--font-head);color:var(--accent);font-size:13px">${cur} ${s.total.toLocaleString()}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${s.items.map(i=>i.name+' ×'+i.qty).join(' · ')}</div>
+      </div>`).join('')||'<div style="color:var(--text3);font-size:13px">No sales in this period</div>'}`;
+  detail.style.display='block';
+}
+
 
 // ─── CUSTOMERS ───
 function renderCustomers(){
@@ -2865,7 +3344,13 @@ function saveCustomer(){
   DB.customers.push({id:Date.now(),name,phone:document.getElementById('c-phone').value,notes:document.getElementById('c-notes').value,totalSpent:0,visits:0});
   save();closeModal('modal-customer');renderCustomers();toast('Customer added');
 }
-function deleteCustomer(id){if(!confirm('Delete?'))return;DB.customers=DB.customers.filter(c=>c.id!==id);save();renderCustomers();}
+function deleteCustomer(id){
+  const c=DB.customers.find(x=>x.id===id);
+  if(!c) return;
+  sendToRecycleBin('customer',{...c},currentUser?currentUser.name:'','Deleted from customers');
+  DB.customers=DB.customers.filter(x=>x.id!==id);
+  save(); renderCustomers(); toast(`"${c.name}" moved to Recycle Bin`);
+}
 
 // ─── STAFF ───
 function renderStaff(){
@@ -3169,14 +3654,19 @@ function savePurchase(){
   if(!DB.purchases) DB.purchases=[];
   DB.purchases.push(record);
 
+  // All items: add stock to Unlocated with qty, then ask for final location
   const findMatch=name=>DB.products.find(p=>p.name.toLowerCase().trim()===name.toLowerCase().trim());
-
-  // All items: add stock + send to Unlocated, then ask for location
   validLines.forEach(l=>{
     const match=findMatch(l.item);
     if(match){
-      match.stock+=Math.floor(l.qty);
-      // Mark as unlocated so user can reassign
+      const purchasedQty=Math.floor(l.qty);
+      match.stock=(match.stock||0)+purchasedQty;
+      if(!match.locations) match.locations=getLocations(match);
+      // Add to Open/Unlocated with qty
+      const unlocZone='⚠ Open / Unlocated';
+      const existing=match.locations.find(loc=>loc.zone===unlocZone);
+      if(existing){ existing.qty=(existing.qty||0)+purchasedQty; }
+      else { match.locations.push({zone:unlocZone,qty:purchasedQty}); }
       if(!match.openSince) match.openSince=Date.now();
     }
   });
@@ -3198,20 +3688,19 @@ function processNextPurItem(){
   if(_purNewIdx>=_purNewQueue.length){
     if(modal) modal.style.display='none';
     renderPurchases();
-    toast('Purchase saved! Stock updated.');
+    toast('Purchase saved! All items sent to Open/Unlocated. Assign locations in Storage.');
     return;
   }
   const l=_purNewQueue[_purNewIdx];
   const findMatch=name=>DB.products.find(p=>p.name.toLowerCase().trim()===name.toLowerCase().trim());
   const existing=findMatch(l.item);
-  const currentLocs=existing?getProductZones(existing).filter(z=>!z.includes('Unlocated')):[];
+  const purchasedQty=Math.floor(l.qty);
+  // Get current non-unlocated locations with qtys
+  const currentLocs=existing?getLocations(existing).filter(loc=>!loc.zone.includes('Unlocated')&&loc.qty>0):[];
   const locOpts=Object.values(LOCATIONS).flatMap(loc=>loc.units.map(u=>`<option value="${loc.short} \u203a ${u.label}">${loc.short} \u203a ${u.label}</option>`)).join('');
 
   if(!modal){modal=document.createElement('div');modal.id='pur-add-modal';document.body.appendChild(modal);}
   modal.style.cssText='display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
-
-  const currentLocHtml=currentLocs.length
-    ?`<div style="font-size:12px;color:var(--accent);margin-top:4px">\u{1F4CD} Currently at: ${currentLocs.join(', ')}</div>`:'';
 
   modal.innerHTML=`<div class="modal" style="max-width:500px;width:100%">
     <div class="modal-header">
@@ -3221,8 +3710,8 @@ function processNextPurItem(){
     <div class="modal-body">
       <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.2);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px">
         <div style="font-size:14px;font-weight:600">${l.item}</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px">${l.qty} ${l.unit} · Cost: NKF ${l.unitPrice}</div>
-        ${currentLocHtml}
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${purchasedQty} ${l.unit||'pcs'} purchased \u00b7 Cost: NKF ${l.unitPrice} \u2014 currently in Open/Unlocated</div>
+        ${currentLocs.length?`<div style="font-size:12px;color:var(--accent);margin-top:4px">\u{1F4CD} Also at: ${currentLocs.map(loc=>loc.zone.split('\u203a').pop().trim()+' ('+loc.qty+')').join(', ')}</div>`:''}
         ${!existing?`<div style="font-size:12px;color:var(--green);margin-top:3px">\u2728 New item \u2014 will be added to products</div>`:''}
       </div>
       ${!existing?`<div class="form-row"><div class="form-label">Category</div>
@@ -3230,30 +3719,40 @@ function processNextPurItem(){
           ${getCategories().map(c=>`<option>${c}</option>`).join('')}
           <option value="Other">Other</option>
         </select></div>`:''}
-      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Storage locations <span style="font-weight:400;color:var(--text3)">(you can split across multiple places)</span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">
+        Split ${purchasedQty} ${l.unit||'pcs'} across locations:
+        <span style="font-weight:400;color:var(--text3)">(leftovers stay in Open/Unlocated)</span>
+      </div>
       <div id="pur-loc-rows">
         <div class="pur-loc-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
           <select class="form-select pur-loc-sel" style="flex:2">
-            ${currentLocs.length?`<option value="KEEP_0">Keep: ${currentLocs[0]}</option>`:''}
             <option value="">Open / Unlocated</option>
             ${locOpts}
           </select>
-          <input class="search-input pur-qty-inp" type="number" placeholder="Qty" min="0" style="width:70px;padding:5px 8px" value="${l.qty}">
-          <button onclick="removePurLocRow(this)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 4px">✕</button>
+          <input class="search-input pur-qty-inp" type="number" placeholder="Qty" min="0" style="width:70px;padding:5px 8px" value="${purchasedQty}">
+          <button onclick="removePurLocRow(this)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 4px">\u2715</button>
         </div>
       </div>
       <button onclick="addPurLocRow()" class="action-btn" style="font-size:12px;margin-top:4px">+ Add another location</button>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px">Total qty purchased: <strong>${l.qty} ${l.unit}</strong>. Split however you like — leftover goes to Unlocated.</div>
+      <div id="pur-qty-status" style="font-size:11px;color:var(--text3);margin-top:8px">Total to assign: <strong>${purchasedQty} ${l.unit||'pcs'}</strong></div>
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="skipPurItem()">Skip</button>
+      <button class="btn-cancel" onclick="skipPurItem()">Skip (keep in Unlocated)</button>
       <button class="btn-save" onclick="confirmPurItem()">Confirm \u2192</button>
     </div>
   </div>`;
 
-  // Store locOpts for addPurLocRow
   window._purLocOpts=locOpts;
-  window._purCurrentLocs=currentLocs;
+  window._purQtyTotal=purchasedQty;
+  window._purUnit=l.unit||'pcs';
+
+  // Live qty counter
+  modal.addEventListener('input',()=>{
+    const used=[...document.querySelectorAll('.pur-qty-inp')].reduce((a,el)=>a+(parseFloat(el.value)||0),0);
+    const rem=window._purQtyTotal-used;
+    const el=document.getElementById('pur-qty-status');
+    if(el) el.innerHTML=`Assigned: <strong>${used}</strong> \u00b7 Remaining in Unlocated: <strong style="color:${rem<0?'var(--red)':rem>0?'var(--accent)':'var(--green)'}">${rem} ${window._purUnit}</strong>`;
+  });
 }
 
 function addPurLocRow(){
@@ -3274,7 +3773,7 @@ function removePurLocRow(btn){
   const row=btn.closest('.pur-loc-row');
   const container=document.getElementById('pur-loc-rows');
   if(container&&container.querySelectorAll('.pur-loc-row').length>1) row.remove();
-  else toast('Need at least one location row');
+  else toast('Need at least one row');
 }
 
 function confirmPurItem(){
@@ -3282,39 +3781,59 @@ function confirmPurItem(){
   const findMatch=name=>DB.products.find(p=>p.name.toLowerCase().trim()===name.toLowerCase().trim());
   let existing=findMatch(l.item);
   const cat=(document.getElementById('pur-item-cat')||{}).value||'Other';
+  const purchasedQty=Math.floor(l.qty);
 
-  // Collect all location rows
+  // Collect location rows
   const rows=[...document.querySelectorAll('#pur-loc-rows .pur-loc-row')];
   const assignments=rows.map(row=>({
     zone:row.querySelector('.pur-loc-sel').value,
-    qty:parseFloat(row.querySelector('.pur-qty-inp').value)||0
-  })).filter(a=>a.qty>0||a.zone);
+    qty:parseInt(row.querySelector('.pur-qty-inp').value)||0
+  })).filter(a=>a.qty>0&&a.zone&&a.zone!=='');
+
+  const assignedTotal=assignments.reduce((a,x)=>a+x.qty,0);
+  const remainder=purchasedQty-assignedTotal;
 
   if(!existing){
-    // Create new product
-    const firstZone=assignments.length&&assignments[0].zone&&assignments[0].zone!==''?assignments[0].zone:'';
     existing={
       id:Date.now(),name:l.item.trim(),cat,
       price:0,cost:l.unitPrice,
-      stock:Math.floor(l.qty),unit:l.unit||'pcs',
-      zone:firstZone,zones:firstZone?[firstZone]:[],
+      stock:purchasedQty,unit:l.unit||'pcs',
+      zone:'',zones:[],locations:[],
       desc:'',sku:'',pcsPerBox:0,needsPrice:true
     };
-    if(!firstZone) existing.openSince=Date.now();
+    // Start with all in unlocated
+    existing.locations=[{zone:'⚠ Open / Unlocated',qty:purchasedQty}];
+    existing.openSince=Date.now();
     DB.products.push(existing);
-    logActivity('inventory',`New product from purchase: ${existing.name} (${existing.stock} ${existing.unit})`);
+    logActivity('inventory',`New product from purchase: ${existing.name} (${purchasedQty} ${existing.unit})`);
   }
 
-  // Apply locations
-  let hasRealZone=false;
-  assignments.forEach(a=>{
-    if(!a.zone||a.zone==='') return; // skip unlocated rows
-    if(a.zone.startsWith('KEEP_')) { hasRealZone=true; return; } // keep existing
-    addProductZone(existing.id,a.zone);
-    hasRealZone=true;
-  });
-  if(hasRealZone) delete existing.openSince;
+  if(!existing.locations) existing.locations=getLocations(existing);
 
+  // Move from Unlocated to each assigned location
+  assignments.forEach(a=>{
+    const unlocLoc=existing.locations.find(loc=>loc.zone.includes('Open / Unlocated'));
+    if(unlocLoc&&unlocLoc.qty>=a.qty){
+      unlocLoc.qty-=a.qty;
+      const dest=existing.locations.find(loc=>loc.zone===a.zone);
+      if(dest){ dest.qty+=a.qty; }
+      else { existing.locations.push({zone:a.zone,qty:a.qty}); }
+      logActivity('inventory',`Stored ${a.qty} ${existing.unit} of ${existing.name} in ${a.zone.split('\u203a').pop().trim()}`);
+    }
+  });
+
+  // Remove empty locations except unlocated with remainder
+  existing.locations=existing.locations.filter(loc=>{
+    if(loc.zone.includes('Open / Unlocated')) return loc.qty>0;
+    return loc.qty>0;
+  });
+
+  if(remainder<=0&&!existing.locations.some(loc=>loc.zone.includes('Unlocated'))){
+    delete existing.openSince;
+  }
+
+  existing.zone=existing.locations[0]?.zone||'';
+  existing.zones=existing.locations.map(loc=>loc.zone);
   save();
   _purNewIdx++;
   processNextPurItem();
@@ -3324,6 +3843,7 @@ function skipPurItem(){
   _purNewIdx++;
   processNextPurItem();
 }
+
 
 
 // ─── LOANS ───
@@ -3386,7 +3906,10 @@ function filterLoans(){
       <td style="font-size:12px;color:var(--text3);max-width:120px">${l.notes||'—'}</td>
       <td>
         ${l.status==='pending'?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="openApproveModal(${l.id})">✓ Approve</button>`:''}
-        ${l.status==='active'?`<button class="action-btn" onclick="markFollowupDone(${l.id})">✓ Checked</button><button class="action-btn" onclick="markLoanPaid(${l.id})">Paid</button>`:''}
+        ${(l.status==='active'||l.status==='overdue')?`
+          <button class="action-btn" onclick="markFollowupDone(${l.id})">✓ Checked</button>
+          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="markLoanPaid(${l.id})">💰 Paid</button>
+        `:''}
         <button class="action-btn del" onclick="deleteLoan(${l.id})">✕</button>
       </td>
     </tr>`;
@@ -3469,9 +3992,11 @@ function markLoanPaid(id){
 }
 function deleteLoan(id){
   const l=(DB.loans||[]).find(x=>x.id===id);
-  if(l) logActivity('loan',`Loan record deleted: ${l.borrower}`);
-  DB.loans=(DB.loans||[]).filter(x=>x.id!==id);
-  save();renderLoans();toast('Loan deleted');
+  if(!l) return;
+  sendToRecycleBin('loan',{...l},currentUser?currentUser.name:'','Deleted from loans');
+  logActivity('loan',`Loan record deleted: ${l.borrower}`);
+  DB.loans=DB.loans.filter(x=>x.id!==id);
+  save(); renderLoans(); toast('Loan moved to Recycle Bin');
 }
 
 // ─── LOAN NOTIFICATION CHECK ───
@@ -3487,7 +4012,7 @@ function checkAndNotifyLoans(){
 // ─── AUTH / LOGIN ───
 // Permission map: which pages each role can access
 const ROLE_PAGES = {
-  Manager: ['dashboard','pos','inventory','storage','reports','purchases','loans','customers','requests','drawer','returns','activity','staff','settings'],
+  Manager: ['dashboard','pos','inventory','storage','reports','purchases','loans','customers','requests','drawer','returns','activity','recycle','staff','settings'],
   Salesperson: ['dashboard','pos','inventory','storage','requests','drawer','returns'],
   Cashier: ['dashboard','pos','inventory','storage','requests','drawer','returns'],
   Storekeeper: ['dashboard','inventory','storage','purchases','requests','returns'],
@@ -4000,12 +4525,17 @@ function showRequestModal(type){
 
 function submitRequest(){
   const type=document.getElementById('req-type').value;
-  const product=document.getElementById('req-product').value.trim();
   const reason=document.getElementById('req-reason').value.trim();
-  if(!product){toast('Select a product');return;}
   if(!reason){toast('Please add a reason');return;}
-  const p=DB.products.find(x=>x.name.toLowerCase()===product.toLowerCase());
-  if(!p){toast('Product not found');return;}
+  // Purchase type handles itself separately (no store product needed)
+  if(type!=='purchase'){
+    const product=document.getElementById('req-product').value.trim();
+    if(!product){toast('Select a product');return;}
+    const p=DB.products.find(x=>x.name.toLowerCase()===product.toLowerCase());
+    if(!p){toast('Product not found');return;}
+  }
+  const product=type==='purchase'?'':document.getElementById('req-product').value.trim();
+  const p=type==='purchase'?null:DB.products.find(x=>x.name.toLowerCase()===product.toLowerCase());
   let details='';
   if(type==='stock'){
     const qty=parseInt(document.getElementById('req-stock-qty').value)||0;
@@ -4017,9 +4547,23 @@ function submitRequest(){
     if(!newPrice&&!newCost){toast('Enter at least one price');return;}
     details=`${newPrice?'Sell: NKF '+newPrice+' (was '+p.price+')':''}${newCost?' Cost: NKF '+newCost+' (was '+p.cost+')':''}`.trim();
   } else if(type==='purchase'){
+    const item=document.getElementById('req-buy-item').value.trim();
     const qty=parseInt(document.getElementById('req-buy-qty').value)||1;
-    const price=parseFloat(document.getElementById('req-buy-price').value)||p.price;
-    details=`Buy ${qty} ${p.unit} @ NKF ${price} each (total: NKF ${(qty*price).toFixed(0)})`;
+    const price=parseFloat(document.getElementById('req-buy-price').value)||0;
+    if(!item){toast('Enter what to buy');return;}
+    details=`Buy ${qty}× ${item} from external supplier — est. NKF ${price}`;
+    // Override product with item name for display
+    DB.requests.push({
+      id:Date.now(),date:todayMinus(0),type,
+      product:item,details,reason,
+      submittedBy:currentUser?currentUser.name:'',
+      status:'pending',managerNote:'',
+      extraData:{buyItem:item,buyQty:qty,buyPrice:price}
+    });
+    logActivity('inventory',`External purchase request: ${item} — est. NKF ${price}`);
+    save();closeModal('modal-request');renderRequests();updateRequestsBadge();
+    toast('Request submitted — waiting for manager approval');
+    return;
   } else {
     details=`Remove "${product}" from system`;
   }
@@ -4060,34 +4604,27 @@ function handleRequest(id,action){
   // Apply changes if approved
   if(action==='approved'){
     const p=DB.products.find(x=>x.name===r.product);
-    if(p){
-      if(r.type==='stock'&&r.extraData.qty>0){
-        p.stock+=r.extraData.qty;
-        logActivity('inventory',`Stock increase approved: ${p.name} +${r.extraData.qty} (by ${r.submittedBy})`);
-      } else if(r.type==='price'){
+    if(r.type==='stock'){
+      const p=DB.products.find(x=>x.name===r.product);
+      if(p){p.stock+=r.extraData.qty||0;logActivity('inventory',`Stock increase approved: ${p.name} +${r.extraData.qty} (by ${r.submittedBy})`);}
+    } else if(r.type==='price'){
+      const p=DB.products.find(x=>x.name===r.product);
+      if(p){
         if(r.extraData.newPrice>0){p.price=r.extraData.newPrice;}
         if(r.extraData.newCost>0){p.cost=r.extraData.newCost;}
         logActivity('inventory',`Price change approved: ${p.name} → NKF ${p.price} (by ${r.submittedBy})`);
-      } else if(r.type==='purchase'){
-        const qty=r.extraData.buyQty||1;
-        const price=r.extraData.buyPrice||p.price;
-        if(p.stock>=qty){
-          p.stock-=qty;
-          // Record as a sale
-          const empSale={id:Date.now(),date:todayMinus(0),customer:r.submittedBy+' (staff purchase)',
-            items:[{name:p.name,qty,price}],subtotal:qty*price,discount:0,total:qty*price};
-          DB.sales.push(empSale);
-          logActivity('sale',`Staff purchase approved: ${r.submittedBy} bought ${qty}× ${p.name} @ NKF ${price}`,qty*price);
-        } else {
-          note='Not enough stock to complete purchase';
-          r.status='rejected';r.managerNote=note;
-          toast('Not enough stock — request auto-rejected');
-          save();filterRequests();updateRequestsBadge();return;
-        }
-      } else if(r.type==='delete'){
-        DB.products=DB.products.filter(x=>x.name!==r.product);
-        logActivity('inventory',`Product deleted (approved): ${r.product} (by ${r.submittedBy})`);
       }
+    } else if(r.type==='purchase'){
+      // External purchase — log as drawer expense
+      const session=getOrPickSession();
+      const amount=r.extraData.buyPrice||0;
+      const desc=`External purchase: ${r.extraData.buyItem||r.product} ×${r.extraData.buyQty||1} (approved for ${r.submittedBy})`;
+      if(session) session.expenses.push({desc,amount,by:currentUser?currentUser.name:'',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+      logActivity('inventory',`External purchase approved: ${desc} — NKF ${amount}`);
+    } else if(r.type==='delete'){
+      sendToRecycleBin('product',r.product,currentUser?currentUser.name:'',`Deleted via request by ${r.submittedBy}`);
+      DB.products=DB.products.filter(x=>x.name!==r.product);
+      logActivity('inventory',`Product deleted (approved): ${r.product} (by ${r.submittedBy})`);
     }
   }
   save();
@@ -4100,29 +4637,80 @@ function handleRequest(id,action){
 // A product can appear in multiple locations
 // product.zones = ['EH Main › Sales Room › Front Wall', 'Mekzen › Large Unit']
 // product.zone = primary location (legacy, kept for compat)
-function getProductZones(p){
-  if(p.zones&&p.zones.length) return p.zones;
-  if(p.zone) return [p.zone];
+// ─── LOCATION + QUANTITY SYSTEM ───
+// product.locations = [{zone:'EH Main › Sales Room', qty:50}, {zone:'Mekzen › Large Unit', qty:30}]
+// product.stock = sum of all location qtys (computed)
+
+function getLocations(p){
+  // Migrate old zone/zones to new locations array
+  if(p.locations&&p.locations.length) return p.locations;
+  // Migrate from old zones array
+  const oldZones=p.zones&&p.zones.length?p.zones:(p.zone?[p.zone]:[]);
+  if(oldZones.length){
+    p.locations=oldZones.map(z=>({zone:z,qty:0}));
+    return p.locations;
+  }
   return [];
 }
 
-function addProductZone(productId, zoneStr){
+function getTotalStock(p){
+  const locs=getLocations(p);
+  if(!locs.length) return p.stock||0;
+  const sum=locs.reduce((a,l)=>a+(l.qty||0),0);
+  // If sum is 0 but p.stock exists (not yet migrated), return p.stock
+  return sum||p.stock||0;
+}
+
+function getProductZones(p){
+  return getLocations(p).map(l=>l.zone).filter(Boolean);
+}
+
+function addProductZone(productId, zoneStr, qty){
   const p=DB.products.find(x=>x.id===productId);if(!p)return;
-  if(!p.zones) p.zones=[p.zone||''].filter(Boolean);
-  if(!p.zones.includes(zoneStr)) p.zones.push(zoneStr);
-  p.zone=p.zones[0]; // keep primary
+  if(!p.locations) p.locations=getLocations(p);
+  const existing=p.locations.find(l=>l.zone===zoneStr);
+  if(existing){ existing.qty=(existing.qty||0)+(qty||0); }
+  else { p.locations.push({zone:zoneStr,qty:qty||0}); }
+  p.zone=p.locations[0]?.zone||'';
+  p.zones=p.locations.map(l=>l.zone);
   if(zoneStr.includes('Open / Unlocated')&&!p.openSince) p.openSince=Date.now();
-  logActivity('inventory',`Location added: ${p.name} → ${zoneStr}`);
+  logActivity('inventory',`Location added: ${p.name} → ${zoneStr}${qty?' ('+qty+' '+p.unit+')':''}`);
   save();
 }
 
 function removeProductZone(productId, zoneStr){
   const p=DB.products.find(x=>x.id===productId);if(!p)return;
-  if(!p.zones) p.zones=[p.zone||''].filter(Boolean);
-  p.zones=p.zones.filter(z=>z!==zoneStr);
-  p.zone=p.zones[0]||'';
+  if(!p.locations) p.locations=getLocations(p);
+  p.locations=p.locations.filter(l=>l.zone!==zoneStr);
+  p.zone=p.locations[0]?.zone||'';
+  p.zones=p.locations.map(l=>l.zone);
   logActivity('inventory',`Location removed: ${p.name} ✕ ${zoneStr}`);
   save();
+}
+
+function moveStock(productId, fromZone, toZone, qty){
+  const p=DB.products.find(x=>x.id===productId);if(!p)return false;
+  if(!p.locations) p.locations=getLocations(p);
+  const from=p.locations.find(l=>l.zone===fromZone);
+  if(!from||(from.qty||0)<qty){return false;}
+  from.qty-=qty;
+  if(from.qty<=0) p.locations=p.locations.filter(l=>l.zone!==fromZone);
+  const to=p.locations.find(l=>l.zone===toZone);
+  if(to){ to.qty=(to.qty||0)+qty; }
+  else { p.locations.push({zone:toZone,qty}); }
+  p.zone=p.locations[0]?.zone||'';
+  p.zones=p.locations.map(l=>l.zone);
+  // Clear openSince if moved out of Unlocated
+  if(!p.locations.some(l=>l.zone.includes('Open / Unlocated'))) delete p.openSince;
+  logActivity('inventory',`Moved: ${p.name} ${qty} ${p.unit} from ${fromZone.split('›').pop().trim()} → ${toZone.split('›').pop().trim()} (by ${currentUser?currentUser.name:''})`);
+  save();
+  return true;
+}
+
+function isLowStockNew(p){
+  const stock=getTotalStock(p);
+  const threshold=p.unit==='pcs'||!p.unit?DB.settings.lowStock||10:DB.settings.lowStockBig||100;
+  return stock>0&&stock<=threshold;
 }
 
 // ─── CASH DRAWER / END OF DAY ───
@@ -4141,7 +4729,8 @@ function getTodaySession(){
 }
 
 function getOrPickSession(){
-  return (DB.drawerSessions||[]).find(x=>!x.closed)||null;
+  // Returns the active (open, not locked) session or null
+  return (DB.drawerSessions||[]).find(x=>!x.closed&&!x.locked)||null;
 }
 
 function openSessionForDate(dateStr){
@@ -4162,19 +4751,6 @@ function renderDrawer(){
   const today=todayMinus(0);
   const tomorrow=todayMinus(-1);
   const yesterday=todayMinus(1);
-  const isLateNight=DB.settings.lateNightUntil===tomorrow;
-
-  const lnBar=document.getElementById('drawer-late-night-bar');
-  if(lnBar){
-    lnBar.innerHTML=`<div style="display:flex;align-items:center;gap:14px;padding:10px 16px;margin-bottom:16px;background:${isLateNight?'rgba(155,89,182,0.12)':'var(--bg3)'};border:1px solid ${isLateNight?'rgba(155,89,182,0.35)':'var(--border)'};border-radius:var(--radius)">
-      <span style="font-size:18px">\u{1F319}</span>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">Late Night Mode</div>
-        <div style="font-size:12px;color:var(--text3)">${isLateNight?'ON \u2014 new sales going to <strong>'+tomorrow+'</strong>':'Turn on to log late customers on tomorrow\'s account'}</div>
-      </div>
-      <button onclick="toggleLateNight()" style="padding:6px 16px;border-radius:20px;border:1px solid ${isLateNight?'rgba(155,89,182,0.5)':'var(--border)'};background:${isLateNight?'rgba(155,89,182,0.2)':'var(--bg4)'};color:${isLateNight?'#9b59b6':'var(--text2)'};font-size:13px;font-weight:600;cursor:pointer">${isLateNight?'Turn Off':'Turn On'}</button>
-    </div>`;
-  }
 
   const activeSession=getOrPickSession();
 
@@ -4199,7 +4775,7 @@ function renderDrawer(){
           <button onclick="openSessionForDate('${tomorrow}');renderDrawer()" style="padding:22px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
             <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">TOMORROW</div>
             <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.1">${formatDisplayDate(tomorrow)}</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:4px">${tomorrow} \u2014 for late-night sales after closing</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:4px">${tomorrow} \u2014 for sales that come in after closing today</div>
           </button>
           <button onclick="openSessionForDate('${yesterday}');renderDrawer()" style="padding:22px 24px;border-radius:var(--radius);border:2px solid var(--border);background:var(--bg3);cursor:pointer;text-align:left;width:100%">
             <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">YESTERDAY</div>
@@ -4271,6 +4847,19 @@ function renderDrawer(){
       <div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-family:var(--font-head);font-size:20px"><span>Expected in Drawer</span><span style="color:var(--accent)">${cur} ${expectedInDrawer.toLocaleString()}</span></div>
     </div>`;
 
+  // Show/hide close day button based on role
+  const closBtn=document.getElementById('close-day-btn');
+  if(closBtn){
+    const isManager=currentUser&&currentUser.role==='Manager';
+    closBtn.style.display=isManager?'':'none';
+    let note=document.getElementById('close-day-note');
+    if(!isManager){
+      if(!note){note=document.createElement('span');note.id='close-day-note';closBtn.parentNode.appendChild(note);}
+      note.style.cssText='font-size:12px;color:var(--text3);flex:2;text-align:center';
+      note.textContent='Only manager can close the day';
+    } else if(note){ note.remove(); }
+  }
+
   renderDrawerHistory(cur,today);
 }
 
@@ -4301,7 +4890,10 @@ function renderDrawerHistory(cur,today){
         ${imbalance?`<div style="font-size:10px;font-weight:400;color:var(--red)">${diff>0?'Extra — unrecorded sales?':'Missing — expenses not logged?'}</div>`:''}
       </td>
       <td style="font-size:12px;color:var(--text3)">${s.closedBy||'—'}</td>
-      <td><button class="action-btn" style="font-size:11px" onclick="showDayDetail('${s.date}')">📋 View</button></td>
+      <td>
+        <button class="action-btn" style="font-size:11px" onclick="showDayDetail('${s.date}')">📋 View</button>
+        ${s.locked&&currentUser&&currentUser.role==='Manager'?`<button class="action-btn" style="font-size:11px;color:var(--green);border-color:var(--green)" onclick="reopenDay('${s.date}')">🔓 Reopen</button>`:''}
+      </td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">No previous sessions</td></tr>';
   renderWeeklyAnalysis(cur);
@@ -4325,6 +4917,68 @@ function removeExpense(idx){
   if(!session) return;
   session.expenses.splice(idx,1);
   save();renderDrawer();
+}
+
+function showDayDetail(date){
+  const s=DB.drawerSessions.find(x=>x.date===date);
+  const panel=document.getElementById('drawer-day-detail');
+  if(!s||!panel){return;}
+  const cur='NKF';
+  const isManager=currentUser&&currentUser.role==='Manager';
+  const rev=DB.sales.filter(x=>x.date===date).reduce((a,x)=>a+x.total,0);
+  const exp=(s.expenses||[]).reduce((a,e)=>a+e.amount,0);
+  const expected=s.startingCash+rev-exp;
+  const sales=DB.sales.filter(x=>x.date===date);
+  panel.style.display='block';
+  panel.innerHTML=`<div class="panel" style="border:2px solid var(--border2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--accent)"></span> Day Detail — ${date}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${s.locked&&isManager?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="reopenDay('${date}')">🔓 Reopen This Day</button>`:''}
+        <button onclick="document.getElementById('drawer-day-detail').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">✕</button>
+      </div>
+    </div>
+    ${s.locked?'<div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:var(--radius2);padding:8px 12px;font-size:12px;color:var(--text2);margin-bottom:12px">🔒 This day is locked. Manager can reopen it to add or edit entries.</div>':''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div>
+        <div style="font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Cash Summary</div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Opened by</span><span>${s.openedBy||'—'}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Closed by</span><span>${s.closedBy||'—'} ${s.closedAt?'('+s.closedAt+')':''}</span></div>
+        ${s.reopenedBy?`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Reopened by</span><span style="color:var(--green)">${s.reopenedBy} (${s.reopenedAt||''})</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Starting float</span><span>${cur} ${s.startingCash}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">+ Sales</span><span style="color:var(--green)">${cur} ${rev.toLocaleString()}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">− Expenses</span><span style="color:var(--red)">${exp?cur+' '+exp:'—'}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;font-family:var(--font-head);font-size:18px"><span>Expected</span><span style="color:var(--accent)">${cur} ${expected.toLocaleString()}</span></div>
+        ${s.actualCash!=null?`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-top:1px solid var(--border)"><span style="color:var(--text3)">Actual counted</span><span style="font-weight:600">${cur} ${s.actualCash}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text3)">Difference</span><span style="color:${Math.abs(s.actualCash-expected)<1?'var(--green)':'var(--red)'};font-weight:600">${s.actualCash>expected?'+':''}${cur} ${(s.actualCash-expected).toFixed(0)}</span></div>`:'<div style="font-size:11px;color:var(--text3);padding:6px 0">No cash count recorded.</div>'}
+        ${(s.expenses||[]).length?`<div style="margin-top:10px;font-size:12px;color:var(--text3);font-weight:600;margin-bottom:4px">Expenses</div>
+        ${(s.expenses||[]).map(e=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text2)"><span>${e.desc}${e.by?' ('+e.by+')':''}</span><span style="color:var(--red)">− ${cur} ${e.amount}</span></div>`).join('')}`:''}
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Sales (${sales.length})</div>
+        ${sales.length?sales.map(sale=>`
+          <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--text2);font-weight:500">${sale.customer}</span><span style="color:var(--accent);font-family:var(--font-head)">${cur} ${sale.total.toLocaleString()}</span></div>
+            <div style="color:var(--text3);font-size:11px">${sale.items.map(i=>i.name+' ×'+i.qty).join(', ')}${sale.servedBy?' · '+sale.servedBy:''}</div>
+          </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:12px 0">No sales this day.</div>'}
+      </div>
+    </div>
+    ${isManager?`<div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--bg3);border-radius:var(--radius2)">
+      <span style="font-size:13px;color:var(--text2)">Record actual cash counted:</span>
+      <input class="search-input" type="number" id="actual-cash-input" placeholder="NKF amount" value="${s.actualCash||''}" style="width:120px;padding:5px 8px;font-size:13px">
+      <button class="topbar-btn" onclick="saveActualCash('${date}')">Save Count</button>
+    </div>`:''}
+  </div>`;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function saveActualCash(date){
+  const s=DB.drawerSessions.find(x=>x.date===date);if(!s)return;
+  const amt=parseFloat(document.getElementById('actual-cash-input').value);
+  if(isNaN(amt)){toast('Enter a valid amount');return;}
+  s.actualCash=amt;
+  save();showDayDetail(date);renderDrawer();
+  toast('Cash count saved');
 }
 
 function renderWeeklyAnalysis(cur){
@@ -4366,7 +5020,24 @@ function renderWeeklyAnalysis(cur){
     </div>`;
 }
 
+function switchDrawerDay(){
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only manager can switch days');return;}
+  // Close current open session if any, then show the day picker
+  const session=getOrPickSession();
+  if(session){
+    session.closed=true;
+    session.closedBy=currentUser?currentUser.name:'';
+    session.closedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    logActivity('inventory',`Day switched by ${session.closedBy} — session for ${session.date} closed`);
+    save();
+  }
+  renderDrawer(); // no open session → shows day picker
+}
+
 function closeDay(){
+  if(!currentUser||currentUser.role!=='Manager'){
+    toast('Only the manager can close the day');return;
+  }
   const session=getOrPickSession();
   if(!session){toast('No open session to close');return;}
   const cur='NKF';
@@ -4375,40 +5046,103 @@ function closeDay(){
   const exp=(session.expenses||[]).reduce((a,e)=>a+e.amount,0);
   const expected=session.startingCash+rev-exp;
   session.closed=true;
-  session.closedBy=currentUser?currentUser.name:'';
+  session.locked=true; // manager-locked: requires explicit reopen
+  session.closedBy=currentUser.name;
   session.closedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  logActivity('inventory',`Day closed by ${session.closedBy} for ${sessionDate}. Revenue: ${cur} ${rev}. Expected: ${cur} ${expected}`);
+  logActivity('inventory',`Day closed & locked by ${session.closedBy} for ${sessionDate}. Revenue: ${cur} ${rev}. Expected: ${cur} ${expected}`);
   save();
   renderDrawer();
-  toast('Day closed ✓  Expected in drawer: '+cur+' '+expected.toLocaleString());
+  toast(`Day closed ✓  Expected in drawer: ${cur} ${expected.toLocaleString()}`);
 }
 
-function toggleLateNight(){
-  const tomorrow=todayMinus(-1);
-  if(DB.settings.lateNightUntil===tomorrow){
-    delete DB.settings.lateNightUntil;
-    save(); renderDrawer(); renderPOS();
-    toast('Late Night off — sales back to today');
-  } else {
-    // Pre-create tomorrow session if needed
-    if(!DB.drawerSessions.find(x=>x.date===tomorrow&&!x.closed)){
-      DB.drawerSessions.push({id:Date.now()+1,date:tomorrow,openedBy:currentUser?currentUser.name:'',startingCash:DRAWER_START,expenses:[],closed:false,closedBy:'',closedAt:'',lateNightCarryover:true});
-    }
-    DB.settings.lateNightUntil=tomorrow;
-    save(); renderDrawer(); renderPOS();
-    toast('🌙 Late Night on — new sales go to '+tomorrow);
-  }
-}
 
 // ─── EMPLOYEE PURCHASE HANDLING ───
 // showRequestModal updated to handle 'purchase' type
 // handleRequest updated to handle 'purchase' approval
 
-function endLateNight(){
-  delete DB.settings.lateNightUntil;
+
+function reopenDay(date){
+  if(!currentUser||currentUser.role!=='Manager'){toast('Only manager can reopen a day');return;}
+  const s=DB.drawerSessions.find(x=>x.date===date&&x.closed);
+  if(!s){toast('Session not found');return;}
+  // Close any other open session first
+  DB.drawerSessions.filter(x=>!x.closed&&x.date!==date).forEach(x=>{x.closed=true;x.closedBy='System (auto)';x.closedAt='';});
+  s.closed=false;
+  s.locked=false;
+  s.reopenedBy=currentUser.name;
+  s.reopenedAt=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  logActivity('inventory',`Day ${date} reopened by ${currentUser.name}`);
   save();
-  renderPOS();
-  toast('Late Night mode off — sales back to today');
+  renderDrawer();
+  toast(`Day ${date} is now open — all sales and expenses restored`);
+}
+
+// ─── RECYCLE BIN ───
+function sendToRecycleBin(type, data, deletedBy, reason){
+  if(!DB.recycleBin) DB.recycleBin=[];
+  DB.recycleBin.push({
+    id:Date.now(), date:todayMinus(0),
+    time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    type, data, deletedBy:deletedBy||'Unknown', reason:reason||''
+  });
+}
+
+function renderRecycle(){
+  if(!DB.recycleBin) DB.recycleBin=[];
+  const isManager=currentUser&&currentUser.role==='Manager';
+  const tbody=document.getElementById('recycle-tbody');
+  if(!tbody) return;
+  if(!DB.recycleBin.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">Recycle bin is empty</td></tr>';
+    return;
+  }
+  tbody.innerHTML=[...DB.recycleBin].reverse().map(item=>{
+    const label=item.type==='product'?item.data.name||item.data
+      :item.type==='sale'?`Sale — ${item.data.customer} (NKF ${item.data.total})`
+      :item.type==='customer'?item.data.name||item.data
+      :item.type==='loan'?`Loan — ${item.data.borrower} NKF ${item.data.amount}`
+      :JSON.stringify(item.data).substring(0,60);
+    return `<tr>
+      <td style="font-size:12px;color:var(--text3)">${item.date} ${item.time||''}</td>
+      <td><span class="badge ${item.type==='product'?'blue':item.type==='sale'?'green':'gray'}">${item.type}</span></td>
+      <td style="font-size:13px;font-weight:500">${label}</td>
+      <td style="font-size:12px;color:var(--text3)">${item.deletedBy}</td>
+      <td style="font-size:12px;color:var(--text3);max-width:140px">${item.reason}</td>
+      <td>
+        ${isManager?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="restoreFromBin(${item.id})">↩ Restore</button>
+        <button class="action-btn del" onclick="permDeleteFromBin(${item.id})">✕ Delete</button>`:'<span style="font-size:11px;color:var(--text3)">Manager only</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function restoreFromBin(id){
+  if(!DB.recycleBin) return;
+  const item=DB.recycleBin.find(x=>x.id===id);
+  if(!item){toast('Item not found');return;}
+  if(item.type==='product'){
+    DB.products.push(typeof item.data==='object'?item.data:{name:item.data,cat:'Other',price:0,stock:0,unit:'pcs'});
+    toast(`Product "${item.data.name||item.data}" restored`);
+    logActivity('inventory',`Restored from recycle bin: product "${item.data.name||item.data}"`);
+  } else if(item.type==='sale'){
+    DB.sales.push(item.data);
+    toast('Sale restored');
+    logActivity('sale',`Restored from recycle bin: sale to ${item.data.customer}`);
+  } else if(item.type==='customer'){
+    DB.customers.push(item.data);
+    toast('Customer restored');
+  } else if(item.type==='loan'){
+    if(!DB.loans) DB.loans=[];
+    DB.loans.push(item.data);
+    toast('Loan restored');
+  }
+  DB.recycleBin=DB.recycleBin.filter(x=>x.id!==id);
+  save(); renderRecycle();
+}
+
+function permDeleteFromBin(id){
+  DB.recycleBin=(DB.recycleBin||[]).filter(x=>x.id!==id);
+  save(); renderRecycle(); toast('Permanently deleted');
 }
 
 // ─── INIT ───
@@ -4421,10 +5155,8 @@ if(!DB.returns) DB.returns=[];
 if(!DB.activityLog) DB.activityLog=[];
 if(!DB.requests) DB.requests=[];
 if(!DB.drawerSessions) DB.drawerSessions=[];
-// Clear late night mode if the target date is no longer tomorrow (e.g. new day started)
-if(DB.settings.lateNightUntil && DB.settings.lateNightUntil!==todayMinus(-1)){
-  delete DB.settings.lateNightUntil;
-}
+if(!DB.recycleBin) DB.recycleBin=[];
+
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
 if(!DB.settings.lang) DB.settings.lang='en';
 seedData();
