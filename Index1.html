@@ -2023,6 +2023,7 @@ function renderPage(page){
   else if(page==='recycle') renderRecycle();
   else if(page==='staff') renderStaff();
   checkOpenZoneItems();
+  renderEmployeeNotifications();
 }
 
 // ─── DASHBOARD ───
@@ -2979,6 +2980,11 @@ function saveProduct(){
       const changeStr=changes.length?changes.join(' | '):'No field changes detected';
       const who=currentUser?currentUser.name:'Manager';
       logActivity('inventory',`✏ Product edited by ${who}: ${name} — ${changeStr}`);
+      // Notify employees of price changes
+      const priceChanges=changes.filter(c=>c.includes('price')||c.includes('Price'));
+      if(priceChanges.length){
+        pushEmployeeNotification(`💰 Price update for "${name}" by ${who}: ${priceChanges.join(', ')}`);
+      }
       // Push to alerts panel so manager can track their own edits too
       if(!DB.stockAlerts) DB.stockAlerts=[];
       if(changes.length){
@@ -3009,6 +3015,7 @@ function deleteProduct(id){
   if(!p) return;
   sendToRecycleBin('product', {...p}, currentUser?currentUser.name:'', 'Deleted from inventory');
   logActivity('inventory',`Product deleted: ${p.name}`);
+  pushEmployeeNotification(`🗑 "${p.name}" has been removed from inventory by ${currentUser?currentUser.name:'manager'}.`);
   DB.products=DB.products.filter(p=>p.id!==id);
   save(); filterInventory(); toast(`"${p.name}" moved to Recycle Bin`);
 }
@@ -5288,6 +5295,62 @@ function saveReturn(){
   toast('Return submitted \u2014 awaiting manager approval');
 }
 
+// ─── EMPLOYEE NOTIFICATIONS ───
+function pushEmployeeNotification(message){
+  if(!DB.notifications) DB.notifications=[];
+  DB.notifications.push({
+    id:Date.now(),
+    ts:new Date().toISOString(),
+    message,
+    seenBy:[]
+  });
+  if(DB.notifications.length>50) DB.notifications=DB.notifications.slice(-50);
+}
+
+function renderEmployeeNotifications(){
+  if(!currentUser||currentUser.role==='Manager') return;
+  if(!DB.notifications||!DB.notifications.length) return;
+  const unseen=(DB.notifications||[]).filter(n=>!(n.seenBy||[]).includes(currentUser.name));
+  // Find or create notification panel inside the active page
+  let panel=document.getElementById('emp-notification-panel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='emp-notification-panel';
+    const activePage=document.querySelector('.page.active')||document.getElementById('page-dashboard');
+    if(activePage) activePage.insertBefore(panel,activePage.firstChild);
+  }
+  if(!unseen.length){panel.innerHTML='';return;}
+  panel.innerHTML=`<div style="background:rgba(155,89,182,0.1);border:1px solid rgba(155,89,182,0.4);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-weight:600;font-size:13px;color:#9b59b6">🔔 ${unseen.length} update${unseen.length!==1?'s':''} from manager</span>
+      <button class="action-btn" style="font-size:11px" onclick="dismissAllNotifications()">✓ Dismiss all</button>
+    </div>
+    ${unseen.map(n=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(155,89,182,0.15);font-size:12px">
+      <div style="flex:1;color:var(--text2)">${n.message}</div>
+      <div style="flex-shrink:0">
+        <span style="font-size:10px;color:var(--text3);margin-right:8px">${new Date(n.ts).toLocaleDateString()}</span>
+        <button class="action-btn" onclick="dismissNotification(${n.id})" style="font-size:11px">✓ Got it</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function dismissNotification(id){
+  const n=(DB.notifications||[]).find(x=>x.id===id);
+  if(n&&currentUser){if(!n.seenBy)n.seenBy=[];n.seenBy.push(currentUser.name);}
+  save();
+  renderEmployeeNotifications();
+}
+
+function dismissAllNotifications(){
+  (DB.notifications||[]).forEach(n=>{
+    if(!n.seenBy)n.seenBy=[];
+    if(currentUser&&!n.seenBy.includes(currentUser.name)) n.seenBy.push(currentUser.name);
+  });
+  save();
+  renderEmployeeNotifications();
+}
+
 // ─── ACTIVITY LOG ───
 function logActivity(type, detail, amount=0){
   if(!DB.activityLog) DB.activityLog=[];
@@ -6795,6 +6858,7 @@ if(!DB.requests) DB.requests=[];
 if(!DB.drawerSessions) DB.drawerSessions=[];
 if(!DB.recycleBin) DB.recycleBin=[];
 if(!DB.stockAlerts) DB.stockAlerts=[];
+if(!DB.notifications) DB.notifications=[];
 
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
 if(!DB.settings.lang) DB.settings.lang='en';
