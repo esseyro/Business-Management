@@ -1811,7 +1811,7 @@ function seedData() {
   ];
   save();
 }
-function todayMinus(d){const t=new Date();t.setDate(t.getDate()-d);return t.toISOString().split('T')[0];}
+function todayMinus(d){const t=new Date();t.setDate(t.getDate()-d);const y=t.getFullYear();const m=String(t.getMonth()+1).padStart(2,'0');const day=String(t.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 
 // ─── TIGRINYA / LANGUAGE ───
 const TI = {
@@ -2063,14 +2063,16 @@ function renderDashboard(){
 
   if(isManager){
     // ── MANAGER DASHBOARD ──
-    const totalRev=DB.sales.reduce((a,s)=>a+s.total,0);
-    const totalProfit=DB.sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
-
+    const todaySession=DB.drawerSessions.find(s=>s.date===todayMinus(0));
+    const dayStatus=todaySession?todaySession.closed?'Closed':'Open':'Not Opened';
+    const dayStatusColor=dayStatus==='Open'?'green':dayStatus==='Closed'?'gray':'orange';
+    const namedCustomers=new Set(daySales.filter(s=>s.customer&&s.customer!=='Walk-in').map(s=>s.customer)).size;
+    const walkIns=daySales.filter(s=>!s.customer||s.customer==='Walk-in').length;
+    const uniqueCustomers=namedCustomers+walkIns;
     document.getElementById('dash-stats').innerHTML=`
-      <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-label">${dayLabel} Revenue</div><div class="stat-value">${cur} ${dayRev.toLocaleString()}</div><div class="stat-sub">${daySales.length} sales</div></div>
       <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-label">Total Products</div><div class="stat-value">${DB.products.length}</div><div class="stat-sub">${lowStock.length} low stock</div></div>
-      <div class="stat-card green"><div class="stat-icon">📈</div><div class="stat-label">All-time Revenue</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div><div class="stat-sub">All time</div></div>
-      <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div><div class="stat-sub">Based on cost prices</div></div>`;
+      <div class="stat-card green"><div class="stat-icon">👥</div><div class="stat-label">Customers Today</div><div class="stat-value">${uniqueCustomers}</div><div class="stat-sub">served today</div></div>
+      <div class="stat-card ${dayStatusColor}"><div class="stat-icon">🏪</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:20px">${dayStatus}</div><div class="stat-sub">${todaySession?todaySession.openedBy?'by '+todaySession.openedBy:'':''}</div></div>`;
 
     document.getElementById('recent-sales-list').innerHTML=`
       ${dayPickerHtml}
@@ -2296,6 +2298,42 @@ function completeSale(){
   if(!isManager&&!session){
     toast('The manager needs to open the day before sales can be made');return;
   }
+  // Warn manager if day is closed or not opened
+  if(isManager&&!session){
+    const today=todayMinus(0);
+    const todaySession=DB.drawerSessions.find(s=>s.date===today);
+    const msg=todaySession&&todaySession.closed
+      ?'The cash drawer for today is closed. Do you want to continue with the sale?'
+      :'The cash drawer has not been opened today. Do you want to continue with the sale?';
+    showSaleWarning(msg);
+    return;
+  }
+  _doCompleteSale();
+}
+
+function showSaleWarning(msg){
+  let modal=document.getElementById('modal-sale-warning');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-sale-warning';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div class="modal" style="max-width:380px">
+    <div class="modal-header"><div class="modal-title">⚠ Day Not Open</div></div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--text2);margin:0 0 16px">${msg}</p>
+      <p style="font-size:13px;color:var(--text3);margin:0">Continue with the sale anyway?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-sale-warning')">Cancel</button>
+      <button class="btn-save" onclick="closeModal('modal-sale-warning');_doCompleteSale()">Complete Sale</button>
+    </div>
+  </div>`;
+  openModal('modal-sale-warning');
+}
+
+function _doCompleteSale(){
   const saleDate=activeDrawerDate||todayMinus(0);
   const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
   const mode=document.getElementById('discount-mode').value||'bill';
@@ -2432,6 +2470,30 @@ function filterInventory(){
         </div>
         <button onclick="openAssignModalFor(${p.id})" class="action-btn" style="font-size:12px">+ Assign / Move Stock</button>`
         :'<div style="color:var(--text3);font-size:13px">No location assigned yet. <button onclick="openAssignModalFor('+p.id+')" class="action-btn" style="font-size:12px">+ Assign Location</button></div>'}
+        ${p.batches&&p.batches.length&&currentUser&&currentUser.role==='Manager'?`
+        <div style="margin-top:14px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📦 Purchase History (${p.batches.length} batch${p.batches.length!==1?'es':''})</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="background:var(--bg2)">
+                <th style="padding:5px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Date</th>
+                <th style="padding:5px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Supplier</th>
+                <th style="padding:5px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Qty</th>
+                <th style="padding:5px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Cost/Unit</th>
+                <th style="padding:5px 10px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Total Cost</th>
+              </tr></thead>
+              <tbody>
+                ${[...p.batches].reverse().map(b=>`<tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:5px 10px">${b.date}</td>
+                  <td style="padding:5px 10px;color:var(--text2)">${b.supplier||'—'}</td>
+                  <td style="padding:5px 10px">${b.qty} ${b.unit||p.unit}</td>
+                  <td style="padding:5px 10px;font-family:var(--font-head);color:var(--accent)">NKF ${b.unitPrice}</td>
+                  <td style="padding:5px 10px;font-family:var(--font-head)">NKF ${(b.qty*b.unitPrice).toLocaleString()}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`:''}
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No products found</td></tr>';
@@ -4139,10 +4201,12 @@ function savePurchase(){
   const grand=validLines.reduce((a,l)=>a+l.total,0);
   const isDubai=document.getElementById('pur-is-dubai').checked;
   const rate=getExchangeRate();
+  const purDate=document.getElementById('pur-date').value||todayMinus(0);
+  const purSupplier=document.getElementById('pur-supplier').value;
   const record={
     id:Date.now(),
-    date:document.getElementById('pur-date').value||todayMinus(0),
-    supplier:document.getElementById('pur-supplier').value,
+    date:purDate,
+    supplier:purSupplier,
     lines:validLines,grandTotal:grand,
     notes:document.getElementById('pur-notes').value,
     recordedBy:currentUser?currentUser.name:'',
@@ -4152,28 +4216,58 @@ function savePurchase(){
   if(!DB.purchases) DB.purchases=[];
   DB.purchases.push(record);
 
-  // All items: add stock to Unlocated with qty, then ask for final location
+  // Per line: add stock to Unlocated + record batch on product
   const findMatch=name=>DB.products.find(p=>p.name.toLowerCase().trim()===name.toLowerCase().trim());
+  const costPriceUpdates=[]; // collect items where cost changed
+
   validLines.forEach(l=>{
     const match=findMatch(l.item);
+    const lineSupplier=purSupplier||'';
+    const batch={
+      purchaseId:record.id,
+      date:purDate,
+      supplier:lineSupplier,
+      qty:Math.floor(l.qty),
+      unitPrice:l.unitPrice,
+      unit:l.unit||'pcs'
+    };
     if(match){
       const purchasedQty=Math.floor(l.qty);
       match.stock=(match.stock||0)+purchasedQty;
       if(!match.locations) match.locations=getLocations(match);
-      // Add to Open/Unlocated with qty
       const unlocZone='⚠ Open / Unlocated';
       const existing=match.locations.find(loc=>loc.zone===unlocZone);
       if(existing){ existing.qty=(existing.qty||0)+purchasedQty; }
       else { match.locations.push({zone:unlocZone,qty:purchasedQty}); }
       if(!match.openSince) match.openSince=Date.now();
+      // Record batch history on product
+      if(!match.batches) match.batches=[];
+      match.batches.push(batch);
+      // Check if cost price changed
+      if(match.cost&&match.cost!==l.unitPrice){
+        costPriceUpdates.push({product:match,newCost:l.unitPrice,oldCost:match.cost,supplier:lineSupplier});
+      } else if(!match.cost){
+        match.cost=l.unitPrice; // set first cost
+      }
     }
   });
 
   const currencyNote=isDubai?` (AED @ ${rate} rate)`:'';
-  logActivity('purchase',`Purchased ${validLines.length} item(s) from ${record.supplier||'unnamed supplier'}${currencyNote}`,grand);
+  logActivity('purchase',`Purchased ${validLines.length} item(s) from ${purSupplier||'unnamed supplier'}${currencyNote}`,grand);
   save();
   closeModal('modal-purchase');
-  // Ask about ALL items — existing and new
+
+  // Prompt about cost price updates if any changed
+  if(costPriceUpdates.length){
+    const names=costPriceUpdates.map(u=>`• ${u.product.name}: NKF ${u.oldCost} → NKF ${u.newCost} (from ${u.supplier||'supplier'})`).join('\n');
+    if(confirm(`These items were bought at a different cost price than recorded:\n\n${names}\n\nUpdate cost prices to the new prices?`)){
+      costPriceUpdates.forEach(u=>{u.product.cost=u.newCost;});
+      save();
+      toast('Cost prices updated ✓');
+    }
+  }
+
+  // Ask about storage locations
   _purNewQueue=validLines;
   _purNewIdx=0;
   processNextPurItem();
@@ -5117,7 +5211,7 @@ function logSaleActivity(sale){
     user: currentUser ? currentUser.name : 'System',
     role: currentUser ? currentUser.role : '',
     type: 'sale',
-    detail: `Sale to ${sale.customer} — ${sale.items.length} item(s)`,
+    detail: `Sale to ${sale.customer} — ${sale.items.length} item(s)${sale.discount?` — Discount: NKF ${sale.discount}`:''}`,
     amount: sale.total,
     saleItems: sale.items.map(i=>({name:i.name, qty:i.qty, price:i.price, lineTotal:i.qty*i.price})),
     saleId: sale.id,
@@ -5126,6 +5220,22 @@ function logSaleActivity(sale){
     discNote: sale.discNote||''
   });
   if(DB.activityLog.length>1000) DB.activityLog=DB.activityLog.slice(-1000);
+  // Push discount alert for manager if a discount was given
+  if(sale.discount>0){
+    if(!DB.stockAlerts) DB.stockAlerts=[];
+    DB.stockAlerts.push({
+      id:Date.now()+1,
+      date:sale.date,
+      time:sale.time||'',
+      product:`Sale to ${sale.customer}`,
+      action:'discount',
+      qty:null,unit:'',oldStock:null,newStock:null,
+      by:currentUser?currentUser.name:'',
+      reason:`NKF ${sale.discount} discount (${sale.discNote||'no note'}) on ${sale.items.map(i=>i.name).join(', ')} — Original: NKF ${sale.subtotal}, Paid: NKF ${sale.total}`,
+      seen:false,
+      type:'discount'
+    });
+  }
 }
 
 function filterActivity(){
@@ -6272,7 +6382,7 @@ function updateStockAlertBadge(){
 
   alertPanel.innerHTML=hasAnything?`<div style="background:rgba(155,89,182,0.1);border:1px solid rgba(155,89,182,0.4);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-weight:600;font-size:13px;color:#9b59b6">⚠ ${unseen.length+dueLoan.length} item${unseen.length+dueLoan.length!==1?'s':''} need attention</span>
+      <span style="font-weight:600;font-size:13px;color:#9b59b6">⚠ ${unseen.length+dueLoan.length} item${unseen.length+dueLoan.length!==1?'s':''} need attention${unseen.filter(a=>a.type==='discount').length?` (${unseen.filter(a=>a.type==='discount').length} discount${unseen.filter(a=>a.type==='discount').length!==1?'s':''})`:''}</span>
       ${unseen.length?`<button onclick="markAllStockAlertsSeen()" style="font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid rgba(155,89,182,0.4);background:none;color:#9b59b6;cursor:pointer">✓ Dismiss all changes</button>`:''}
     </div>
 
@@ -6286,17 +6396,19 @@ function updateStockAlertBadge(){
     </div>`).join('')}
 
     ${unseen.map(a=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid rgba(155,89,182,0.15);font-size:12px">
-      <span style="color:#9b59b6;font-weight:700;font-size:14px;flex-shrink:0">${a.type==='product_edit'?(a.action==='add_request'?'➕':'✏'):(a.action==='added'?'▲':'▼')}</span>
+      <span style="color:#9b59b6;font-weight:700;font-size:14px;flex-shrink:0">${a.type==='product_edit'?(a.action==='add_request'?'➕':'✏'):a.type==='discount'?'💸':(a.action==='added'?'▲':'▼')}</span>
       <div style="flex:1">
         <strong>${a.product}</strong>
         ${a.type==='product_edit'
           ?`<span style="color:var(--text3)"> — ${a.action==='add_request'?'New product request':a.reason}</span>`
+          :a.type==='discount'
+          ?`<span style="color:var(--red)"> — ${a.reason}</span>`
           :`<span style="color:var(--text3)"> — ${a.action} ${a.qty} ${a.unit} (${a.oldStock}→${a.newStock})</span>`
         }
-        <div style="color:var(--text3);margin-top:2px">by <em>${a.by}</em> · ${a.date} ${a.time}${a.type!=='product_edit'?' · '+a.reason:''}</div>
+        <div style="color:var(--text3);margin-top:2px">by <em>${a.by}</em> · ${a.date} ${a.time}${a.type!=='product_edit'&&a.type!=='discount'?' · '+a.reason:''}</div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
-        <button onclick="${a.action==='add_request'||a.type==='product_edit'?`nav('requests')`:`nav('inventory')`};markStockAlertSeen(${a.id})" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;white-space:nowrap">${a.action==='add_request'?'→ Review':'→ View'}</button>
+        <button onclick="${a.type==='discount'?`nav('reports')`:a.action==='add_request'||a.type==='product_edit'?`nav('requests')`:`nav('inventory')`};markStockAlertSeen(${a.id})" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;white-space:nowrap">${a.type==='discount'?'→ Sales':a.action==='add_request'?'→ Review':'→ View'}</button>
         <button onclick="markStockAlertSeen(${a.id})" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text3)">✕</button>
       </div>
     </div>`).join('')}
