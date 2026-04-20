@@ -1128,9 +1128,22 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </select>
         </div>
       </div>
-      <div class="form-row-2">
+      <!-- Standard price fields (hidden when unit=rolls) -->
+      <div class="form-row-2" id="f-price-standard">
         <div class="form-row"><div class="form-label">Selling Price (NKF) *</div><input class="form-input" id="f-price" type="number" placeholder="0.00" min="0" step="0.01"></div>
         <div class="form-row"><div class="form-label">Cost Price (NKF)</div><input class="form-input" id="f-cost" type="number" placeholder="0.00" min="0" step="0.01"></div>
+      </div>
+      <!-- Roll-specific price fields (shown when unit=rolls) -->
+      <div id="f-price-rolls" style="display:none">
+        <div class="form-row-2">
+          <div class="form-row"><div class="form-label">Sell Price per Roll (NKF)</div><input class="form-input" id="f-price-per-roll" type="number" placeholder="0.00" min="0" step="0.01"></div>
+          <div class="form-row"><div class="form-label">Sell Price per Meter (NKF)</div><input class="form-input" id="f-price-per-meter" type="number" placeholder="0.00" min="0" step="0.01"></div>
+        </div>
+        <div class="form-row" style="max-width:220px">
+          <div class="form-label">Cost Price per Roll (NKF)</div>
+          <input class="form-input" id="f-cost-roll" type="number" placeholder="0.00" min="0" step="0.01">
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Cables are bought by roll — cost per roll</div>
+        </div>
       </div>
       <div class="form-row-2">
         <div class="form-row" id="f-stock-row">
@@ -1753,6 +1766,7 @@ function load() {
     if(p.zone&&p.zone.includes('Unlocated Items')) p.zone='⚠ Open / Unlocated';
     if(p.zones) p.zones=p.zones.map(z=>z.includes('Unlocated Items')?'⚠ Open / Unlocated':z);
   });
+  migrateAllRollProducts();
 }
 
 // ─── SEED DATA ───
@@ -2216,13 +2230,19 @@ function filterPOS(){
       <div class="product-emoji">${emojis[p.cat]||'📦'}</div>
       <div class="product-name-pos">${p.name}</div>
       <div class="product-price-pos">${DB.settings.currency} ${p.price}</div>
-      <div class="product-stock-pos">${getTotalStock(p)} ${p.unit} in stock${p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':''}${p.unit==='rolls'&&p.metersPerRoll?' ('+getTotalStock(p)*p.metersPerRoll+'m total)':''}</div>
+      <div class="product-stock-pos">${p.unit==='rolls'&&p.metersPerRoll?`${getTotalFullRolls(p)} rolls${getTotalPartialMeters(p)>0?' + '+getTotalPartialMeters(p)+'m':''} · ${getTotalRollMeters(p)}m total`:getTotalStock(p)+' '+p.unit+' in stock'+(p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':'')}</div>
     </div>`).join('')||'<div style="color:var(--text3);padding:20px;text-align:center;font-size:13px">No products found</div>';
 }
 
 function addToCart(id){
   const p=DB.products.find(x=>x.id===id);
-  if(!p||getTotalStock(p)<=0){toast('Out of stock!');return;}
+  if(!p){toast('Product not found');return;}
+  // Roll products get a special sell modal
+  if(p.unit==='rolls'&&p.metersPerRoll){
+    openRollSellModal(p);
+    return;
+  }
+  if(getTotalStock(p)<=0){toast('Out of stock!');return;}
   const ex=cart.find(c=>c.id===id);
   if(ex){
     if(ex.qty>=getTotalStock(p)){toast('Max stock reached');return;}
@@ -2234,6 +2254,138 @@ function addToCart(id){
   toast('Added: '+p.name);
 }
 
+function openRollSellModal(p){
+  const totalMeters=getTotalRollMeters(p);
+  const fullRolls=getTotalFullRolls(p);
+  const partialM=getTotalPartialMeters(p);
+  const cur=DB.settings.currency;
+  if(totalMeters<=0){toast('Out of stock!');return;}
+  let modal=document.getElementById('modal-roll-sell');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-roll-sell';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-roll-sell');});
+  }
+  const pricePerMeter=p.pricePerMeter||p.price||0;
+  const pricePerRoll=p.pricePerRoll||(p.metersPerRoll*(p.pricePerMeter||p.price||0))||0;
+  modal.innerHTML=`<div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">🔌 Sell ${p.name}</div>
+      <button class="modal-close" onclick="closeModal('modal-roll-sell')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px">
+        <div style="color:var(--text2)"><strong>${fullRolls} full rolls</strong>${partialM>0?` + <strong>${partialM}m</strong> partial`:''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${totalMeters}m total available · ${p.metersPerRoll}m per roll</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${cur} ${pricePerMeter}/m · ${cur} ${pricePerRoll}/roll</div>
+      </div>
+      <div class="form-row">
+        <div class="form-label">Sell by</div>
+        <div style="display:flex;gap:8px">
+          <button id="roll-mode-meters" onclick="setRollMode('meters')" class="topbar-btn" style="flex:1;background:var(--accent);color:#fff;border:none">By Meters</button>
+          <button id="roll-mode-rolls" onclick="setRollMode('rolls')" class="topbar-btn" style="flex:1">By Rolls</button>
+        </div>
+      </div>
+      <div id="roll-input-section">
+        <div class="form-row">
+          <div class="form-label" id="roll-qty-label">How many meters?</div>
+          <input class="form-input" id="roll-qty-input" type="number" placeholder="e.g. 250" min="1" style="font-size:20px;text-align:center" oninput="updateRollSellPreview(${p.id})">
+        </div>
+        <div id="roll-sell-preview" style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;font-size:13px;min-height:44px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-roll-sell')">Cancel</button>
+      <button class="btn-save" onclick="addRollToCart(${p.id})">Add to Cart</button>
+    </div>
+  </div>`;
+  modal._rollMode='meters';
+  openModal('modal-roll-sell');
+  setTimeout(()=>document.getElementById('roll-qty-input').focus(),300);
+}
+
+function setRollMode(mode){
+  const modal=document.getElementById('modal-roll-sell');
+  modal._rollMode=mode;
+  document.getElementById('roll-mode-meters').style.background=mode==='meters'?'var(--accent)':'';
+  document.getElementById('roll-mode-meters').style.color=mode==='meters'?'#fff':'';
+  document.getElementById('roll-mode-meters').style.border=mode==='meters'?'none':'1px solid var(--border)';
+  document.getElementById('roll-mode-rolls').style.background=mode==='rolls'?'var(--accent)':'';
+  document.getElementById('roll-mode-rolls').style.color=mode==='rolls'?'#fff':'';
+  document.getElementById('roll-mode-rolls').style.border=mode==='rolls'?'none':'1px solid var(--border)';
+  document.getElementById('roll-qty-label').textContent=mode==='meters'?'How many meters?':'How many rolls?';
+  document.getElementById('roll-qty-input').placeholder=mode==='meters'?'e.g. 250':'e.g. 2';
+  document.getElementById('roll-qty-input').value='';
+  document.getElementById('roll-sell-preview').innerHTML='';
+}
+
+function updateRollSellPreview(pid){
+  const p=DB.products.find(x=>x.id===pid);if(!p)return;
+  const modal=document.getElementById('modal-roll-sell');
+  const mode=modal._rollMode||'meters';
+  const qty=parseFloat(document.getElementById('roll-qty-input').value)||0;
+  const priceM=p.pricePerMeter||0;
+  const priceR=p.pricePerRoll||p.price||0;
+  const cur=DB.settings.currency;
+  const totalMeters=getTotalRollMeters(p);
+  const mpr=p.metersPerRoll;
+  const prev=document.getElementById('roll-sell-preview');
+  if(!qty){prev.innerHTML='';return;}
+  if(mode==='meters'){
+    if(qty>totalMeters){prev.innerHTML=`<span style="color:var(--red)">Only ${totalMeters}m available</span>`;return;}
+    const fullUsed=Math.floor(qty/mpr);
+    const partUsed=Math.round(qty%mpr);
+    const remaining=totalMeters-qty;
+    const remFull=Math.floor(remaining/mpr);
+    const remPart=Math.round(remaining%mpr);
+    const total=(qty*priceM).toFixed(0);
+    prev.innerHTML=`<div>Uses <strong>${fullUsed} full roll${fullUsed!==1?'s':''}${partUsed>0?' + '+partUsed+'m from partial roll':''}</strong></div>
+      <div style="color:var(--text3);font-size:12px;margin-top:4px">After: ${remFull} full rolls${remPart>0?' + '+remPart+'m partial':''} remaining</div>
+      <div style="color:var(--accent);font-weight:600;margin-top:6px">Total: ${cur} ${total} (${cur} ${priceM}/m × ${qty}m)</div>`;
+  } else {
+    const meters=qty*mpr;
+    if(getTotalFullRolls(p)<qty){prev.innerHTML=`<span style="color:var(--red)">Only ${getTotalFullRolls(p)} full rolls available</span>`;return;}
+    const remaining=totalMeters-meters;
+    const remFull=Math.floor(remaining/mpr);
+    const remPart=Math.round(remaining%mpr);
+    const total=(qty*priceR).toFixed(0);
+    prev.innerHTML=`<div>= <strong>${meters}m total</strong> (${mpr}m/roll)</div>
+      <div style="color:var(--text3);font-size:12px;margin-top:4px">After: ${remFull} full rolls${remPart>0?' + '+remPart+'m partial':''} remaining</div>
+      <div style="color:var(--accent);font-weight:600;margin-top:6px">Total: ${cur} ${total} (${cur} ${priceR}/roll × ${qty} rolls)</div>`;
+  }
+}
+
+function addRollToCart(pid){
+  const p=DB.products.find(x=>x.id===pid);if(!p)return;
+  const modal=document.getElementById('modal-roll-sell');
+  const mode=modal._rollMode||'meters';
+  const qty=parseFloat(document.getElementById('roll-qty-input').value)||0;
+  const priceM=p.pricePerMeter||0;
+  const priceR=p.pricePerRoll||p.price||0;
+  if(!qty||qty<=0){toast('Enter a quantity');return;}
+  const totalMeters=getTotalRollMeters(p);
+  const mpr=p.metersPerRoll;
+  if(mode==='meters'){
+    if(qty>totalMeters){toast(`Only ${totalMeters}m available`);return;}
+    if(!priceM){toast('Price per meter not set — edit the product first');return;}
+    const displayLabel=`${qty}m (${mpr}m rolls)`;
+    const price=parseFloat((qty*priceM).toFixed(2));
+    cart.push({id:pid,name:p.name,price,qty:1,unit:'meters',rollMeters:qty,rollMode:'meters',mpr,displayLabel});
+  } else {
+    if(getTotalFullRolls(p)<qty){toast(`Only ${getTotalFullRolls(p)} full rolls available`);return;}
+    if(!priceR){toast('Price per roll not set — edit the product first');return;}
+    const meters=qty*mpr;
+    const displayLabel=`${qty} roll${qty!==1?'s':''} (${mpr}m/roll = ${meters}m)`;
+    const price=parseFloat((qty*priceR).toFixed(2));
+    cart.push({id:pid,name:p.name,price,qty:1,unit:'rolls',rollMeters:meters,rollMode:'rolls',rollCount:qty,mpr,displayLabel});
+  }
+  closeModal('modal-roll-sell');
+  renderCart();
+  toast(`Added: ${p.name}`);
+}
+
 function renderCart(){
   if(!cart.length){
     document.getElementById('cart-items').innerHTML='<div class="cart-empty">Add products to start a sale</div>';
@@ -2242,11 +2394,12 @@ function renderCart(){
   }
   document.getElementById('cart-items').innerHTML=cart.map((item,i)=>`
     <div class="cart-item">
-      <div class="cart-item-name">${item.name}</div>
+      <div class="cart-item-name">${item.name}${item.displayLabel?`<div style="font-size:10px;color:var(--text3)">${item.displayLabel}</div>`:''}</div>
       <div class="cart-qty-controls">
-        <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+        ${item.rollMode?'<span style="font-size:11px;color:var(--text3)">×1</span>':
+        `<button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
         <span style="font-size:13px;min-width:20px;text-align:center">${item.qty}</span>
-        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>`}
       </div>
       <div class="cart-item-total">${DB.settings.currency} ${(item.price*item.qty).toFixed(0)}</div>
       <span class="remove-btn" onclick="removeFromCart(${i})">✕</span>
@@ -2356,18 +2509,22 @@ function _doCompleteSale(){
   cart.forEach(c=>{
     const p=DB.products.find(x=>x.id===c.id);
     if(p){
-      p.stock=Math.max(0,(getTotalStock(p)||p.stock||0)-c.qty);
-      // Deduct from Sales Room first, then other locations
-      if(p.locations&&p.locations.length){
-        let rem=c.qty;
-        const salesRoomLoc=p.locations.find(l=>l.zone.includes('Sales Room'));
-        if(salesRoomLoc){ const take=Math.min(salesRoomLoc.qty||0,rem); salesRoomLoc.qty-=take; rem-=take; }
-        for(const loc of p.locations){
-          if(rem<=0) break;
-          if(loc.zone.includes('Sales Room')) continue;
-          const take=Math.min(loc.qty||0,rem); loc.qty-=take; rem-=take;
+      if(p.unit==='rolls'&&p.metersPerRoll&&c.rollMeters){
+        // Deduct meters from roll product
+        deductRollMeters(p,c.rollMeters);
+      } else {
+        p.stock=Math.max(0,(getTotalStock(p)||p.stock||0)-c.qty);
+        if(p.locations&&p.locations.length){
+          let rem=c.qty;
+          const salesRoomLoc=p.locations.find(l=>l.zone.includes('Sales Room'));
+          if(salesRoomLoc){ const take=Math.min(salesRoomLoc.qty||0,rem); salesRoomLoc.qty-=take; rem-=take; }
+          for(const loc of p.locations){
+            if(rem<=0) break;
+            if(loc.zone.includes('Sales Room')) continue;
+            const take=Math.min(loc.qty||0,rem); loc.qty-=take; rem-=take;
+          }
+          p.locations=p.locations.filter(l=>l.qty>0);
         }
-        p.locations=p.locations.filter(l=>l.qty>0);
       }
     }
   });
@@ -2445,9 +2602,11 @@ function filterInventory(){
       <td>${p.price?cur+' '+p.price:'<span class="badge orange" style="cursor:pointer" onclick="event.stopPropagation();editProduct('+p.id+')">⚠ No price</span>'}</td>
       <td style="color:var(--text3)">${p.cost?cur+' '+p.cost:'-'}</td>
       <td>
-        <span class="badge ${totalStock===0?'red':isLowStock(p)?'orange':'green'}">${totalStock} ${p.unit}</span>
-        ${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${totalStock*p.pcsPerBox} pcs total</span>`:''}
-        ${p.unit==='rolls'&&p.metersPerRoll?`<span style="font-size:10px;color:var(--blue);display:block">${totalStock} rolls × ${p.metersPerRoll}m = ${totalStock*p.metersPerRoll}m total</span>`:''}
+        ${p.unit==='rolls'&&p.metersPerRoll?`
+          <span class="badge ${getTotalFullRolls(p)===0&&getTotalPartialMeters(p)===0?'red':isLowStock(p)?'orange':'green'}">${getTotalFullRolls(p)} rolls${getTotalPartialMeters(p)>0?' + '+getTotalPartialMeters(p)+'m partial':''}</span>
+          <span style="font-size:10px;color:var(--blue);display:block">${getTotalRollMeters(p)}m total (${p.metersPerRoll}m/roll)</span>
+        `:`<span class="badge ${totalStock===0?'red':isLowStock(p)?'orange':'green'}">${totalStock} ${p.unit}</span>
+        ${p.unit==='boxes'&&p.pcsPerBox?`<span style="font-size:10px;color:var(--text3);display:block">${totalStock*p.pcsPerBox} pcs total</span>`:''}`}
       </td>
       <td style="font-size:12px;color:var(--text3);max-width:180px">
         ${locs.map(l=>`<div>${l.zone.replace('⚠ ','')}: <strong>${l.qty}</strong></div>`).join('')||'—'}
@@ -2464,7 +2623,12 @@ function filterInventory(){
         ${locs.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px">
           ${locs.map(l=>`<div style="background:var(--bg2);border:1px solid ${l.zone.includes('Unlocated')?'rgba(230,126,34,0.4)':'var(--border)'};border-radius:var(--radius2);padding:8px 12px">
             <div style="font-size:11px;color:var(--text3);margin-bottom:2px">${l.zone.replace('⚠ ','')}</div>
-            <div style="font-size:18px;font-weight:700;font-family:var(--font-head);color:${l.zone.includes('Unlocated')?'#e67e22':'var(--accent)'}">${l.qty} ${p.unit}</div>
+            <div style="font-size:18px;font-weight:700;font-family:var(--font-head);color:${l.zone.includes('Unlocated')?'#e67e22':'var(--accent)'}">
+              ${p.unit==='rolls'&&p.metersPerRoll
+                ?`${l.fullRolls||l.qty||0} rolls${(l.partialMeters||0)>0?' + '+(l.partialMeters)+'m partial':''}`
+                :`${l.qty} ${p.unit}`}
+            </div>
+            ${p.unit==='rolls'&&p.metersPerRoll?`<div style="font-size:10px;color:var(--blue);margin-top:2px">${(l.fullRolls||l.qty||0)*p.metersPerRoll+(l.partialMeters||0)}m total</div>`:''}
             ${l.zone.includes('Unlocated')?'<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠ Needs a location</div>':''}
           </div>`).join('')}
         </div>
@@ -2508,8 +2672,12 @@ function toggleBoxField(){
   const unit=document.getElementById('f-unit').value;
   const boxRow=document.getElementById('box-size-row');
   const rollRow=document.getElementById('roll-size-row');
+  const priceStandard=document.getElementById('f-price-standard');
+  const priceRolls=document.getElementById('f-price-rolls');
   if(boxRow) boxRow.style.display=unit==='boxes'?'block':'none';
   if(rollRow) rollRow.style.display=unit==='rolls'?'block':'none';
+  if(priceStandard) priceStandard.style.display=unit==='rolls'?'none':'';
+  if(priceRolls) priceRolls.style.display=unit==='rolls'?'block':'none';
 }
 
 function showAddProductModal(id){
@@ -2539,6 +2707,9 @@ function showAddProductModal(id){
   if(sh) sh.style.display='none';
   document.getElementById('f-pcs-per-box').value='';
   document.getElementById('f-meters-per-roll').value='';
+  document.getElementById('f-price-per-roll').value='';
+  document.getElementById('f-price-per-meter').value='';
+  document.getElementById('f-cost-roll').value='';
   toggleBoxField();
   openModal('modal-product');
 }
@@ -2624,11 +2795,21 @@ function editProduct(id){
   const stockDisplay=document.getElementById('f-stock-display');
   const stockHint=document.getElementById('f-stock-hint');
   if(stockDisplay){
-    const locs=getLocations(p).filter(l=>l.qty>0);
-    const total=getTotalStock(p);
-    stockDisplay.innerHTML=locs.length
-      ?`<strong>${total} ${p.unit}</strong> — `+locs.map(l=>`${l.zone.replace('⚠ ','').split('›').pop().trim()}: ${l.qty}`).join(', ')
-      :`<strong>${total} ${p.unit}</strong>`;
+    const isRoll=p.unit==='rolls'&&p.metersPerRoll;
+    if(isRoll){
+      migrateRollLocations(p);
+      const locs=getLocations(p).filter(l=>(l.fullRolls||0)>0||(l.partialMeters||0)>0);
+      stockDisplay.innerHTML=locs.length
+        ?locs.map(l=>`${l.zone.replace('⚠ ','').split('›').pop().trim()}: <strong>${l.fullRolls||0} rolls${(l.partialMeters||0)>0?' + '+(l.partialMeters)+'m partial':''}</strong>`).join(', ')
+          +` <span style="color:var(--blue)">(${getTotalRollMeters(p)}m total)</span>`
+        :`<strong>${getTotalFullRolls(p)} rolls (${getTotalRollMeters(p)}m total)</strong>`;
+    } else {
+      const locs=getLocations(p).filter(l=>l.qty>0);
+      const total=getTotalStock(p);
+      stockDisplay.innerHTML=locs.length
+        ?`<strong>${total} ${p.unit}</strong> — `+locs.map(l=>`${l.zone.replace('⚠ ','').split('›').pop().trim()}: ${l.qty}`).join(', ')
+        :`<strong>${total} ${p.unit}</strong>`;
+    }
     stockDisplay.style.display='block';
   }
   if(stockHint) stockHint.style.display='block';
@@ -2643,6 +2824,9 @@ function editProduct(id){
   }
   document.getElementById('f-pcs-per-box').value=p.pcsPerBox||'';
   document.getElementById('f-meters-per-roll').value=p.metersPerRoll||'';
+  document.getElementById('f-price-per-roll').value=p.pricePerRoll||'';
+  document.getElementById('f-price-per-meter').value=p.pricePerMeter||'';
+  document.getElementById('f-cost-roll').value=p.cost||'';
   document.getElementById('f-desc').value=p.desc||'';
   document.getElementById('f-sku').value=p.sku||'';
   const catSel=document.getElementById('f-cat');
@@ -2656,15 +2840,18 @@ function editProduct(id){
 function openProductChangeRequest(id){
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   const cur=DB.settings.currency;
+  const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   let modal=document.getElementById('modal-product-change-req');
   if(!modal){
     modal=document.createElement('div');
     modal.id='modal-product-change-req';
     modal.className='modal-overlay';
     document.body.appendChild(modal);
-    // Register click-outside to close
     modal.addEventListener('click',e=>{if(e.target===modal) closeModal('modal-product-change-req');});
   }
+  const currentPriceInfo=isRoll
+    ?`${cur} ${p.pricePerRoll||0}/roll · ${cur} ${p.pricePerMeter||0}/m`
+    :`${p.price?cur+' '+p.price:'No price'}`;
   modal.innerHTML=`<div class="modal" style="max-width:480px">
     <div class="modal-header">
       <div class="modal-title">✏ Request Product Change</div>
@@ -2673,14 +2860,23 @@ function openProductChangeRequest(id){
     <div class="modal-body">
       <div style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px">
         <strong>${p.name}</strong>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${p.cat} · ${p.unit} · ${p.price?cur+' '+p.price:'No price'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${p.cat} · ${p.unit} · ${currentPriceInfo}</div>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Fill in only the fields you want changed. Leave blank to keep as is.</div>
       <div class="form-row"><div class="form-label">New Name</div><input class="form-input" id="pcr-name" placeholder="${p.name}" value=""></div>
+      ${isRoll?`
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">New Price per Roll (${cur})</div><input class="form-input" id="pcr-price-roll" type="number" placeholder="${p.pricePerRoll||'not set'}"></div>
+        <div class="form-row"><div class="form-label">New Price per Meter (${cur})</div><input class="form-input" id="pcr-price-meter" type="number" placeholder="${p.pricePerMeter||'not set'}"></div>
+      </div>
+      <input type="hidden" id="pcr-price" value="">
+      <input type="hidden" id="pcr-cost" value="">
+      `:`
       <div class="form-row-2">
         <div class="form-row"><div class="form-label">New Sell Price (${cur})</div><input class="form-input" id="pcr-price" type="number" placeholder="${p.price||'not set'}"></div>
         <div class="form-row"><div class="form-label">New Cost Price (${cur})</div><input class="form-input" id="pcr-cost" type="number" placeholder="${p.cost||'not set'}"></div>
       </div>
+      `}
       <div class="form-row"><div class="form-label">New Description</div><textarea class="form-textarea" id="pcr-desc" placeholder="${p.desc||'none'}" style="height:60px"></textarea></div>
       <div class="form-row"><div class="form-label">Reason for change *</div><textarea class="form-textarea" id="pcr-reason" placeholder="Explain why this change is needed..." style="height:60px"></textarea></div>
     </div>
@@ -2694,18 +2890,30 @@ function openProductChangeRequest(id){
 
 function submitProductChangeRequest(id){
   const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   const reason=document.getElementById('pcr-reason').value.trim();
   if(!reason){toast('Please explain why you want this change');return;}
   const newName=document.getElementById('pcr-name').value.trim();
-  const newPrice=document.getElementById('pcr-price').value.trim();
-  const newCost=document.getElementById('pcr-cost').value.trim();
   const newDesc=document.getElementById('pcr-desc').value.trim();
-  // Build diff summary
   const changes=[];
-  if(newName&&newName!==p.name) changes.push(`Name: "${p.name}" → "${newName}"`);
-  if(newPrice!==''&&parseFloat(newPrice)!==p.price) changes.push(`Sell price: ${p.price} → ${newPrice}`);
-  if(newCost!==''&&parseFloat(newCost)!==(p.cost||0)) changes.push(`Cost price: ${p.cost||0} → ${newCost}`);
-  if(newDesc&&newDesc!==p.desc) changes.push(`Description updated`);
+  let extraData={productId:id,newName,newDesc};
+  if(isRoll){
+    const newPriceRoll=document.getElementById('pcr-price-roll').value.trim();
+    const newPriceMeter=document.getElementById('pcr-price-meter').value.trim();
+    if(newName&&newName!==p.name) changes.push(`Name: "${p.name}" → "${newName}"`);
+    if(newPriceRoll!==''&&parseFloat(newPriceRoll)!==(p.pricePerRoll||0)) changes.push(`Price/roll: ${p.pricePerRoll||0} → ${newPriceRoll}`);
+    if(newPriceMeter!==''&&parseFloat(newPriceMeter)!==(p.pricePerMeter||0)) changes.push(`Price/meter: ${p.pricePerMeter||0} → ${newPriceMeter}`);
+    if(newDesc&&newDesc!==p.desc) changes.push('Description updated');
+    extraData={...extraData,newPriceRoll:newPriceRoll!==''?parseFloat(newPriceRoll):null,newPriceMeter:newPriceMeter!==''?parseFloat(newPriceMeter):null};
+  } else {
+    const newPrice=document.getElementById('pcr-price').value.trim();
+    const newCost=document.getElementById('pcr-cost').value.trim();
+    if(newName&&newName!==p.name) changes.push(`Name: "${p.name}" → "${newName}"`);
+    if(newPrice!==''&&parseFloat(newPrice)!==p.price) changes.push(`Sell price: ${p.price} → ${newPrice}`);
+    if(newCost!==''&&parseFloat(newCost)!==(p.cost||0)) changes.push(`Cost price: ${p.cost||0} → ${newCost}`);
+    if(newDesc&&newDesc!==p.desc) changes.push('Description updated');
+    extraData={...extraData,newPrice:newPrice!==''?parseFloat(newPrice):null,newCost:newCost!==''?parseFloat(newCost):null};
+  }
   if(!changes.length){toast('No changes entered');return;}
   const details=changes.join(' | ');
   if(!DB.requests) DB.requests=[];
@@ -2714,7 +2922,7 @@ function submitProductChangeRequest(id){
     type:'edit',product:p.name,details,reason,
     submittedBy:currentUser?currentUser.name:'',
     status:'pending',managerNote:'',
-    extraData:{productId:id,newName,newPrice:newPrice!==''?parseFloat(newPrice):null,newCost:newCost!==''?parseFloat(newCost):null,newDesc}
+    extraData
   });
   // Log to activity with full details
   logActivity('inventory',`⚠ Product edit request from ${currentUser?currentUser.name:'staff'}: ${p.name} — ${details} | Reason: ${reason}`);
@@ -2729,18 +2937,24 @@ function submitProductChangeRequest(id){
 function saveProduct(){
   const isManager=currentUser&&currentUser.role==='Manager';
   const name=document.getElementById('f-name').value.trim();
-  const price=parseFloat(document.getElementById('f-price').value)||0;
-  const stock=parseInt(document.getElementById('f-stock').value)||0;
-  if(!name){toast('Product name required');return;}
   const unitSel=document.getElementById('f-unit');
   const unit=(unitSel&&unitSel.style.display!=='none')?unitSel.value||'pcs':document.getElementById('f-unit-readonly').textContent||'pcs';
+  const isRoll=unit==='rolls';
+  const stock=parseInt(document.getElementById('f-stock').value)||0;
+  if(!name){toast('Product name required');return;}
   const pcsPerBox=unit==='boxes'?parseInt(document.getElementById('f-pcs-per-box').value)||0:0;
-  const metersPerRoll=unit==='rolls'?parseInt(document.getElementById('f-meters-per-roll').value)||0:0;
+  const metersPerRoll=isRoll?parseInt(document.getElementById('f-meters-per-roll').value)||0:0;
+  // Roll products use separate prices; others use standard price field
+  const pricePerRoll=isRoll?parseFloat(document.getElementById('f-price-per-roll').value)||0:0;
+  const pricePerMeter=isRoll?parseFloat(document.getElementById('f-price-per-meter').value)||0:0;
+  const costRoll=isRoll?parseFloat(document.getElementById('f-cost-roll').value)||0:0;
+  const price=isRoll?pricePerRoll:parseFloat(document.getElementById('f-price').value)||0;
+  const cost=isRoll?costRoll:parseFloat(document.getElementById('f-cost').value)||0;
   const id=parseInt(document.getElementById('edit-product-id').value)||0;
   const data={
     name,cat:document.getElementById('f-cat').value,zone:document.getElementById('f-zone').value,
-    price,cost:parseFloat(document.getElementById('f-cost').value)||0,
-    unit,pcsPerBox,metersPerRoll,
+    price,cost,unit,pcsPerBox,metersPerRoll,
+    ...(isRoll?{pricePerRoll,pricePerMeter}:{}),
     desc:document.getElementById('f-desc').value,sku:document.getElementById('f-sku').value,
     needsPrice:price===0
   };
@@ -2803,8 +3017,11 @@ function adjustStock(id){
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   document.getElementById('adj-product-id').value=id;
   document.getElementById('adj-product-name').textContent=p.name;
-  const total=getTotalStock(p);
-  document.getElementById('adj-product-stock').textContent=`Total stock: ${total} ${p.unit}`;
+  const isRoll=p.unit==='rolls'&&p.metersPerRoll;
+  const stockDisplay=isRoll
+    ?`${getTotalFullRolls(p)} rolls${getTotalPartialMeters(p)>0?' + '+getTotalPartialMeters(p)+'m partial':''} (${getTotalRollMeters(p)}m total)`
+    :`${getTotalStock(p)} ${p.unit}`;
+  document.getElementById('adj-product-stock').textContent=`Total stock: ${stockDisplay}`;
   document.getElementById('adj-qty').value='';
   document.getElementById('adj-reason').value='';
   document.getElementById('adj-preview').textContent='';
@@ -2828,23 +3045,32 @@ function setAdjMode(mode){
     // Show info that added items go to Unlocated
     let addNote=document.getElementById('adj-add-note');
     if(!addNote){addNote=document.createElement('div');addNote.id='adj-add-note';locRow.parentNode.insertBefore(addNote,locRow);}
-    addNote.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 10px;background:rgba(230,126,34,0.08);border-radius:var(--radius2);margin-bottom:8px">📦 Added stock will go to <strong style="color:#e67e22">Open / Unlocated</strong> — assign a location from Storage after saving</div>';
+    const pid=parseInt(document.getElementById('adj-product-id').value);
+    const pp=DB.products.find(x=>x.id===pid);
+    const isRollAdd=pp&&pp.unit==='rolls'&&pp.metersPerRoll;
+    addNote.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:6px 10px;background:rgba(230,126,34,0.08);border-radius:var(--radius2);margin-bottom:8px">📦 ${isRollAdd?'Enter number of full rolls received. They will go to <strong style="color:#e67e22">Open / Unlocated</strong>.':'Added stock will go to <strong style="color:#e67e22">Open / Unlocated</strong> — assign a location from Storage after saving'}</div>`;
   } else {
     remBtn.style.cssText='padding:12px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     addBtn.style.cssText='padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
-    lbl.textContent='Quantity to Remove';
+    const idR=parseInt(document.getElementById('adj-product-id').value);
+    const pR=DB.products.find(x=>x.id===idR);
+    const isRollRem=pR&&pR.unit==='rolls'&&pR.metersPerRoll;
+    lbl.textContent=isRollRem?'Rolls to Remove':'Quantity to Remove';
     saveBtn.textContent='− Remove from Stock';saveBtn.style.background='var(--red)';saveBtn.style.border='none';saveBtn.style.color='#fff';
     const addNote=document.getElementById('adj-add-note');
     if(addNote) addNote.innerHTML='';
     // Populate location dropdown
     if(locRow){
       locRow.style.display='block';
-      const id=parseInt(document.getElementById('adj-product-id').value);
-      const p=DB.products.find(x=>x.id===id);
       const locSel=document.getElementById('adj-location');
-      const locs=p?getLocations(p).filter(l=>l.qty>0):[];
+      const locs=pR?getLocations(pR).filter(l=>(l.qty||0)>0||(l.fullRolls||0)>0):[];
       if(locs.length){
-        locSel.innerHTML=locs.map(l=>`<option value="${l.zone}">${l.zone.replace('⚠ ','')} — ${l.qty} ${p.unit}</option>`).join('');
+        locSel.innerHTML=locs.map(l=>{
+          const display=isRollRem
+            ?`${l.zone.replace('⚠ ','')} — ${l.fullRolls||l.qty||0} rolls${(l.partialMeters||0)>0?' + '+(l.partialMeters)+'m partial':''}`
+            :`${l.zone.replace('⚠ ','')} — ${l.qty} ${pR.unit}`;
+          return `<option value="${l.zone}">${display}</option>`;
+        }).join('');
       } else {
         locSel.innerHTML='<option value="">All stock (no location set)</option>';
       }
@@ -2856,21 +3082,39 @@ function updateAdjPreview(){
   const id=parseInt(document.getElementById('adj-product-id').value);
   const p=DB.products.find(x=>x.id===id);if(!p)return;
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
-  const total=getTotalStock(p);
+  const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   if(!qty){document.getElementById('adj-preview').textContent='';return;}
-  const newStock=adjMode==='add'?total+qty:Math.max(0,total-qty);
   const col=adjMode==='add'?'var(--green)':'var(--red)';
-  // Show per-location context for remove
-  let locNote='';
-  if(adjMode==='remove'){
-    const locSel=document.getElementById('adj-location');
-    if(locSel&&locSel.value){
-      const loc=getLocations(p).find(l=>l.zone===locSel.value);
-      if(loc) locNote=`<div style="font-size:11px;color:var(--text3);margin-top:4px">${loc.zone.split('›').pop().trim()}: ${loc.qty} → ${Math.max(0,loc.qty-qty)}</div>`;
+  if(isRoll){
+    const curFull=getTotalFullRolls(p);
+    const curPart=getTotalPartialMeters(p);
+    const curMeters=getTotalRollMeters(p);
+    if(adjMode==='add'){
+      const newFull=curFull+qty;
+      const newMeters=newFull*p.metersPerRoll+curPart;
+      document.getElementById('adj-preview').innerHTML=
+        `<span style="color:var(--text3)">${curFull} rolls</span> <span style="color:${col}">+ ${qty} rolls</span> → <strong style="color:var(--text)">${newFull} rolls (${newMeters}m total)</strong>`;
+    } else {
+      if(qty>curFull){document.getElementById('adj-preview').innerHTML=`<span style="color:var(--red)">Can only remove full rolls (have ${curFull})</span>`;return;}
+      const newFull=curFull-qty;
+      const newMeters=newFull*p.metersPerRoll+curPart;
+      document.getElementById('adj-preview').innerHTML=
+        `<span style="color:var(--text3)">${curFull} rolls</span> <span style="color:${col}">− ${qty} rolls</span> → <strong style="color:var(--text)">${newFull} rolls${curPart>0?' + '+curPart+'m partial':''} (${newMeters}m total)</strong>`;
     }
+  } else {
+    const total=getTotalStock(p);
+    const newStock=adjMode==='add'?total+qty:Math.max(0,total-qty);
+    let locNote='';
+    if(adjMode==='remove'){
+      const locSel=document.getElementById('adj-location');
+      if(locSel&&locSel.value){
+        const loc=getLocations(p).find(l=>l.zone===locSel.value);
+        if(loc) locNote=`<div style="font-size:11px;color:var(--text3);margin-top:4px">${loc.zone.split('›').pop().trim()}: ${loc.qty} → ${Math.max(0,loc.qty-qty)}</div>`;
+      }
+    }
+    document.getElementById('adj-preview').innerHTML=
+      `<span style="color:var(--text3)">${total} ${p.unit}</span> <span style="color:${col}">${adjMode==='add'?'+ '+qty:'− '+qty}</span> → <strong style="color:var(--text)">${newStock} ${p.unit}</strong>${locNote}`;
   }
-  document.getElementById('adj-preview').innerHTML=
-    `<span style="color:var(--text3)">${total} ${p.unit}</span> <span style="color:${col}">${adjMode==='add'?'+ '+qty:'− '+qty}</span> → <strong style="color:var(--text)">${newStock} ${p.unit}</strong>${locNote}`;
 }
 function saveStockAdjust(){
   if(!currentUser||currentUser.role!=='Manager'){toast('Only managers can adjust stock directly');return;}
@@ -2880,11 +3124,57 @@ function saveStockAdjust(){
   if(!qty||qty<=0){toast('Enter a valid quantity');return;}
   if(!reason){toast('Reason is required — explain why the quantity is changing');return;}
   const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const isRoll=p.unit==='rolls'&&p.metersPerRoll;
+  const who=currentUser?currentUser.name:'Manager';
+
+  if(isRoll){
+    migrateRollLocations(p);
+    const curFull=getTotalFullRolls(p);
+    const curPart=getTotalPartialMeters(p);
+    const oldMeters=getTotalRollMeters(p);
+    if(adjMode==='remove'&&qty>curFull){toast(`Can only remove full rolls — have ${curFull}`);return;}
+    if(!p.locations) p.locations=getLocations(p);
+    if(adjMode==='add'){
+      // Add full rolls to unlocated
+      const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+      if(unloc){
+        unloc.fullRolls=(unloc.fullRolls||unloc.qty||0)+qty;
+        unloc.qty=unloc.fullRolls*p.metersPerRoll+(unloc.partialMeters||0);
+      } else {
+        p.locations.push({zone:'⚠ Open / Unlocated',fullRolls:qty,partialMeters:0,qty:qty*p.metersPerRoll});
+        if(!p.openSince) p.openSince=Date.now();
+      }
+    } else {
+      // Remove full rolls from chosen location
+      const locSel=document.getElementById('adj-location');
+      const chosenZone=locSel?locSel.value:'';
+      const loc=chosenZone?p.locations.find(l=>l.zone===chosenZone):p.locations[0];
+      if(loc){
+        const locFull=loc.fullRolls||loc.qty||0;
+        if(qty>locFull){toast(`Only ${locFull} full rolls at that location`);return;}
+        loc.fullRolls=locFull-qty;
+        loc.qty=loc.fullRolls*p.metersPerRoll+(loc.partialMeters||0);
+      }
+      p.locations=p.locations.filter(l=>(l.fullRolls||0)>0||(l.partialMeters||0)>0);
+    }
+    p.stock=getTotalRollMeters(p);
+    const newMeters=p.stock;
+    const newFull=getTotalFullRolls(p);
+    const action=adjMode==='add'?'added':'removed';
+    const logMsg=`⚠ Stock ${action} by ${who}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} rolls (${oldMeters}m → ${newMeters}m total) | Reason: ${reason}`;
+    logActivity('inventory',logMsg);
+    if(!DB.stockAlerts) DB.stockAlerts=[];
+    DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:p.name,action,qty,unit:'rolls',oldStock:oldMeters,newStock:newMeters,by:who,reason,seen:false});
+    save();closeModal('modal-stock-adjust');filterInventory();updateStockAlertBadge();
+    toast(`${p.name}: ${curFull} → ${newFull} rolls`);
+    return;
+  }
+
+  // Non-roll products
   const totalStock=getTotalStock(p);
   if(adjMode==='remove'&&qty>totalStock){toast(`Cannot remove more than current stock (${totalStock})`);return;}
   const oldStock=totalStock;
   p.stock=adjMode==='add'?totalStock+qty:totalStock-qty;
-  // Sync locations
   if(!p.locations) p.locations=getLocations(p);
   if(adjMode==='add'){
     const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
@@ -2894,28 +3184,19 @@ function saveStockAdjust(){
     const chosenZone=locSel?locSel.value:'';
     if(chosenZone){
       const loc=p.locations.find(l=>l.zone===chosenZone);
-      if(loc){
-        if(qty>loc.qty){toast(`Only ${loc.qty} ${p.unit} at that location`);return;}
-        loc.qty-=qty;
-      }
+      if(loc){if(qty>loc.qty){toast(`Only ${loc.qty} ${p.unit} at that location`);return;}loc.qty-=qty;}
     } else {
       let rem=qty;
       for(const loc of p.locations){if(rem<=0)break;const take=Math.min(loc.qty||0,rem);loc.qty-=take;rem-=take;}
     }
     p.locations=p.locations.filter(l=>l.qty>0);
   }
-  // Log with full detail — always visible in activity log as alert
-  const who=currentUser?currentUser.name:'Manager';
   const action=adjMode==='add'?'added':'removed';
   const logMsg=`⚠ Stock ${action} by ${who}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} ${p.unit} (${oldStock} → ${p.stock}) | Reason: ${reason}`;
-  logActivity('inventory', logMsg);
-  // Push to stockAlerts for dashboard alert
+  logActivity('inventory',logMsg);
   if(!DB.stockAlerts) DB.stockAlerts=[];
   DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:p.name,action,qty,unit:p.unit,oldStock,newStock:p.stock,by:who,reason,seen:false});
-  save();
-  closeModal('modal-stock-adjust');
-  filterInventory();
-  updateStockAlertBadge();
+  save();closeModal('modal-stock-adjust');filterInventory();updateStockAlertBadge();
   toast(`${p.name}: ${oldStock} → ${p.stock} ${p.unit}`);
 }
 
@@ -5507,6 +5788,8 @@ function handleRequest(id,action){
         if(r.extraData.newName&&r.extraData.newName!==prod.name){changes.push(`Name: "${prod.name}"→"${r.extraData.newName}"`);prod.name=r.extraData.newName;}
         if(r.extraData.newPrice!==null&&r.extraData.newPrice!==undefined){changes.push(`Price: ${prod.price}→${r.extraData.newPrice}`);prod.price=r.extraData.newPrice;}
         if(r.extraData.newCost!==null&&r.extraData.newCost!==undefined){changes.push(`Cost: ${prod.cost||0}→${r.extraData.newCost}`);prod.cost=r.extraData.newCost;}
+        if(r.extraData.newPriceRoll!==null&&r.extraData.newPriceRoll!==undefined){changes.push(`Price/roll: ${prod.pricePerRoll||0}→${r.extraData.newPriceRoll}`);prod.pricePerRoll=r.extraData.newPriceRoll;prod.price=r.extraData.newPriceRoll;}
+        if(r.extraData.newPriceMeter!==null&&r.extraData.newPriceMeter!==undefined){changes.push(`Price/meter: ${prod.pricePerMeter||0}→${r.extraData.newPriceMeter}`);prod.pricePerMeter=r.extraData.newPriceMeter;}
         if(r.extraData.newDesc){prod.desc=r.extraData.newDesc;changes.push('Description updated');}
         logActivity('inventory',`Product edit approved: ${r.product} — ${changes.join(' | ')} (requested by ${r.submittedBy}, approved by ${currentUser?currentUser.name:''})`);
       }
@@ -5564,11 +5847,87 @@ function getLocations(p){
 }
 
 function getTotalStock(p){
+  if(p.unit==='rolls'&&p.metersPerRoll){
+    // For roll products, stock is tracked as total meters
+    return getTotalRollMeters(p);
+  }
   const locs=getLocations(p);
   if(!locs.length) return p.stock||0;
   const sum=locs.reduce((a,l)=>a+(l.qty||0),0);
-  // If sum is 0 but p.stock exists (not yet migrated), return p.stock
   return sum||p.stock||0;
+}
+
+// For roll products: total meters = sum of (fullRolls * metersPerRoll + partialMeters) across all locations
+function getTotalRollMeters(p){
+  if(!p.metersPerRoll) return p.stock||0;
+  const locs=getLocations(p);
+  if(!locs.length) return (p.stock||0)*p.metersPerRoll;
+  return locs.reduce((a,l)=>{
+    const full=l.fullRolls!=null?l.fullRolls:(l.qty||0);
+    const partial=l.partialMeters||0;
+    return a+(full*p.metersPerRoll)+partial;
+  },0);
+}
+
+// Get full rolls count across all locations
+function getTotalFullRolls(p){
+  if(!p.metersPerRoll) return p.stock||0;
+  const locs=getLocations(p);
+  return locs.reduce((a,l)=>a+(l.fullRolls!=null?l.fullRolls:(l.qty||0)),0);
+}
+
+// Get partial meters across all locations
+function getTotalPartialMeters(p){
+  const locs=getLocations(p);
+  return locs.reduce((a,l)=>a+(l.partialMeters||0),0);
+}
+
+// Migrate a roll product location to fullRolls/partialMeters format
+function migrateRollLocations(p){
+  if(!p.metersPerRoll||!p.locations) return;
+  p.locations.forEach(l=>{
+    if(l.fullRolls==null){
+      l.fullRolls=l.qty||0;
+      l.partialMeters=0;
+      // qty now represents total meters equivalent for backward compat
+      l.qty=l.fullRolls*p.metersPerRoll;
+    }
+  });
+}
+
+// Run migration on all roll products
+// Deduct meters from a roll product, updating fullRolls and partialMeters per location
+function deductRollMeters(p, metersToDeduct){
+  if(!p.metersPerRoll||!metersToDeduct) return;
+  migrateRollLocations(p); // ensure fullRolls/partialMeters exist
+  let rem=metersToDeduct;
+  // Sort locations: prefer locations with partial meters first (use up partials)
+  const locs=[...p.locations].sort((a,b)=>(b.partialMeters||0)-(a.partialMeters||0));
+  for(const locRef of locs){
+    if(rem<=0) break;
+    const loc=p.locations.find(l=>l.zone===locRef.zone);
+    if(!loc) continue;
+    const locTotalMeters=(loc.fullRolls||0)*p.metersPerRoll+(loc.partialMeters||0);
+    if(locTotalMeters<=0) continue;
+    const take=Math.min(rem,locTotalMeters);
+    rem-=take;
+    // Deduct from this location's meters
+    let locMetersLeft=locTotalMeters-take;
+    loc.fullRolls=Math.floor(locMetersLeft/p.metersPerRoll);
+    loc.partialMeters=Math.round(locMetersLeft%p.metersPerRoll);
+    loc.qty=loc.fullRolls*p.metersPerRoll+loc.partialMeters; // keep qty in sync
+  }
+  // Remove empty locations
+  p.locations=p.locations.filter(l=>(l.fullRolls||0)>0||(l.partialMeters||0)>0);
+  p.stock=getTotalRollMeters(p);
+}
+
+function migrateAllRollProducts(){
+  (DB.products||[]).forEach(p=>{
+    if(p.unit==='rolls'&&p.metersPerRoll){
+      migrateRollLocations(p);
+    }
+  });
 }
 
 function getProductZones(p){
