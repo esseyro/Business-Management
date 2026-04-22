@@ -527,7 +527,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="nav-item" onclick="nav('drawer')"><span class="icon">💵</span> Cash Drawer</div>
       <div class="nav-item" onclick="nav('returns')"><span class="icon">↩️</span> Returns</div>
       <div class="nav-item" onclick="nav('activity')"><span class="icon">📋</span> Activity Log</div>
-      <div class="nav-item" onclick="nav('recycle')"><span class="icon">🗑️</span> Recycle Bin</div>
+      <div class="nav-item" onclick="nav('recycle')"><span class="icon">🗑️</span> <span data-en="Recycle Bin" data-ti="ቆሻሻ">Recycle Bin</span></div>
       <div class="nav-item" onclick="nav('staff')"><span class="icon">👷</span> Staff</div>
       <div class="nav-item" onclick="nav('settings')"><span class="icon">⚙️</span> Settings</div>
     </div>
@@ -715,7 +715,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <!-- Profit breakdown -->
         <div class="panel" style="margin-bottom:16px">
-          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--accent)"></span> Profit Breakdown by Category</div>
+          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--accent)"></span> ${t('Profit Breakdown')} by ${t('Category')}</div>
           <div id="profit-summary"></div>
           <div id="profit-detail" style="margin-top:10px">
             <div id="profit-detail-content"></div>
@@ -817,11 +817,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <!-- Left: Day session -->
           <div class="panel">
-            <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--accent)"></span> Today's Session</div>
+            <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--accent)"></span> <span data-en="Today's Session" data-ti="ናይ ሎሚ ሰሽን">Today's Session</span></div>
             <div id="drawer-session-info" style="margin-bottom:16px"></div>
             <!-- Expenses -->
             <div style="margin-bottom:12px">
-              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Expenses Paid From Drawer</div>
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px"><span data-en="Expenses Paid From Drawer" data-ti="ካብ ካሳ ዝወጽአ ወጻኢ">Expenses Paid From Drawer</span></div>
               <div id="drawer-expenses-list" style="margin-bottom:8px"></div>
               <div style="display:flex;gap:8px">
                 <input class="search-input" id="exp-desc" placeholder="What for? (e.g. bread, taxi...)" style="flex:2">
@@ -832,7 +832,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </div>
           <!-- Right: Close of day summary -->
           <div class="panel">
-            <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--green)"></span> End of Day Summary</div>
+            <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--green)"></span> <span data-en="End of Day Summary" data-ti="ናይ ዕለት መወዳእታ ጸብጻብ">End of Day Summary</span></div>
             <div id="drawer-eod-summary"></div>
             <div style="display:flex;gap:10px;margin-top:16px">
               <button class="btn-cancel" onclick="switchDrawerDay()" style="flex:1">⇄ Switch Day</button>
@@ -843,7 +843,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <!-- History with drill-down -->
         <div class="panel" style="margin-top:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--blue)"></span> Previous Days</div>
+            <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--blue)"></span> <span data-en="Previous Days" data-ti="ዝሓለፈ ዕለታት">Previous Days</span></div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <select class="search-input" id="drawer-history-range" onchange="renderDrawer()" style="max-width:140px;padding:5px 8px;font-size:12px">
                 <option value="14">Last 14 days</option>
@@ -867,7 +867,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div id="drawer-day-detail" style="display:none;margin-top:16px"></div>
         <!-- Weekly analysis -->
         <div class="panel" style="margin-top:16px">
-          <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--purple)"></span> Weekly Analysis</div>
+          <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--purple)"></span> <span data-en="Weekly Analysis" data-ti="ናይ ሰሙን ትንታነ">Weekly Analysis</span></div>
           <div id="drawer-weekly"></div>
         </div>
       </div>
@@ -1299,7 +1299,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
               <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Category</th>
               <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Qty *</th>
               <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Unit</th>
-              <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)" id="pur-price-header">Unit Price (NKF) *</th>
+              <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)" id="pur-price-header">Cost Price (NKF) *</th>
+              <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Sell Price (NKF)</th>
               <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Total</th>
               <th style="padding:6px 8px;text-align:left;color:var(--text3);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Storage Zone</th>
               <th style="padding:6px 4px;border-bottom:1px solid var(--border)"></th>
@@ -1308,7 +1309,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <tbody id="pur-lines-body"></tbody>
           <tfoot>
             <tr>
-              <td colspan="5" style="padding:8px;text-align:right;font-size:12px;color:var(--text3)">Grand Total:</td>
+              <td colspan="6" style="padding:8px;text-align:right;font-size:12px;color:var(--text3)">Grand Total:</td>
               <td style="padding:8px;font-family:var(--font-head);font-size:15px;color:var(--accent)" id="pur-grand-total">NKF 0</td>
               <td colspan="2"></td>
             </tr>
@@ -1834,6 +1835,8 @@ const TI = {
   'Storage Room View':'ቤት ዕቃ','Reports & Analytics':'ጸብጻብ',
   'Purchases & Stock Bought':'ምግዛእ','Loans & Credit':'ልቓሕ',
   'Customers':'ዓሚልቲ','Staff':'ሰራሕተኛ','Settings':'ምቕናዕ',
+  'Cash Drawer':'ካሳ','Requests':'ጠለባት','Returns':'ምምላስ',
+  'Activity Log':'ናይ ስርሒት ቅዳሕ','Recycle Bin':'ቆሻሻ',
   // Dashboard
   "Today's Revenue":"ናይ ሎሚ እቶት","Total Products":"ጠቕላሊ ፍርያት",
   "Total Revenue":"ጠቕላሊ እቶት","Est. Profit":"ግምት ትርፊ",
@@ -1841,24 +1844,44 @@ const TI = {
   "Sales This Week":"ሽያጥ ናይዛ ሰሙን","All time":"ኩሉ ግዜ",
   "sales today":"ሽያጥ ሎሚ","low stock":"ትሑት ክምችት",
   "All stock levels OK":"✓ ኩሉ ክምችት ጽቡቕ ኣሎ","No sales yet":"ሽያጥ የልቦን",
+  "Customers Today":"ዓሚልቲ ሎሚ","Day Status":"ኩነታት መዓልቲ",
+  "served today":"ሎሚ ዝተገልገሉ","low stock":"ትሑት ክምችት",
+  "Open":"ክፉት","Closed":"ዝተዓጸወ","Not Opened":"ዘይተኸፍተ",
+  // Dashboard alerts
+  "items need attention":"ዝሓልፍ ናይ ኣካያዲ ቆላሕታ ዘድልዮ","need attention":"ቆላሕታ ዘድልዮ",
+  "product changes to review":"ናይ ፍርያት ለውጢ ክርአ","Dismiss all changes":"ኩሎም ዝርአ ምባሃሃል",
+  "loan follow-up overdue":"ናይ ልቓሕ ክትትል ዝሓለፈ","Go to Loans":"ናብ ልቓሕ ኪድ",
+  "→ Review":"→ ርአ","→ View":"→ ርአ","→ Sales":"→ ሽያጥ",
   // POS
   "Current Sale":"ሕጂ ዘሎ ሽያጥ","Add products to start a sale":"ፍርያት ወሲኽካ ሽያጥ ጀምር",
   "Subtotal":"ንኡስ ድምር","Discount":"ቅናሽ","Total":"ጠቕላሊ",
   "Discount on bill":"ቅናሽ ካብ ጠቕላሊ","Per item discount":"ቅናሽ ንነፍሲ ወከፍ ፍርያት",
-  "Discount":"ቅናሽ","Customer name":"ሽም ዓሚል",
+  "Customer name":"ሽም ዓሚል",
   "⚡ COMPLETE SALE":"⚡ ሽያጥ ወዳእ","in stock":"ኣብ ክምችት","Out of stock!":"ክምችት ወዲኡ!",
   "Max stock reached":"ዝለዓለ ክምችት በጺሕካ","Cart is empty":"ዝሽየጥ የልቦን",
+  "Walk-in":"ዝኣተወ ዓሚል",
   // Inventory
   "Products & Inventory":"ክምችት ፍርያት","Add Product":"ፍርያት ወሲኽ",
   "All Categories":"ኩሎም ዓይነት","Search products...":"ፍርያት ድለ...",
   "Product":"ፍርያት","Category":"ዓይነት","Price":"ዋጋ","Cost":"ዋጋ ምዕዳግ",
   "Stock":"ክምችት","Storage":"ዕቃ ቤት","Actions":"ተግባር",
-  // Storage
-  "Storage Zones":"ቦታ ዕቃ",
+  "Edit":"ምምሕያሽ","Delete":"ሰርዝ","± Stock":"ክምችት ምምሕያሽ",
   // Reports
   "Today":"ሎሚ","Total Sales":"ጠቕላሊ ሽያጥ","Date":"ዕለት",
   "Customer":"ዓሚል","Items":"ፍርያት","Sales History":"ታሪኽ ሽያጥ",
   "Top Selling Products":"ዝበዝሐ ዝሽየጥ","Daily Revenue (Last 7 Days)":"ናይ 7 መዓልቲ እቶት",
+  "Profit Breakdown":"ናይ ትርፊ ዝርዝር","Revenue":"እቶት","Profit":"ትርፊ",
+  "Margin":"ትርፊ ዕቐባ","Units Sold":"ዝተሸጠ","Est. Cost":"ግምት ዋጋ",
+  "Est. Profit":"ግምት ትርፊ",
+  // Cash Drawer
+  "Today's Session":"ናይ ሎሚ ሰሽን","End of Day Summary":"ናይ ዕለት መወዳእታ ጸብጻብ",
+  "Expenses Paid From Drawer":"ካብ ካሳ ዝወጽአ ወጻኢ","Starting float":"ናይ መጀመርታ ገንዘብ",
+  "Expected in Drawer":"ዝጽበ ኣብ ካሳ","Sales Revenue":"ናይ ሽያጥ እቶት",
+  "Expenses":"ወጻኢ","Close Day":"ዕለት ዓጹ","Switch Day":"ዕለት ቀይር",
+  "Open Day":"ዕለት ክፈት","Starting Cash":"ናይ መጀመርታ ገንዘብ",
+  "Previous Days":"ዝሓለፈ ዕለታት","Actual Cash Counted":"ዝተቖጸረ ናይ ሓቂ ገንዘብ",
+  "Save Count":"ቁጽሪ ዕቀብ","Export to Excel":"ናብ ኤክሰል ኣውጽእ",
+  "Monthly Report":"ወርሓዊ ጸብጻብ",
   // Purchases
   "Purchases & Stock Bought":"ምዕዳግ ፍርያት","Record Purchase":"ምዕዳግ መዝግብ",
   "Total Purchases":"ጠቕላሊ ምዕዳግ","Total Spent":"ጠቕላሊ ዝወጽአ","This Month":"ናይዚ ወርሒ",
@@ -1870,7 +1893,18 @@ const TI = {
   "Pending Approval":"ፍቓድ ትጽቢት","Follow-ups Due":"ክትክተሉ ዘሎ",
   "Borrower":"ብዳሪ","Amount":"መጠን","Date Given":"ዕለት ዝተዋህበ",
   "Next Follow-up":"ዝቕጽል ክትትል","Status":"ኩነታት","Approved By":"ዝፈቐደ",
-  "Pending Approval":"ፍቓድ ትጽቢት",
+  // Activity Log
+  "Activity Log":"ናይ ስርሒት ቅዳሕ","All Staff":"ኩሎም ሰራሕተኛ",
+  "All Types":"ኩሎም ዓይነት","All Actions":"ኩሎም ተግባር",
+  "sale":"ሽያጥ","purchase":"ምዕዳግ","return":"ምምላስ",
+  "loan":"ልቓሕ","inventory":"ክምችት","login":"ምእታው",
+  // Requests
+  "Requests":"ጠለባት","All Requests":"ኩሎም ጠለባት",
+  "All Statuses":"ኩሎም ኩነታት","pending":"ትጽቢት",
+  "approved":"ፈቒዱ","rejected":"ነጺጉ","Approve":"ፍቓድ ሃብ","Reject":"ኣብ ነጻ",
+  // Returns
+  "Returns":"ምምላስ","Record Return":"ምምላስ መዝግብ",
+  "Awaiting Approval":"ፍቓድ ትጽቢት","Refunded":"ገንዘብ ተመሊሱ","Exchanged":"ተቐያዪሩ",
   // Customers
   "Customers":"ዓሚልቲ","Add Customer":"ዓሚል ወሲኽ","visits":"ምብጻሕ",
   "No customers yet":"ዓሚልቲ የልቦኑ",
@@ -1893,7 +1927,6 @@ const TI = {
   "units":"ዓቐን","Sale Complete ✓":"ሽያጥ ተዛዚሙ ✓",
   "Thank you for choosing Weyni Electric!":"ዌይኒ ኤለክትሪክ ስለ ዝመረጽካ የቐንየልና!",
   "Come back soon ⚡":"ቀልጢፍካ ተመለስ ⚡",
-  // Low stock badge
   "Bulbs, switches, small parts — alert below":"ቡልቦ፡ ቀያሪ፡ ናእሽቶ ቁሳቁስ — ማጠንቀቂ ኣብ ትሕቲ",
   "Cable (meters), conduit, bulk stock — alert below":"ካብሎ (ሜትር)፡ ቆሎፕ፡ ብዙሕ ክምችት — ማጠንቀቂ ኣብ ትሕቲ",
   "App display language":"ቋንቋ ናይ ኣፕ",
@@ -1909,20 +1942,64 @@ function t(key){ // translate
 
 function applyLang(){
   const isTi = DB.settings.lang === 'ti';
+
   // Update all elements with data-en / data-ti attributes
   document.querySelectorAll('[data-en]').forEach(el=>{
     const val = isTi ? (el.getAttribute('data-ti')||el.getAttribute('data-en')) : el.getAttribute('data-en');
     if(val) el.textContent = val;
   });
-  // Update html lang
+
+  // Update nav items — use data-nav-key stored on element, or set it first time
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    // Find raw text node
+    for(const node of el.childNodes){
+      if(node.nodeType===3&&node.textContent.trim()){
+        // Store original English key first time
+        if(!el._navKey){
+          const raw=node.textContent.trim().replace(/\s*\d+\s*$/,'').trim();
+          // Check if raw matches an English TI key
+          if(TI[raw]) el._navKey=raw;
+          else {
+            // Try reverse lookup (might be Tigrinya already)
+            const found=Object.keys(TI).find(k=>TI[k]===raw);
+            if(found) el._navKey=found;
+          }
+        }
+        if(el._navKey) node.textContent=' '+(isTi?TI[el._navKey]:el._navKey)+' ';
+      }
+    }
+  });
+
+  // Update panel titles — use data-panel-key, not text content
+  document.querySelectorAll('.panel-title').forEach(el=>{
+    // Store original English key first time
+    if(!el._panelKey){
+      const inner=el.querySelector('[data-en]');
+      if(inner){el._panelKey=inner.getAttribute('data-en');return;} // handled by data-en above
+      const dotSpan=el.querySelector('span.dot');
+      const txt=el.textContent.replace(dotSpan?.textContent||'','').trim();
+      const found=Object.keys(TI).find(k=>k===txt||TI[k]===txt);
+      if(found) el._panelKey=found;
+    }
+    if(el._panelKey){
+      const dotSpan=el.querySelector('span.dot');
+      const badge=el.querySelector('.nav-badge');
+      el.innerHTML=(dotSpan?dotSpan.outerHTML:'')+' '+(isTi?(TI[el._panelKey]||el._panelKey):el._panelKey)+(badge?badge.outerHTML:'');
+    }
+  });
+
   document.documentElement.lang = isTi ? 'ti' : 'en';
 }
 
 function changeLang(lang){
   DB.settings.lang = lang;
   save();
-  applyLang();
+  // Clear cached translation keys so applyLang re-detects correctly
+  document.querySelectorAll('.nav-item,.panel-title').forEach(el=>{
+    delete el._navKey; delete el._panelKey;
+  });
   renderPage(currentPage);
+  applyLang();
   // re-render sidebar titles
   renderSidebarLang();
 }
@@ -4415,6 +4492,7 @@ function renderPurLines(){
         </select>
       </td>
       <td style="padding:4px"><input class="search-input" style="width:75px;padding:5px 6px;font-size:12px" type="number" value="${l.unitPrice}" placeholder="0.00" step="0.01" oninput="purLines[${i}].unitPrice=parseFloat(this.value)||0;calcPurLineTotal(${i})"></td>
+      <td style="padding:4px"><input class="search-input" style="width:75px;padding:5px 6px;font-size:12px" type="number" value="${l.sellPrice||''}" placeholder="0.00" step="0.01" oninput="purLines[${i}].sellPrice=parseFloat(this.value)||0" title="Selling price — shown to customers"></td>
       <td style="padding:4px;font-family:var(--font-head);color:var(--accent);font-size:13px;white-space:nowrap" id="pur-line-total-${i}">NKF ${(l.total||0).toFixed(0)}</td>
       <td style="padding:4px">
         <select class="form-select" style="padding:5px 6px;font-size:11px;min-width:120px" onchange="purLines[${i}].zone=this.value">
@@ -4448,35 +4526,43 @@ function _doExcelImport(file){
       const wb=XLSX.read(ev.target.result,{type:'binary'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      // Try to detect columns: item/name, qty, price/unitprice, unit, category
       if(rows.length<2){toast('Excel file is empty');return;}
       const header=rows[0].map(h=>String(h).toLowerCase().trim());
       const col=k=>header.findIndex(h=>h.includes(k));
       const iName=col('name')>=0?col('name'):col('item')>=0?col('item'):0;
       const iQty=col('qty')>=0?col('qty'):col('quantity')>=0?col('quantity'):2;
-      const iPrice=col('price')>=0?col('price'):col('unit')>=0?col('unit'):3;
-      const iUnit=col('unit')>=0&&col('unit')!==iPrice?col('unit'):-1;
+      // Cost price: look for 'cost' first, then fallback to 'unit price'
+      const iCost=col('cost')>=0?col('cost'):col('unit price')>=0?col('unit price'):col('price')>=0?col('price'):3;
+      // Selling price: look for 'sell' column
+      const iSell=col('sell')>=0?col('sell'):col('selling')>=0?col('selling'):-1;
+      const iUnit=col('unit')>=0?col('unit'):-1;
       const iCat=col('cat')>=0?col('cat'):col('category')>=0?col('category'):-1;
       const iDesc=col('desc')>=0?col('desc'):col('description')>=0?col('description'):-1;
       let imported=0;
       purLines=[];
       rows.slice(1).forEach(row=>{
         const name=String(row[iName]||'').trim();
-        if(!name) return;
+        if(!name||name==='Item Name') return; // skip header/example rows
         const qty=parseFloat(row[iQty])||0;
-        const up=parseFloat(row[iPrice])||0;
-        const unit=iUnit>=0?String(row[iUnit]||'pcs'):'pcs';
+        const costPrice=parseFloat(row[iCost])||0;
+        const sellPrice=iSell>=0?parseFloat(row[iSell])||0:0;
+        const unit=iUnit>=0&&row[iUnit]?String(row[iUnit]).trim():'pcs';
         const cat=iCat>=0&&row[iCat]?String(row[iCat]):'Other';
         const desc=iDesc>=0?String(row[iDesc]||''):'';
-        // Also try to update product description in inventory
+        // If product exists, update selling price and description
         const prod=DB.products.find(p=>p.name.toLowerCase()===name.toLowerCase());
-        if(prod&&desc){prod.desc=desc;save();}
-        purLines.push({item:name,cat,qty,unit,unitPrice:up,total:qty*up,zone:'',desc});
+        if(prod){
+          if(sellPrice>0) prod.price=sellPrice;
+          if(costPrice>0) prod.cost=costPrice;
+          if(desc) prod.desc=desc;
+          save();
+        }
+        purLines.push({item:name,cat,qty,unit,unitPrice:costPrice,sellPrice,total:qty*costPrice,zone:'',desc});
         imported++;
       });
-      if(!purLines.length) purLines=[{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:'Zone A – Shelves (Bulbs)'}];
+      if(!purLines.length) purLines=[{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',sellPrice:'',total:0,zone:''}];
       renderPurLines();
-      toast(`Imported ${imported} items from Excel`);
+      toast(`Imported ${imported} items ✓`);
     }catch(err){toast('Error reading Excel file: '+err.message);}
   };
   reader.readAsBinaryString(file);
@@ -4531,11 +4617,13 @@ function savePurchase(){
       // Record batch history on product
       if(!match.batches) match.batches=[];
       match.batches.push(batch);
+      // Update selling price if provided
+      if(l.sellPrice>0) match.price=l.sellPrice;
       // Check if cost price changed
       if(match.cost&&match.cost!==l.unitPrice){
         costPriceUpdates.push({product:match,newCost:l.unitPrice,oldCost:match.cost,supplier:lineSupplier});
-      } else if(!match.cost){
-        match.cost=l.unitPrice; // set first cost
+      } else if(!match.cost&&l.unitPrice>0){
+        match.cost=l.unitPrice;
       }
     }
   });
@@ -4689,10 +4777,10 @@ function confirmPurItem(){
   if(!existing){
     existing={
       id:Date.now(),name:l.item.trim(),cat,
-      price:0,cost:l.unitPrice,
+      price:l.sellPrice||0,cost:l.unitPrice,
       stock:purchasedQty,unit:l.unit||'pcs',
       zone:'',zones:[],locations:[],
-      desc:'',sku:'',pcsPerBox:0,needsPrice:true
+      desc:'',sku:'',pcsPerBox:0,needsPrice:!(l.sellPrice>0)
     };
     // Start with all in unlocated
     existing.locations=[{zone:'⚠ Open / Unlocated',qty:purchasedQty}];
@@ -5295,6 +5383,61 @@ function saveReturn(){
   toast('Return submitted \u2014 awaiting manager approval');
 }
 
+function showExpenseRequestModal(){
+  let modal=document.getElementById('modal-expense-req');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-expense-req';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-expense-req');});
+  }
+  const cur=DB.settings.currency;
+  modal.innerHTML=`<div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">💸 Report Drawer Expense</div>
+      <button class="modal-close" onclick="closeModal('modal-expense-req')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Report cash paid from the drawer. Manager will approve and it will be logged.</div>
+      <div class="form-row"><div class="form-label">What was it for? *</div><input class="form-input" id="exp-req-desc" placeholder="e.g. Taxi, lunch, supplies..."></div>
+      <div class="form-row"><div class="form-label">Amount (${cur}) *</div><input class="form-input" id="exp-req-amount" type="number" placeholder="0" min="1"></div>
+      <div class="form-row"><div class="form-label">Notes</div><input class="form-input" id="exp-req-notes" placeholder="Any extra details..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-expense-req')">Cancel</button>
+      <button class="btn-save" onclick="submitExpenseRequest()">Submit for Approval</button>
+    </div>
+  </div>`;
+  openModal('modal-expense-req');
+  setTimeout(()=>document.getElementById('exp-req-desc').focus(),300);
+}
+
+function submitExpenseRequest(){
+  const desc=document.getElementById('exp-req-desc').value.trim();
+  const amount=parseFloat(document.getElementById('exp-req-amount').value)||0;
+  const notes=document.getElementById('exp-req-notes').value.trim();
+  if(!desc){toast('Describe what the expense was for');return;}
+  if(!amount||amount<=0){toast('Enter the amount');return;}
+  if(!DB.requests) DB.requests=[];
+  DB.requests.push({
+    id:Date.now(),date:todayMinus(0),
+    type:'expense',
+    product:desc,
+    details:`${desc} — NKF ${amount}${notes?' ('+notes+')':''}`,
+    reason:notes||desc,
+    submittedBy:currentUser?currentUser.name:'',
+    status:'pending',managerNote:'',
+    extraData:{amount,desc,notes,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+  });
+  logActivity('inventory',`⚠ Expense reported by ${currentUser?currentUser.name:'staff'}: ${desc} — NKF ${amount}`);
+  save();
+  closeModal('modal-expense-req');
+  updateRequestsBadge();
+  renderDrawer();
+  toast('Expense submitted — awaiting manager approval');
+}
+
 // ─── EMPLOYEE NOTIFICATIONS ───
 function pushEmployeeNotification(message){
   if(!DB.notifications) DB.notifications=[];
@@ -5589,6 +5732,7 @@ function filterActivity(){
   const cur='NKF';
   const typeIcon={sale:'🛒',purchase:'🛍️',return:'↩️',loan:'💳',inventory:'📦',login:'🔐'};
   const typeBadge={sale:'green',purchase:'blue',return:'red',loan:'orange',inventory:'gray',login:'blue'};
+  const typeLabel={sale:t('sale'),purchase:t('purchase'),return:t('return'),loan:t('loan'),inventory:t('inventory'),login:t('login')};
   const filtered=[...DB.activityLog].reverse().filter(a=>{
     return (!user||a.user===user)&&(!type||a.type===type);
   }).slice(0,200);
@@ -5615,7 +5759,7 @@ function filterActivity(){
     return `<tr>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;vertical-align:top;padding-top:10px">${timeStr}</td>
       <td style="vertical-align:top;padding-top:10px"><span style="font-weight:500">${a.user}</span><br><span style="font-size:10px;color:var(--text3)">${a.role||''}</span></td>
-      <td style="vertical-align:top;padding-top:10px"><span class="badge ${typeBadge[a.type]||'gray'}">${typeIcon[a.type]||'•'} ${a.type}</span></td>
+      <td style="vertical-align:top;padding-top:10px"><span class="badge ${typeBadge[a.type]||'gray'}">${typeIcon[a.type]||'•'} ${typeLabel[a.type]||a.type}</span></td>
       <td style="font-size:12px;color:var(--text2);max-width:340px">${a.detail}${itemsDetail}</td>
       <td style="font-family:var(--font-head);color:${a.amount?'var(--accent)':'var(--text3)'};vertical-align:top;padding-top:10px;white-space:nowrap">${a.amount?cur+' '+a.amount.toLocaleString():'—'}</td>
     </tr>`;
@@ -5638,7 +5782,7 @@ function renderRequests(){
     document.getElementById('my-requests-list').innerHTML = myReqs.length
       ? myReqs.map(r=>`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2);border:1px solid var(--border);margin-bottom:6px">
-          <span style="font-size:18px">${r.type==='stock'?'📦':r.type==='price'?'💰':r.type==='edit'?'✏️':r.type==='addproduct'?'➕':'🗑️'}</span>
+          <span style="font-size:18px">${r.type==='stock'?'📦':r.type==='price'?'💰':r.type==='edit'?'✏️':r.type==='addproduct'?'➕':r.type==='expense'?'💸':'🗑️'}</span>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:500">${r.product}</div>
             <div style="font-size:11px;color:var(--text3)">${r.details} · ${r.date}</div>
@@ -5662,7 +5806,7 @@ function filterRequests(){
     <tr style="${r.status==='pending'?'background:rgba(45,156,219,0.04)':''}">
       <td style="font-size:12px;color:var(--text3)">${r.date}</td>
       <td style="font-weight:500">${r.submittedBy}</td>
-      <td><span class="badge ${r.type==='stock'?'green':r.type==='price'?'orange':r.type==='edit'?'blue':r.type==='addproduct'?'green':'red'}">${r.type==='stock'?'📦 Stock':r.type==='price'?'💰 Price':r.type==='edit'?'✏ Edit':r.type==='addproduct'?'➕ New Product':'🗑 Delete'}</span></td>
+      <td><span class="badge ${r.type==='stock'?'green':r.type==='price'?'orange':r.type==='edit'?'blue':r.type==='addproduct'?'green':r.type==='expense'?'orange':'red'}">${r.type==='stock'?'📦 Stock':r.type==='price'?'💰 Price':r.type==='edit'?'✏ Edit':r.type==='addproduct'?'➕ New Product':r.type==='expense'?'💸 Expense':'🗑 Delete'}</span></td>
       <td>${r.product}</td>
       <td style="font-size:12px;color:var(--text2)">${r.details}</td>
       <td style="font-size:12px;color:var(--text3);max-width:150px">${r.reason}</td>
@@ -5832,8 +5976,20 @@ function handleRequest(id,action){
       const session=getOrPickSession();
       const amount=r.extraData.buyPrice||0;
       const desc=`External purchase: ${r.extraData.buyItem||r.product} ×${r.extraData.buyQty||1} (approved for ${r.submittedBy})`;
-      if(session) session.expenses.push({desc,amount,by:currentUser?currentUser.name:'',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+      if(session) session.expenses.push({desc,amount,by:r.submittedBy,time:r.extraData?.time||new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
       logActivity('inventory',`External purchase approved: ${desc} — NKF ${amount}`);
+    } else if(r.type==='expense'){
+      // Employee drawer expense — add to active session
+      const session=getOrPickSession();
+      const amount=r.extraData.amount||0;
+      const desc=`${r.extraData.desc||r.product} (by ${r.submittedBy})`;
+      if(session){
+        session.expenses.push({desc,amount,by:r.submittedBy,time:r.extraData?.time||new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+        logActivity('inventory',`Expense approved: ${desc} — NKF ${amount} (approved by ${currentUser?currentUser.name:''})`);
+      } else {
+        toast('No open drawer session — expense logged but not added to drawer');
+        logActivity('inventory',`Expense approved (no session): ${desc} — NKF ${amount}`);
+      }
     } else if(r.type==='delete'){
       sendToRecycleBin('product',r.product,currentUser?currentUser.name:'',`Deleted via request by ${r.submittedBy}`);
       DB.products=DB.products.filter(x=>x.name!==r.product);
@@ -6303,8 +6459,38 @@ function renderDrawer(){
         <span>${daySales.length} sale${daySales.length!==1?'s':''}</span>
         <span style="color:var(--accent);font-family:var(--font-head)">${cur} ${daySales.reduce((a,s)=>a+s.total,0).toLocaleString()}</span>
       </div>`;
+
+    // Expense request panel for employees
+    let empExpPanel=document.getElementById('emp-expense-panel');
+    if(!empExpPanel){
+      empExpPanel=document.createElement('div');
+      empExpPanel.id='emp-expense-panel';
+      empExpPanel.className='panel';
+      empExpPanel.style.marginTop='16px';
+      const drawerPage=document.getElementById('page-drawer');
+      if(drawerPage) drawerPage.insertBefore(empExpPanel,drawerPage.children[2]||null);
+    }
+    empExpPanel.style.display='block';
+    const myExpReqs=(DB.requests||[]).filter(r=>r.type==='expense'&&r.submittedBy===(currentUser?currentUser.name:'')&&r.date===today);
+    empExpPanel.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="panel-title" style="margin:0"><span class="dot" style="background:var(--orange,#e67e22)"></span> Expenses from Drawer</div>
+        <button class="topbar-btn" onclick="showExpenseRequestModal()">+ Report Expense</button>
+      </div>
+      ${myExpReqs.length?myExpReqs.map(r=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <div style="flex:1">
+            <div style="font-weight:500">${r.product}</div>
+            <div style="font-size:11px;color:var(--text3)">${r.reason||''}</div>
+          </div>
+          <span style="font-family:var(--font-head);color:var(--red)">− ${cur} ${r.extraData?.amount||0}</span>
+          <span class="badge ${r.status==='approved'?'green':r.status==='rejected'?'red':'orange'}" style="font-size:10px">${r.status==='approved'?'✓ Approved':r.status==='rejected'?'✕ Rejected':'⏳ Pending'}</span>
+        </div>`).join('')
+      :`<div style="color:var(--text3);font-size:12px;padding:8px 0">No expenses reported today</div>`}`;
   } else if(empSalesPanel){
     empSalesPanel.style.display='none';
+    const ep=document.getElementById('emp-expense-panel');
+    if(ep) ep.style.display='none';
   }
 
   renderDrawerHistory(cur,today);
@@ -6491,13 +6677,21 @@ function exportMonthlyReport(){
   const monthProfit=monthSales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
 
   rows.push(['MONTHLY SUMMARY']);
+  rows.push(['ወርሓዊ ጸብጻብ','']);
   rows.push(['Total Revenue',`${cur} ${monthRev.toLocaleString()}`]);
+  rows.push(['ጠቕላሊ እቶት',`ናቕፋ ${monthRev.toLocaleString()}`]);
   rows.push(['Total Expenses',`${cur} ${monthExp.toLocaleString()}`]);
+  rows.push(['ጠቕላሊ ወጻኢ',`ናቕፋ ${monthExp.toLocaleString()}`]);
   rows.push(['Net (Revenue - Expenses)',`${cur} ${(monthRev-monthExp).toLocaleString()}`]);
+  rows.push(['ጥርኑፍ (እቶት - ወጻኢ)',`ናቕፋ ${(monthRev-monthExp).toLocaleString()}`]);
   rows.push(['Est. Profit',`${cur} ${Math.round(monthProfit).toLocaleString()}`]);
+  rows.push(['ግምታዊ ትርፊ',`ናቕፋ ${Math.round(monthProfit).toLocaleString()}`]);
   rows.push(['Total Transactions',monthSales.length]);
+  rows.push(['ጠቕላሊ ሸቐጥ',monthSales.length]);
   rows.push(['Days Operated',allDates.length]);
+  rows.push(['ዕለታት ስርሒት',allDates.length]);
   rows.push(['Avg Revenue/Day',`${cur} ${allDates.length?Math.round(monthRev/allDates.length).toLocaleString():'0'}`]);
+  rows.push(['ማእከላይ እቶት/ዕለት',`ናቕፋ ${allDates.length?Math.round(monthRev/allDates.length).toLocaleString():'0'}`]);
   rows.push([]);
 
   // Top products this month
@@ -6505,7 +6699,9 @@ function exportMonthlyReport(){
   monthSales.forEach(s=>s.items.forEach(i=>{itemRevs[i.name]=(itemRevs[i.name]||0)+i.qty*i.price;}));
   const topProds=Object.entries(itemRevs).sort((a,b)=>b[1]-a[1]).slice(0,10);
   rows.push(['TOP 10 PRODUCTS']);
+  rows.push(['ዝለዓለ 10 ኣቑሑ','']);
   rows.push(['Product','Revenue ('+cur+')']);
+  rows.push(['ናይ ዕቃ ስም','እቶት (ናቕፋ)']);
   topProds.forEach(([n,v])=>rows.push([n,Math.round(v).toLocaleString()]));
   rows.push([]);
 
@@ -6513,13 +6709,17 @@ function exportMonthlyReport(){
   const staffRev={};const staffCount={};
   monthSales.forEach(s=>{const w=s.servedBy||'Unknown';staffRev[w]=(staffRev[w]||0)+s.total;staffCount[w]=(staffCount[w]||0)+1;});
   rows.push(['STAFF PERFORMANCE']);
+  rows.push(['ኣፈጻጽማ ሰራሕተኛ','']);
   rows.push(['Name','Transactions','Revenue ('+cur+')']);
+  rows.push(['ስም','ሸቐጥ','እቶት (ናቕፋ)']);
   Object.entries(staffRev).sort((a,b)=>b[1]-a[1]).forEach(([n,v])=>rows.push([n,staffCount[n],Math.round(v).toLocaleString()]));
   rows.push([]);
 
   // ── SHEET 2 separator: Daily Breakdown ──
   rows.push(['═══ DAILY BREAKDOWN ═══']);
+  rows.push(['ዕለታዊ ዝርዝር','']);
   rows.push(['Date','Day','Opened By','Closed By','Transactions','Revenue ('+cur+')','Expenses ('+cur+')','Expected ('+cur+')','Actual Counted ('+cur+')','Difference ('+cur+')','Status']);
+  rows.push(['ዕለት','መዓልቲ','ዝኸፈቶ','ዝዓጸዎ','ሸቐጥ','እቶት (ናቕፋ)','ወጻኢ (ናቕፋ)','ዝጽበ (ናቕፋ)','ዝተቖጸረ (ናቕፋ)','ፍልልይ (ናቕፋ)','ኩነታት']);
 
   allDates.forEach(date=>{
     const s=DB.drawerSessions.find(x=>x.date===date);
@@ -6543,7 +6743,9 @@ function exportMonthlyReport(){
 
   // ── SHEET 3 separator: All Transactions ──
   rows.push(['═══ ALL TRANSACTIONS ═══']);
+  rows.push(['ሙሉእ ሸቐጥ','']);
   rows.push(['Date','Time','Customer','Served By','Items','Discount ('+cur+')','Total ('+cur+')']);
+  rows.push(['ዕለት','ሰዓት','ዓሚል','ዘገልገለ','ኣቑሑ','ቅናሽ (ናቕፋ)','ጠቕላሊ (ናቕፋ)']);
   [...monthSales].sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')).forEach(sale=>{
     rows.push([sale.date,sale.time||'—',sale.customer,sale.servedBy||'—',sale.items.map(i=>i.name+' x'+i.qty).join('; '),sale.discount?sale.discount.toFixed(0):'0',sale.total.toFixed(0)]);
   });
@@ -6555,9 +6757,159 @@ function exportMonthlyReport(){
   monthSessions.forEach(s=>(s.expenses||[]).forEach(e=>allExpenses.push({date:s.date,...e})));
   if(allExpenses.length){
     rows.push(['═══ ALL EXPENSES ═══']);
+    rows.push(['ሙሉእ ወጻኢታት','']);
     rows.push(['Date','Description','Amount ('+cur+')','Recorded By','Time']);
+    rows.push(['ዕለት','መግለጺ','መጠን (ናቕፋ)','ዝሰፈሮ','ሰዓት']);
     allExpenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>rows.push([e.date,e.desc,e.amount,e.by||'—',e.time||'—']));
-    rows.push(['','TOTAL EXPENSES',monthExp.toFixed(0),'','']);
+    rows.push(['','TOTAL EXPENSES / ጠቕላሊ ወጻኢ',monthExp.toFixed(0),'','']);
+    rows.push([]);
+  }
+
+  // ── Products with zero sales this month ──
+  const soldNames=new Set(monthSales.flatMap(s=>s.items.map(i=>i.name)));
+  const zeroSales=DB.products.filter(p=>!soldNames.has(p.name)&&getTotalStock(p)>0);
+  rows.push(['═══ PRODUCTS WITH NO SALES THIS MONTH ═══']);
+  rows.push(['ኣቑሑ ብዘይ መሸጣ ኣብዚ ወርሒ','']);
+  if(zeroSales.length){
+    rows.push(['Product','Category','Current Stock','Unit','Cost Price ('+cur+')']);
+    rows.push(['ናይ ዕቃ ስም','ዓይነት','ሕጂ ዘሎ ዕቃ','ናይ ዕቃ ሓድነት','ዋጋ ዕቃ (ናቕፋ)']);
+    zeroSales.forEach(p=>{
+      const stock=p.unit==='rolls'&&p.metersPerRoll
+        ?`${getTotalFullRolls(p)} rolls (${getTotalRollMeters(p)}m)`
+        :`${getTotalStock(p)} ${p.unit}`;
+      rows.push([p.name,p.cat||'—',stock,p.unit,p.cost?p.cost:'—']);
+    });
+    rows.push([`Total: ${zeroSales.length} product${zeroSales.length!==1?'s':''} with no sales`,'','','','']);
+    rows.push([`ጠቕላሊ: ${zeroSales.length} ናይ ዕቃ ዓይነት ብዘይ መሸጣ`,'','','','']);
+  } else {
+    rows.push(['All products had at least one sale this month ✓']);
+    rows.push(['ኩሎም ኣቑሑ ቀሊል ሓደ ሸቐጥ ኣለዎም ✓']);
+  }
+  rows.push([]);
+
+  // ── Stock purchased this month ──
+  const monthPurchases=(DB.purchases||[]).filter(p=>p.date&&p.date.startsWith(month));
+  rows.push(['═══ STOCK PURCHASED THIS MONTH ═══']);
+  rows.push(['ዝተዓደገ ዕቃ ኣብዚ ወርሒ','']);
+  if(monthPurchases.length){
+    const totalPurchased=monthPurchases.reduce((a,p)=>a+p.grandTotal,0);
+    rows.push(['Date','Supplier','Items Purchased','Total Cost ('+cur+')','Recorded By']);
+    rows.push(['ዕለት','መሸጣዩ','ዝተዓደጉ ኣቑሑ','ጠቕላሊ ዋጋ (ናቕፋ)','ዝሰፈሮ']);
+    monthPurchases.sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
+      const itemList=p.lines.map(l=>`${l.item} ×${l.qty} ${l.unit}`).join('; ');
+      rows.push([p.date,p.supplier||'—',itemList,p.grandTotal.toFixed(0),p.recordedBy||'—']);
+    });
+    // Line-by-line detail
+    rows.push([]);
+    rows.push(['PURCHASE DETAIL / ዝርዝር ዕድጊ','','','','']);
+    rows.push(['Date','Product','Qty','Unit','Cost/Unit ('+cur+')','Total Cost ('+cur+')','Supplier']);
+    rows.push(['ዕለት','ዕቃ','መጠን','ሓድነት','ዋጋ/ሓደ ሓድነት','ጠቕላሊ ዋጋ','መሸጣዩ']);
+    monthPurchases.forEach(p=>{
+      p.lines.forEach(l=>{
+        rows.push([p.date,l.item,l.qty,l.unit||'pcs',l.unitPrice,(l.qty*l.unitPrice).toFixed(0),p.supplier||'—']);
+      });
+    });
+    rows.push(['','','','','TOTAL PURCHASED / ጠቕላሊ ዕድጊ',totalPurchased.toFixed(0),'']);
+  } else {
+    rows.push(['No purchases recorded this month']);
+    rows.push(['ኣብዚ ወርሒ ዝተሰፈረ ዕድጊ የለን']);
+  }
+
+  // ── FULL TIGRINYA SECTION ──
+  rows.push([]);
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['ትግርኛ / TIGRINYA VERSION BELOW']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push([]);
+  rows.push([shopName]);
+  rows.push([`ወርሓዊ ጸብጻብ — ${monthLabel}`]);
+  rows.push([`ዝተፈጠረ: ${new Date().toLocaleDateString()}`]);
+  rows.push([]);
+
+  rows.push(['═══ ወርሓዊ ጸብጻብ ═══']);
+  rows.push(['ጠቕላሊ እቶት',`ናቕፋ ${monthRev.toLocaleString()}`]);
+  rows.push(['ጠቕላሊ ወጻኢ',`ናቕፋ ${monthExp.toLocaleString()}`]);
+  rows.push(['ጥርኑፍ (እቶት - ወጻኢ)',`ናቕፋ ${(monthRev-monthExp).toLocaleString()}`]);
+  rows.push(['ግምታዊ ትርፊ',`ናቕፋ ${Math.round(monthProfit).toLocaleString()}`]);
+  rows.push(['ጠቕላሊ ሸቐጥ',monthSales.length]);
+  rows.push(['ዕለታት ስርሒት',allDates.length]);
+  rows.push(['ማእከላይ እቶት/ዕለት',`ናቕፋ ${allDates.length?Math.round(monthRev/allDates.length).toLocaleString():'0'}`]);
+  rows.push([]);
+
+  rows.push(['ዝለዓለ 10 ኣቑሑ']);
+  rows.push(['ናይ ዕቃ ስም','እቶት (ናቕፋ)']);
+  topProds.forEach(([n,v])=>rows.push([n,Math.round(v).toLocaleString()]));
+  rows.push([]);
+
+  rows.push(['ኣፈጻጽማ ሰራሕተኛ']);
+  rows.push(['ስም','ሸቐጥ','እቶት (ናቕፋ)']);
+  Object.entries(staffRev).sort((a,b)=>b[1]-a[1]).forEach(([n,v])=>rows.push([n,staffCount[n],Math.round(v).toLocaleString()]));
+  rows.push([]);
+
+  rows.push(['ዕለታዊ ዝርዝር']);
+  rows.push(['ዕለት','መዓልቲ','ዝኸፈቶ','ዝዓጸዎ','ሸቐጥ','እቶት (ናቕፋ)','ወጻኢ (ናቕፋ)','ዝጽበ (ናቕፋ)','ዝተቖጸረ (ናቕፋ)','ፍልልይ (ናቕፋ)','ኩነታት']);
+  allDates.forEach(date=>{
+    const s=DB.drawerSessions.find(x=>x.date===date);
+    const daySales=DB.sales.filter(x=>x.date===date);
+    const rev=daySales.reduce((a,x)=>a+x.total,0);
+    const exp2=s?(s.expenses||[]).reduce((a,e)=>a+e.amount,0):0;
+    const start=s?s.startingCash:0;
+    const expected2=start+rev-exp2;
+    const actual2=s&&s.actualCash!=null?s.actualCash:'';
+    const diff2=actual2!==''?actual2-expected2:'';
+    const dayOfWeek=new Date(date+'T12:00:00').toLocaleDateString('ti',{weekday:'long'})||new Date(date+'T12:00:00').toLocaleDateString([],{weekday:'long'});
+    const status=s?s.closed?'ዝተዓጸወ':'ክፉት':'ሸቐጥ ጥራይ';
+    rows.push([date,dayOfWeek,s?s.openedBy:'—',s&&s.closedBy?s.closedBy:'—',daySales.length,rev.toFixed(0),exp2.toFixed(0),expected2.toFixed(0),actual2!==''?actual2:'ዘይተቖጸረ',diff2!==''?(diff2>=0?'+':'')+diff2.toFixed(0):'—',status]);
+  });
+  rows.push(['ጠቕላሊ','','','',monthSales.length,totalRev.toFixed(0),totalExp.toFixed(0),'','','','']);
+  rows.push([]);
+
+  rows.push(['ሙሉእ ሸቐጥ']);
+  rows.push(['ዕለት','ሰዓት','ዓሚል','ዘገልገለ','ኣቑሑ','ቅናሽ (ናቕፋ)','ጠቕላሊ (ናቕፋ)']);
+  [...monthSales].sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||'')).forEach(sale=>{
+    rows.push([sale.date,sale.time||'—',sale.customer,sale.servedBy||'—',sale.items.map(i=>i.name+' ×'+i.qty).join('; '),sale.discount?sale.discount.toFixed(0):'0',sale.total.toFixed(0)]);
+  });
+  rows.push(['','','','','','ጠቕላሊ',totalRev.toFixed(0)]);
+  rows.push([]);
+
+  if(allExpenses.length){
+    rows.push(['ሙሉእ ወጻኢታት']);
+    rows.push(['ዕለት','መግለጺ','መጠን (ናቕፋ)','ዝሰፈሮ','ሰዓት']);
+    allExpenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>rows.push([e.date,e.desc,e.amount,e.by||'—',e.time||'—']));
+    rows.push(['','ጠቕላሊ ወጻኢ',monthExp.toFixed(0),'','']);
+    rows.push([]);
+  }
+
+  rows.push(['ኣቑሑ ብዘይ መሸጣ ኣብዚ ወርሒ']);
+  if(zeroSales.length){
+    rows.push(['ናይ ዕቃ ስም','ዓይነት','ሕጂ ዘሎ ዕቃ','ሓድነት','ዋጋ ዕቃ (ናቕፋ)']);
+    zeroSales.forEach(p=>{
+      const stock=p.unit==='rolls'&&p.metersPerRoll
+        ?`${getTotalFullRolls(p)} rolls (${getTotalRollMeters(p)}m)`
+        :`${getTotalStock(p)} ${p.unit}`;
+      rows.push([p.name,p.cat||'—',stock,p.unit,p.cost?p.cost:'—']);
+    });
+    rows.push([`ጠቕላሊ: ${zeroSales.length} ዓይነት ዕቃ ብዘይ መሸጣ`]);
+  } else {
+    rows.push(['ኩሎም ኣቑሑ ቀሊል ሓደ ሸቐጥ ኣለዎም ✓']);
+  }
+  rows.push([]);
+
+  rows.push(['ዝተዓደገ ዕቃ ኣብዚ ወርሒ']);
+  if(monthPurchases.length){
+    rows.push(['ዕለት','መሸጣዩ','ዝተዓደጉ ኣቑሑ','ጠቕላሊ ዋጋ (ናቕፋ)','ዝሰፈሮ']);
+    monthPurchases.sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
+      rows.push([p.date,p.supplier||'—',p.lines.map(l=>`${l.item} ×${l.qty} ${l.unit}`).join('; '),p.grandTotal.toFixed(0),p.recordedBy||'—']);
+    });
+    rows.push([]);
+    rows.push(['ዝርዝር ዕድጊ']);
+    rows.push(['ዕለት','ዕቃ','መጠን','ሓድነት','ዋጋ/ሓደ','ጠቕላሊ ዋጋ','መሸጣዩ']);
+    monthPurchases.forEach(p=>{
+      p.lines.forEach(l=>rows.push([p.date,l.item,l.qty,l.unit||'pcs',l.unitPrice,(l.qty*l.unitPrice).toFixed(0),p.supplier||'—']));
+    });
+    rows.push(['','','','','','ጠቕላሊ ዕድጊ',monthPurchases.reduce((a,p)=>a+p.grandTotal,0).toFixed(0)]);
+  } else {
+    rows.push(['ኣብዚ ወርሒ ዝተሰፈረ ዕድጊ የለን']);
   }
 
   // Download as CSV with BOM
@@ -6565,7 +6917,7 @@ function exportMonthlyReport(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`${month}-monthly-report.csv`;
+  a.href=url;a.download=`Weyni-Monthly-Report-${month}.csv`;
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(url);
   toast(`${monthLabel} report downloaded ✓`);
@@ -6585,49 +6937,113 @@ function exportDayFull(date){
 
 
 function exportDayAsCSV(date,s,sales,expenses,rev,exp,expected,actual,diff,cur){
-  // Build a comprehensive CSV that Excel can open
   const rows=[];
   const shopName=DB.settings.shopName||'Weyni General Electric Shop';
+  const dayOfWeek=new Date(date+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+
+  // ── ENGLISH SECTION ──
   rows.push([shopName]);
-  rows.push([`Day Report — ${date}`]);
-  rows.push([`Opened by: ${s?s.openedBy:'—'}`,`Closed by: ${s&&s.closedBy?s.closedBy:'Open'}`]);
+  rows.push(['DAILY CASH DRAWER REPORT / ዕለታዊ ናይ ገንዘብ ጸብጻብ']);
+  rows.push([`Date: ${date} — ${dayOfWeek}`]);
+  rows.push([`Opened by: ${s?s.openedBy:'—'}  |  Closed by: ${s&&s.closedBy?s.closedBy:'Still Open'}`]);
   rows.push([]);
-  rows.push(['CASH SUMMARY']);
+
+  // Cash Summary — English
+  rows.push(['═══ CASH SUMMARY ═══']);
   rows.push(['Starting Float',`${cur} ${s?s.startingCash:0}`]);
   rows.push(['Total Sales Revenue',`${cur} ${rev.toLocaleString()}`]);
-  rows.push(['Total Expenses',`${cur} ${exp.toLocaleString()}`]);
+  rows.push(['Total Expenses Paid',`${cur} ${exp.toLocaleString()}`]);
   rows.push(['Expected in Drawer',`${cur} ${expected.toLocaleString()}`]);
   if(actual!=null){
     rows.push(['Actual Cash Counted',`${cur} ${actual}`]);
-    rows.push(['Difference',`${cur} ${diff>=0?'+':''}${diff!=null?diff.toFixed(0):'—'}`]);
+    rows.push([`Difference`,`${cur} ${diff>=0?'+':''}${diff.toFixed(0)} ${Math.abs(diff)<1?'✓ Balanced':diff>0?'⚠ Extra':'⚠ Short'}`]);
   }
   rows.push([]);
-  rows.push(['SALES ('+sales.length+' transactions)']);
-  rows.push(['Time','Customer','Served By','Items','Discount','Total ('+cur+')']);
-  sales.forEach(sale=>{
-    rows.push([
-      sale.time||'—',
-      sale.customer,
-      sale.servedBy||'—',
-      sale.items.map(i=>i.name+' x'+i.qty).join('; '),
-      sale.discount?sale.discount.toFixed(0):'0',
-      sale.total.toFixed(0)
-    ]);
+
+  // Discounts — English
+  const discountSales=sales.filter(sa=>sa.discount>0);
+  if(discountSales.length){
+    rows.push([`DISCOUNTS GIVEN (${discountSales.length})`]);
+    rows.push(['Time','Customer','Items','Discount ('+cur+')','Original ('+cur+')','Paid ('+cur+')','Served By']);
+    discountSales.forEach(sa=>{
+      rows.push([sa.time||'—',sa.customer,sa.items.map(i=>i.name+' ×'+i.qty).join('; '),sa.discount.toFixed(0),sa.subtotal.toFixed(0),sa.total.toFixed(0),sa.servedBy||'—']);
+    });
+    rows.push([]);
+  }
+
+  // Sales — English
+  rows.push([`SALES (${sales.length} transactions)`]);
+  rows.push(['Time','Customer','Served By','Items','Discount ('+cur+')','Total ('+cur+')']);
+  sales.forEach(sa=>{
+    rows.push([sa.time||'—',sa.customer,sa.servedBy||'—',sa.items.map(i=>i.name+' ×'+i.qty+(i.rollMode?' ('+i.rollMeters+'m)':'')).join('; '),sa.discount?sa.discount.toFixed(0):'0',sa.total.toFixed(0)]);
   });
   rows.push(['','','','','TOTAL',rev.toFixed(0)]);
+  rows.push([]);
+
+  // Expenses — English
   if(expenses.length){
+    rows.push([`EXPENSES FROM DRAWER (${expenses.length})`]);
+    rows.push(['Description','Amount ('+cur+')','Recorded By','Approved By','Time']);
+    expenses.forEach(e=>{rows.push([e.desc,e.amount,e.by||'—',e.approvedBy||'N/A (Manager)',e.time||'—']);});
+    rows.push(['','TOTAL EXPENSES',exp.toFixed(0),'','']);
     rows.push([]);
-    rows.push(['EXPENSES ('+expenses.length+')']);
-    rows.push(['Description','Amount ('+cur+')','Recorded By','Time']);
-    expenses.forEach(e=>{rows.push([e.desc,e.amount,e.by||'—',e.time||'—']);});
-    rows.push(['','TOTAL EXPENSES',exp.toFixed(0)]);
   }
-  // Convert to CSV with BOM for Excel UTF-8
-  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+
+  // ── TIGRINYA SECTION ──
+  rows.push(['══════════════════════════════════════']);
+  rows.push(['ትግርኛ / TIGRINYA VERSION BELOW']);
+  rows.push(['══════════════════════════════════════']);
+  rows.push([]);
+  rows.push([shopName]);
+  rows.push(['ዕለታዊ ናይ ገንዘብ ጸብጻብ']);
+  rows.push([`ዕለት: ${date} — ${dayOfWeek}`]);
+  rows.push([`ዝኸፈቶ: ${s?s.openedBy:'—'}  |  ዝዓጸዎ: ${s&&s.closedBy?s.closedBy:'ገና ኣይተዓጸወን'}`]);
+  rows.push([]);
+
+  // Cash Summary — Tigrinya
+  rows.push(['═══ ናይ ገንዘብ ጸብጻብ ═══']);
+  rows.push(['ናይ መጀመርታ ገንዘብ',`ናቕፋ ${s?s.startingCash:0}`]);
+  rows.push(['ጠቕላሊ እቶት',`ናቕፋ ${rev.toLocaleString()}`]);
+  rows.push(['ጠቕላሊ ወጻኢ',`ናቕፋ ${exp.toLocaleString()}`]);
+  rows.push(['ዝጽበ ኣብ ካሳ',`ናቕፋ ${expected.toLocaleString()}`]);
+  if(actual!=null){
+    rows.push(['ዝተቖጸረ ናይ ሓቂ ገንዘብ',`ናቕፋ ${actual}`]);
+    rows.push(['ፍልልይ',`ናቕፋ ${diff>=0?'+':''}${diff.toFixed(0)} ${Math.abs(diff)<1?'✓ ኣዳላዊ':diff>0?'⚠ ዝወሰኸ':'⚠ ዝጎደለ'}`]);
+  }
+  rows.push([]);
+
+  // Discounts — Tigrinya
+  if(discountSales.length){
+    rows.push([`ዝተዋህቡ ቅናሽ (${discountSales.length})`]);
+    rows.push(['ሰዓት','ዓሚል','ኣቑሑ','ቅናሽ (ናቕፋ)','ዋጋ (ናቕፋ)','ዝተኸፍለ (ናቕፋ)','ዘገልገለ']);
+    discountSales.forEach(sa=>{
+      rows.push([sa.time||'—',sa.customer,sa.items.map(i=>i.name+' ×'+i.qty).join('; '),sa.discount.toFixed(0),sa.subtotal.toFixed(0),sa.total.toFixed(0),sa.servedBy||'—']);
+    });
+    rows.push([]);
+  }
+
+  // Sales — Tigrinya
+  rows.push([`ሸቐጥ (${sales.length} ግብይት)`]);
+  rows.push(['ሰዓት','ዓሚል','ዘገልገለ','ኣቑሑ','ቅናሽ (ናቕፋ)','ጠቕላሊ (ናቕፋ)']);
+  sales.forEach(sa=>{
+    rows.push([sa.time||'—',sa.customer,sa.servedBy||'—',sa.items.map(i=>i.name+' ×'+i.qty).join('; '),sa.discount?sa.discount.toFixed(0):'0',sa.total.toFixed(0)]);
+  });
+  rows.push(['','','','','ጠቕላሊ',rev.toFixed(0)]);
+  rows.push([]);
+
+  // Expenses — Tigrinya
+  if(expenses.length){
+    rows.push([`ወጻኢ ካብ ካሳ (${expenses.length})`]);
+    rows.push(['መግለጺ','መጠን (ናቕፋ)','ዝሰፈሮ','ዝፈቀዶ','ሰዓት']);
+    expenses.forEach(e=>{rows.push([e.desc,e.amount,e.by||'—',e.approvedBy||'ሓላፊ',e.time||'—']);});
+    rows.push(['','ጠቕላሊ ወጻኢ',exp.toFixed(0),'','']);
+  }
+
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>`"${String(c===null||c===undefined?'':c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`${date}-day-report.csv`;
+  a.href=url;a.download=`Weyni-Day-Report-${date}.csv`;
   document.body.appendChild(a);a.click();
   document.body.removeChild(a);URL.revokeObjectURL(url);
   toast('Downloaded! Open in Excel ✓');
@@ -6735,24 +7151,24 @@ function renderRecycle(){
   const tbody=document.getElementById('recycle-tbody');
   if(!tbody) return;
   if(!DB.recycleBin.length){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">Recycle bin is empty</td></tr>';
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">${DB.settings.lang==='ti'?'ቆሻሻ ባዶ ኣሎ':'Recycle bin is empty'}</td></tr>`;
     return;
   }
   tbody.innerHTML=[...DB.recycleBin].reverse().map(item=>{
     const label=item.type==='product'?item.data.name||item.data
-      :item.type==='sale'?`Sale — ${item.data.customer} (NKF ${item.data.total})`
+      :item.type==='sale'?`${DB.settings.lang==='ti'?'ሽያጥ':'Sale'} — ${item.data.customer} (NKF ${item.data.total})`
       :item.type==='customer'?item.data.name||item.data
-      :item.type==='loan'?`Loan — ${item.data.borrower} NKF ${item.data.amount}`
+      :item.type==='loan'?`${DB.settings.lang==='ti'?'ልቓሕ':'Loan'} — ${item.data.borrower} NKF ${item.data.amount}`
       :JSON.stringify(item.data).substring(0,60);
     return `<tr>
       <td style="font-size:12px;color:var(--text3)">${item.date} ${item.time||''}</td>
-      <td><span class="badge ${item.type==='product'?'blue':item.type==='sale'?'green':'gray'}">${item.type}</span></td>
+      <td><span class="badge ${item.type==='product'?'blue':item.type==='sale'?'green':'gray'}">${t(item.type)||item.type}</span></td>
       <td style="font-size:13px;font-weight:500">${label}</td>
       <td style="font-size:12px;color:var(--text3)">${item.deletedBy}</td>
       <td style="font-size:12px;color:var(--text3);max-width:140px">${item.reason}</td>
       <td>
-        ${isManager?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="restoreFromBin(${item.id})">↩ Restore</button>
-        <button class="action-btn del" onclick="permDeleteFromBin(${item.id})">✕ Delete</button>`:'<span style="font-size:11px;color:var(--text3)">Manager only</span>'}
+        ${isManager?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="restoreFromBin(${item.id})">↩ ${DB.settings.lang==='ti'?'መልስ':'Restore'}</button>
+        <button class="action-btn del" onclick="permDeleteFromBin(${item.id})">✕ ${DB.settings.lang==='ti'?'ሰርዝ':'Delete'}</button>`:`<span style="font-size:11px;color:var(--text3)">${DB.settings.lang==='ti'?'ሓላፊ ጥራሕ':'Manager only'}</span>`}
       </td>
     </tr>`;
   }).join('');
