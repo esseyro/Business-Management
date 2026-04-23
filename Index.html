@@ -542,7 +542,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <div id="topbar">
       <button id="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="page-title">Dashboard</div>
-      <button class="topbar-btn" onclick="exportData()">⬇ Export</button>
+      
       <div class="user-chip" onclick="logoutPrompt()" title="Click to log out / switch user">
         <div class="user-chip-avatar" id="chip-avatar">?</div>
         <div>
@@ -4510,16 +4510,17 @@ function renderPurLines(){
 
 function importPurchaseExcel(e){
   const file=e.target.files[0];if(!file)return;
+  const inputEl=e.target;
   // Use SheetJS via CDN – load dynamically
   if(!window.XLSX){
     const s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload=()=>_doExcelImport(file);
+    s.onload=()=>_doExcelImport(file,inputEl);
     document.head.appendChild(s);
-  } else { _doExcelImport(file); }
+  } else { _doExcelImport(file,inputEl); }
 }
 
-function _doExcelImport(file){
+function _doExcelImport(file,inputEl){
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
@@ -4566,7 +4567,7 @@ function _doExcelImport(file){
     }catch(err){toast('Error reading Excel file: '+err.message);}
   };
   reader.readAsBinaryString(file);
-  e.target.value='';
+  if(inputEl) inputEl.value='';
 }
 
 function savePurchase(){
