@@ -778,7 +778,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="inv-table-wrap">
           <table class="inv-table">
             <thead><tr>
-              <th>Date</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th>Category</th><th>Zone</th><th>Grand / By</th>
+              <th>Date / Time</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Category</th><th>Zone</th><th>By</th><th></th>
             </tr></thead>
             <tbody id="pur-tbody"></tbody>
           </table>
@@ -1052,6 +1052,16 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </div>
         </div>
         <div class="settings-section">
+          <div class="settings-title">🏷️ Product Categories</div>
+          <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px">
+            <div style="font-size:12px;color:var(--text3)">Add or remove categories. Used in product forms and import.</div>
+            <div id="cat-manager-list" style="width:100%;display:flex;flex-wrap:wrap;gap:6px"></div>
+            <div style="display:flex;gap:8px;width:100%">
+              <input class="form-input" id="new-cat-input" placeholder="New category name..." style="flex:1">
+              <button class="btn-save" style="white-space:nowrap" onclick="addCategory()">+ Add</button>
+            </div>
+          </div>
+
           <div class="settings-title">📱 Data & Transfer</div>
           <div class="setting-row">
             <div><div class="setting-label">Export All Data</div><div class="setting-desc">Download as JSON backup file</div></div>
@@ -1104,15 +1114,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="form-row-2">
         <div class="form-row"><div class="form-label">Category</div>
           <select class="form-select" id="f-cat">
-            <option>Bulbs & Lighting</option><option>Chandeliers & Decorative</option><option>Cables & Wiring</option>
-            <option>Switches & Sockets</option><option>Solar Equipment</option>
-            <option>Inverters & Batteries</option><option>Circuit Breakers</option>
-            <option>Tools</option><option>Conduit & Fittings</option>
-            <option>Meters & Testers</option><option>Other</option>
           </select>
         </div>
         <div class="form-row"><div class="form-label">Storage Zone</div>
           <select class="form-select" id="f-zone">
+            <option value="">— Not set —</option>
+            <option value="⚠ Open / Unlocated">⚠ Open / Unlocated</option>
             <option value="EH Main › Sales Room">EH Main › Sales Room</option>
             <option value="EH Main › Storage Unit 1">EH Main › Storage Unit 1</option>
             <option value="EH Main › Storage Unit 2">EH Main › Storage Unit 2</option>
@@ -1124,7 +1131,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
             <option value="Mekzen › Small Unit 2">Mekzen › Small Unit 2</option>
             <option value="Mekzen › Small Unit 3">Mekzen › Small Unit 3</option>
             <option value="Mekzen › Large Unit">Mekzen › Large Unit</option>
-            <option value="⚠ Open / Unlocated">⚠ Open / Unlocated</option>
           </select>
         </div>
       </div>
@@ -2061,6 +2067,82 @@ function saveSettings(){
   toast(t('Save Settings')+' ✓');
 }
 
+// ─── CATEGORY MANAGER ───
+function autoDetectCategory(name){
+  const n=name.toLowerCase();
+  const cats=getCategories();
+  const find=key=>cats.find(c=>c.toLowerCase().includes(key))||null;
+
+  // Order matters — most specific first
+  if(/chandelier|cb\d+\/|lc\d+\/|crystal.*lc|crystal.*cb/.test(n)) return find('chandelier')||'Chandeliers';
+  if(/wall lamp|wall light|\/wall|\/1w$|\d+w$/.test(n)&&!/pendant|hanging/.test(n)) return find('wall lamp')||'Wall Lamps';
+  if(/ceiling|x-c\d/.test(n)) return find('ceiling')||'Ceiling Lamps';
+  if(/pendant|hanging|\/5$|\/3$|\/1p$/.test(n)&&!/wall/.test(n)) return find('pendant')||'Pendant Lamps';
+  if(/table lamp|table light|bedside/.test(n)) return find('table')||'Table Lamps';
+  if(/track light|mt26/.test(n)&&!/accessori/.test(n)) return find('track')||'Track Lights';
+  if(/spot|downlight|fy-\d{3}-\d|fy-b00/.test(n)) return find('spot')||'Spot Lights';
+  if(/stick light|6371|6358|6148|fy-119|fy-178/.test(n)) return find('stick')||'Stick Lights';
+  if(/rope light|ht-tx|ht-dc|ht-pjd|ht-lyc|ht-lvhp/.test(n)) return find('rope')||'Rope Lights';
+  if(/neon|ht-nhdp/.test(n)) return find('neon')||'Neon Signs';
+  if(/sticky screen|\d+\*\d+ screen/.test(n)) return find('screen')||'LED Screens';
+  if(/led strip|cob strip|220v-cob|220v-2835|xgh-|12v-(red|blue|green|pink|warm)/.test(n)) return find('led strip')||'LED Strips';
+  if(/flood|xg-\d+w|jl-\d+w/.test(n)) return find('flood')||'Flood Lights';
+  if(/wooden lamp|wooden wall|wood/.test(n)) return find('wooden')||'Wooden Lamps';
+  if(/bulb|led.*\dw|t8 glass|corn bulb|filament|g95|g96|g125|tw\d|sj5w|led a bulb|led c bulb|led t bulb/.test(n)) return find('bulb')||'Bulbs & Lighting';
+  if(/design light|kd\d|xd\d+\//.test(n)) return find('design')||'Design Lights';
+  if(/decor|ht-sjxl|ht-dtxg|ht-msdc|butterfly light|ht-dpj|ht-mq|ht-36|ht-mghq|ht-xqhp|ht-sd/.test(n)) return find('decor')||'Decorative Lights';
+  if(/adaptor|adapter|power supply|controller|12v adapter|cob plug/.test(n)) return find('adaptor')||'Adaptors & Power';
+  if(/mt26.*accessori/.test(n)) return find('track')||'Track Lights';
+  if(/cable|wire/.test(n)) return find('cable')||'Cables & Wiring';
+  if(/switch|socket/.test(n)) return find('switch')||'Switches & Sockets';
+  if(/breaker|mcb/.test(n)) return find('circuit')||'Circuit Breakers';
+  if(/solar/.test(n)) return find('solar')||'Solar Equipment';
+  return 'Other';
+}
+
+function renderCategoryManager(){
+  const list=document.getElementById('cat-manager-list');
+  if(!list) return;
+  const cats=getCategories();
+  list.innerHTML=cats.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px">
+      <span>${c}</span>
+      ${c!=='Other'?`<button onclick="removeCategory(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 4px" title="Remove">×</button>`:''}
+    </div>`).join('');
+}
+
+function addCategory(){
+  const input=document.getElementById('new-cat-input');
+  const name=input.value.trim();
+  if(!name){toast('Enter a category name');return;}
+  if(!DB.categories) DB.categories=[...DEFAULT_CATS];
+  if(DB.categories.find(c=>c.toLowerCase()===name.toLowerCase())){toast('Category already exists');return;}
+  // Insert before 'Other'
+  const otherIdx=DB.categories.indexOf('Other');
+  if(otherIdx>=0) DB.categories.splice(otherIdx,0,name);
+  else DB.categories.push(name);
+  input.value='';
+  save();
+  renderCategoryManager();
+  toast(`"${name}" added ✓`);
+}
+
+function removeCategory(idx){
+  if(!DB.categories) DB.categories=[...DEFAULT_CATS];
+  const cat=DB.categories[idx];
+  if(cat==='Other'){toast("Can't remove Other");return;}
+  // Check if any products use this category
+  const inUse=DB.products.filter(p=>p.cat===cat).length;
+  if(inUse>0){
+    if(!confirm(`${inUse} product(s) use "${cat}". They will be moved to "Other". Continue?`)) return;
+    DB.products.forEach(p=>{if(p.cat===cat) p.cat='Other';});
+  }
+  DB.categories.splice(idx,1);
+  save();
+  renderCategoryManager();
+  toast(`"${cat}" removed`);
+}
+
 // ─── NAVIGATION ───
 function nav(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -2099,6 +2181,7 @@ function renderPage(page){
   else if(page==='activity') renderActivity();
   else if(page==='recycle') renderRecycle();
   else if(page==='staff') renderStaff();
+  else if(page==='settings') renderCategoryManager();
   checkOpenZoneItems();
   renderEmployeeNotifications();
 }
@@ -2256,7 +2339,7 @@ function dashSelectDay(val){
 }
 
 // ─── POS ───
-function getCategories(){ return [...new Set(DB.products.map(p=>p.cat))].sort(); }
+function getUniqueProductCats(){ return [...new Set(DB.products.map(p=>p.cat))].sort(); }
 
 function renderPOS(){
   const cats = getCategories();
@@ -2313,7 +2396,7 @@ function filterPOS(){
 }
 
 function addToCart(id){
-  const p=DB.products.find(x=>x.id===id);
+  const p=DB.products.find(x=>x.id==id);
   if(!p){toast('Product not found');return;}
   // Roll products get a special sell modal
   if(p.unit==='rolls'&&p.metersPerRoll){
@@ -2788,6 +2871,7 @@ function showAddProductModal(id){
   document.getElementById('f-price-per-roll').value='';
   document.getElementById('f-price-per-meter').value='';
   document.getElementById('f-cost-roll').value='';
+  document.getElementById('f-cat').innerHTML=CATS.map(c=>`<option>${c}</option>`).join('');
   toggleBoxField();
   openModal('modal-product');
 }
@@ -2855,7 +2939,7 @@ function submitAddProductRequest(){
   toast('Request submitted — manager will review');
 }
 function editProduct(id){
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const isManager=currentUser&&currentUser.role==='Manager';
   if(!isManager){
     // Employees see a request-change modal instead
@@ -2908,6 +2992,7 @@ function editProduct(id){
   document.getElementById('f-desc').value=p.desc||'';
   document.getElementById('f-sku').value=p.sku||'';
   const catSel=document.getElementById('f-cat');
+  catSel.innerHTML=CATS.map(c=>`<option${c===p.cat?' selected':''}>${c}</option>`).join('');
   for(let o of catSel.options){if(o.value===p.cat)o.selected=true;}
   const zoneSel=document.getElementById('f-zone');
   for(let o of zoneSel.options){if(o.value===p.zone)o.selected=true;}
@@ -2916,7 +3001,7 @@ function editProduct(id){
 }
 
 function openProductChangeRequest(id){
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const cur=DB.settings.currency;
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   let modal=document.getElementById('modal-product-change-req');
@@ -2967,7 +3052,7 @@ function openProductChangeRequest(id){
 }
 
 function submitProductChangeRequest(id){
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   const reason=document.getElementById('pcr-reason').value.trim();
   if(!reason){toast('Please explain why you want this change');return;}
@@ -3038,9 +3123,9 @@ function saveProduct(){
   };
   // Include stock for new products only — existing stock managed via ± Stock
   if(!id) data.stock=stock;
-  else data.stock=DB.products.find(x=>x.id===id)?.stock||0; // preserve existing stock
+  else data.stock=DB.products.find(x=>x.id==id)?.stock||0; // preserve existing stock
   if(id){
-    const idx=DB.products.findIndex(x=>x.id===id);
+    const idx=DB.products.findIndex(x=>x.id==id);
     if(idx>=0){
       const old=DB.products[idx];
       const changes=[];
@@ -3079,6 +3164,18 @@ function saveProduct(){
     toast(price===0?'Product updated — remember to set a price':'Product updated');
   } else {
     data.id=Date.now();
+    // Set up initial location based on zone + stock
+    const chosenZone=data.zone||'';
+    if(data.stock>0){
+      if(chosenZone&&chosenZone!=='⚠ Open / Unlocated'){
+        data.locations=[{zone:chosenZone,qty:data.stock}];
+      } else {
+        data.locations=[{zone:'⚠ Open / Unlocated',qty:data.stock}];
+        data.openSince=Date.now();
+      }
+    } else {
+      data.locations=[];
+    }
     DB.products.push(data);
     logActivity('inventory',`New product added by ${currentUser?currentUser.name:'manager'}: ${name} — price: ${price}, unit: ${unit}`);
     toast(price===0?'Product added — price not set yet':'Product added');
@@ -3088,7 +3185,7 @@ function saveProduct(){
   renderInventory();
 }
 function deleteProduct(id){
-  const p=DB.products.find(x=>x.id===id);
+  const p=DB.products.find(x=>x.id==id);
   if(!p) return;
   sendToRecycleBin('product', {...p}, currentUser?currentUser.name:'', 'Deleted from inventory');
   logActivity('inventory',`Product deleted: ${p.name}`);
@@ -3098,8 +3195,8 @@ function deleteProduct(id){
 }
 let adjMode='add';
 function adjustStock(id){
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
-  document.getElementById('adj-product-id').value=id;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
+  document.getElementById('adj-product-id').value=String(id);
   document.getElementById('adj-product-name').textContent=p.name;
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   const stockDisplay=isRoll
@@ -3129,14 +3226,14 @@ function setAdjMode(mode){
     // Show info that added items go to Unlocated
     let addNote=document.getElementById('adj-add-note');
     if(!addNote){addNote=document.createElement('div');addNote.id='adj-add-note';locRow.parentNode.insertBefore(addNote,locRow);}
-    const pid=parseInt(document.getElementById('adj-product-id').value);
+    const pid=Number(document.getElementById('adj-product-id').value);
     const pp=DB.products.find(x=>x.id===pid);
     const isRollAdd=pp&&pp.unit==='rolls'&&pp.metersPerRoll;
     addNote.innerHTML=`<div style="font-size:12px;color:var(--text3);padding:6px 10px;background:rgba(230,126,34,0.08);border-radius:var(--radius2);margin-bottom:8px">📦 ${isRollAdd?'Enter number of full rolls received. They will go to <strong style="color:#e67e22">Open / Unlocated</strong>.':'Added stock will go to <strong style="color:#e67e22">Open / Unlocated</strong> — assign a location from Storage after saving'}</div>`;
   } else {
     remBtn.style.cssText='padding:12px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
     addBtn.style.cssText='padding:12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer';
-    const idR=parseInt(document.getElementById('adj-product-id').value);
+    const idR=Number(document.getElementById('adj-product-id').value);
     const pR=DB.products.find(x=>x.id===idR);
     const isRollRem=pR&&pR.unit==='rolls'&&pR.metersPerRoll;
     lbl.textContent=isRollRem?'Rolls to Remove':'Quantity to Remove';
@@ -3163,8 +3260,8 @@ function setAdjMode(mode){
   updateAdjPreview();
 }
 function updateAdjPreview(){
-  const id=parseInt(document.getElementById('adj-product-id').value);
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const id=Number(document.getElementById('adj-product-id').value);
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   if(!qty){document.getElementById('adj-preview').textContent='';return;}
@@ -3202,12 +3299,12 @@ function updateAdjPreview(){
 }
 function saveStockAdjust(){
   if(!currentUser||currentUser.role!=='Manager'){toast('Only managers can adjust stock directly');return;}
-  const id=parseInt(document.getElementById('adj-product-id').value);
+  const id=Number(document.getElementById('adj-product-id').value);
   const qty=parseInt(document.getElementById('adj-qty').value)||0;
   const reason=document.getElementById('adj-reason').value.trim();
   if(!qty||qty<=0){toast('Enter a valid quantity');return;}
   if(!reason){toast('Reason is required — explain why the quantity is changing');return;}
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   const who=currentUser?currentUser.name:'Manager';
 
@@ -3220,14 +3317,11 @@ function saveStockAdjust(){
     if(!p.locations) p.locations=getLocations(p);
     if(adjMode==='add'){
       // Add full rolls to unlocated
-      const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
-      if(unloc){
-        unloc.fullRolls=(unloc.fullRolls||unloc.qty||0)+qty;
-        unloc.qty=unloc.fullRolls*p.metersPerRoll+(unloc.partialMeters||0);
-      } else {
-        p.locations.push({zone:'⚠ Open / Unlocated',fullRolls:qty,partialMeters:0,qty:qty*p.metersPerRoll});
-        if(!p.openSince) p.openSince=Date.now();
-      }
+      if(!p.locations||!p.locations.length) p.locations=[];
+      let unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+      if(!unloc){ unloc={zone:'⚠ Open / Unlocated',qty:0,fullRolls:0,partialMeters:0}; p.locations.push(unloc); if(!p.openSince) p.openSince=Date.now(); }
+      unloc.fullRolls=(unloc.fullRolls||unloc.qty||0)+qty;
+      unloc.qty=unloc.fullRolls*p.metersPerRoll+(unloc.partialMeters||0);
     } else {
       // Remove full rolls from chosen location
       const locSel=document.getElementById('adj-location');
@@ -3259,10 +3353,12 @@ function saveStockAdjust(){
   if(adjMode==='remove'&&qty>totalStock){toast(`Cannot remove more than current stock (${totalStock})`);return;}
   const oldStock=totalStock;
   p.stock=adjMode==='add'?totalStock+qty:totalStock-qty;
-  if(!p.locations) p.locations=getLocations(p);
+  if(!p.locations||!p.locations.length) p.locations=[];
   if(adjMode==='add'){
-    const unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
-    if(unloc){ unloc.qty+=qty; } else { p.locations.push({zone:'⚠ Open / Unlocated',qty}); if(!p.openSince) p.openSince=Date.now(); }
+    let unloc=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+    if(unloc){ unloc.qty=(unloc.qty||0)+qty; }
+    else { p.locations.push({zone:'⚠ Open / Unlocated',qty}); }
+    if(!p.openSince) p.openSince=Date.now();
   } else {
     const locSel=document.getElementById('adj-location');
     const chosenZone=locSel?locSel.value:'';
@@ -3789,7 +3885,7 @@ function updateMoveFromInfo(){
   const infoEl=document.getElementById('move-from-info');
   const toSel=document.getElementById('move-to-zone');
   if(!fromZone||!infoEl){return;}
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const loc=getLocations(p).find(l=>l.zone===fromZone);
   if(infoEl) infoEl.textContent=loc?`${loc.qty} ${p.unit} available here`:'';
   // Filter destination to exclude the selected source
@@ -3812,7 +3908,7 @@ function confirmMove(){
   if(!toZone){toast('Select a destination');return;}
   if(fromZone===toZone){toast('Source and destination are the same');return;}
   if(!qty||qty<=0){toast('Enter quantity to move');return;}
-  const p=DB.products.find(x=>x.id===id);if(!p)return;
+  const p=DB.products.find(x=>x.id==id);if(!p)return;
   const ok=moveStock(id,fromZone,toZone,qty);
   if(!ok){toast(`Not enough stock at that location`);return;}
   closeModal('modal-move-stock');
@@ -4420,22 +4516,90 @@ function filterPurchases(){
     const names=(p.lines||[{item:p.item}]).map(l=>l.item||'').join(' ');
     return !q||names.toLowerCase().includes(q.toLowerCase())||(p.supplier||'').toLowerCase().includes(q.toLowerCase());
   });
-  document.getElementById('pur-tbody').innerHTML=filtered.map(p=>{
-    const lines=p.lines||[{item:p.item,cat:p.cat,qty:p.qty,unit:p.unit,unitPrice:p.unitPrice,total:p.total,zone:p.zone||'—'}];
+  document.getElementById('pur-tbody').innerHTML=filtered.flatMap(p=>{
+    const lines=p.lines&&p.lines.length?p.lines:[{item:p.item,cat:p.cat,qty:p.qty,unit:p.unit,unitPrice:p.unitPrice,total:p.total,zone:p.zone||'—'}];
     const grand=p.grandTotal||p.total||0;
-    const rowspan=lines.length;
     return lines.map((l,i)=>`<tr>
-      ${i===0?`<td rowspan="${rowspan}">${p.date}</td>`:''}
+      <td style="font-size:12px">${p.date}<br><span style="color:var(--text3);font-size:10px">${p.time||''}</span></td>
       <td style="font-weight:500">${l.item||'—'}</td>
-      <td style="color:var(--text2)">${i===0?p.supplier||'—':''}</td>
-      <td>${l.qty} ${l.unit||''}</td>
-      <td>${cur} ${l.unitPrice||0}</td>
-      <td style="font-family:var(--font-head);color:var(--accent)">${cur} ${(l.total||0).toLocaleString()}</td>
+      <td style="color:var(--text2)"><span style="cursor:pointer" onclick="editPurchaseSupplier(${p.id})" title="Click to edit">${p.supplier||`<span style="color:var(--text3);font-size:11px">+ Add supplier</span>`}</span></td>
+      <td>${l.qty||'—'} ${l.unit||''}</td>
+      <td>${l.unitPrice?cur+' '+l.unitPrice:'—'}</td>
+      <td style="font-family:var(--font-head);color:var(--accent)">${l.total?cur+' '+(l.total).toLocaleString():grand&&lines.length===1?cur+' '+grand.toLocaleString():'—'}</td>
       <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:10px;color:var(--text2)">${l.cat||'—'}</span></td>
       <td style="font-size:11px;color:var(--text3)">${l.zone||'—'}</td>
-      ${i===0?`<td rowspan="${rowspan}" style="font-family:var(--font-head);font-size:14px;color:var(--accent);white-space:nowrap">${cur} ${grand.toLocaleString()}<br><span style="font-size:10px;color:var(--text3)">${p.recordedBy||''}</span></td>`:''}
-    </tr>`).join('');
-  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No purchases recorded yet</td></tr>';
+      <td style="font-size:11px;color:var(--text3)">${i===0?p.recordedBy||'':''}</td>
+      <td style="white-space:nowrap">${i===0?`<button class="action-btn" style="font-size:11px" onclick="undoPurchase(${p.id})">↩ Undo</button>`:''}</td>
+    </tr>`);
+  }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">No purchases recorded yet</td></tr>';
+}
+
+function editPurchaseSupplier(id){
+  const p=(DB.purchases||[]).find(x=>x.id===id);
+  if(!p) return;
+  const current=p.supplier||'';
+  let modal=document.getElementById('modal-edit-supplier');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-edit-supplier';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-edit-supplier');});
+  }
+  modal.innerHTML=`<div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title">✏ Edit Supplier</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-supplier')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Purchase on ${p.date} · ${(p.lines||[]).length} item(s)</div>
+      <div class="form-row"><div class="form-label">Supplier / Seller Name</div>
+        <input class="form-input" id="edit-sup-input" value="${current}" placeholder="Who sold it to you">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-edit-supplier')">Cancel</button>
+      <button class="btn-save" onclick="saveEditedSupplier(${id})">Save</button>
+    </div>
+  </div>`;
+  openModal('modal-edit-supplier');
+  setTimeout(()=>document.getElementById('edit-sup-input').focus(),200);
+}
+
+function saveEditedSupplier(id){
+  const p=(DB.purchases||[]).find(x=>x.id===id);
+  if(!p) return;
+  p.supplier=document.getElementById('edit-sup-input').value.trim();
+  save();
+  closeModal('modal-edit-supplier');
+  filterPurchases();
+  toast('Supplier updated ✓');
+}
+
+function undoPurchase(id){
+  const p=(DB.purchases||[]).find(x=>x.id===id);
+  if(!p) return;
+  const lines=p.lines||[];
+  const names=lines.map(l=>`• ${l.item} ×${l.qty||0}`).join('\n');
+  if(!confirm(`Undo this purchase from ${p.date}?\n\n${names}\n\nThis will reverse the stock and remove the record.`)) return;
+  // Reverse stock for each line
+  lines.forEach(l=>{
+    const prod=DB.products.find(pr=>pr.name.toLowerCase().trim()===l.item.toLowerCase().trim());
+    if(prod&&l.qty>0){
+      prod.stock=Math.max(0,(prod.stock||0)-l.qty);
+      // Also remove from locations
+      if(prod.locations){
+        const loc=prod.locations.find(loc=>loc.zone===(l.zone||'⚠ Open / Unlocated'));
+        if(loc) loc.qty=Math.max(0,(loc.qty||0)-l.qty);
+      }
+    }
+  });
+  // Remove purchase record
+  DB.purchases=DB.purchases.filter(x=>x.id!==id);
+  logActivity('purchase',`⚠ Purchase undone: ${lines.length} item(s) from ${p.date} (${p.supplier||'unnamed'}) by ${currentUser?currentUser.name:''}`);
+  save();
+  renderPurchases();
+  toast('Purchase reversed ✓');
 }
 
 function showAddPurchaseModal(){
@@ -4460,7 +4624,9 @@ function removePurLine(i){
   renderPurLines();
 }
 
-const CATS=['Bulbs & Lighting','Chandeliers & Decorative','Cables & Wiring','Switches & Sockets','Solar Equipment','Inverters & Batteries','Circuit Breakers','Tools','Conduit & Fittings','Meters & Testers','Other'];
+const DEFAULT_CATS=['Bulbs & Lighting','Pendant Lamps','Wall Lamps','Chandeliers','Ceiling Lamps','Table Lamps','Design Lights','Track Lights','Spot Lights','Stick Lights','Rope Lights','Decorative Lights','Neon Signs','LED Screens','LED Strips','Wooden Lamps','Flood Lights','Adaptors & Power','Cables & Wiring','Switches & Sockets','Circuit Breakers','Solar Equipment','Inverters & Batteries','Conduit & Fittings','Tools','Meters & Testers','Other'];
+function getCategories(){ return (DB&&DB.categories&&DB.categories.length)?DB.categories:DEFAULT_CATS; }
+Object.defineProperty(window,'CATS',{get:()=>getCategories()});
 const ZONE_NAMES=[
   'EH Main › Sales Room',
   'EH Main › Storage Unit 1','EH Main › Storage Unit 2','EH Main › Storage Unit 3',
@@ -4548,17 +4714,20 @@ function _doExcelImport(file,inputEl){
         const costPrice=parseFloat(row[iCost])||0;
         const sellPrice=iSell>=0?parseFloat(row[iSell])||0:0;
         const unit=iUnit>=0&&row[iUnit]?String(row[iUnit]).trim():'pcs';
-        const cat=iCat>=0&&row[iCat]?String(row[iCat]):'Other';
+        const cat=iCat>=0&&row[iCat]&&String(row[iCat]).trim()!==''?String(row[iCat]):'Other';
         const desc=iDesc>=0?String(row[iDesc]||''):'';
-        // If product exists, update selling price and description
+        // If product already exists, inherit its category (unless it's Other)
         const prod=DB.products.find(p=>p.name.toLowerCase()===name.toLowerCase());
+        const inheritedCat=prod&&prod.cat&&prod.cat!=='Other'?prod.cat:cat;
         if(prod){
           if(sellPrice>0) prod.price=sellPrice;
           if(costPrice>0) prod.cost=costPrice;
           if(desc) prod.desc=desc;
+          // Update category if currently Other
+          if(inheritedCat!=='Other'&&(!prod.cat||prod.cat==='Other')) prod.cat=inheritedCat;
           save();
         }
-        purLines.push({item:name,cat,qty,unit,unitPrice:costPrice,sellPrice,total:qty*costPrice,zone:'',desc});
+        purLines.push({item:name,cat:inheritedCat,qty,unit,unitPrice:costPrice,sellPrice,total:qty*costPrice,zone:'',desc});
         imported++;
       });
       if(!purLines.length) purLines=[{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',sellPrice:'',total:0,zone:''}];
@@ -4571,58 +4740,60 @@ function _doExcelImport(file,inputEl){
 }
 
 function savePurchase(){
-  const validLines=purLines.filter(l=>l.item&&l.item.trim()&&(l.qty>0)&&(l.unitPrice>0));
-  if(!validLines.length){toast('Add at least one complete item (name + qty + price)');return;}
-  const grand=validLines.reduce((a,l)=>a+l.total,0);
+  const validLines=purLines.filter(l=>l.item&&l.item.trim());
+  if(!validLines.length){toast('Add at least one item name');return;}
+  const grand=validLines.reduce((a,l)=>a+(l.total||0),0);
   const isDubai=document.getElementById('pur-is-dubai').checked;
   const rate=getExchangeRate();
   const purDate=document.getElementById('pur-date').value||todayMinus(0);
-  const purSupplier=document.getElementById('pur-supplier').value;
-  const record={
-    id:Date.now(),
-    date:purDate,
-    supplier:purSupplier,
-    lines:validLines,grandTotal:grand,
-    notes:document.getElementById('pur-notes').value,
-    recordedBy:currentUser?currentUser.name:'',
-    currency:isDubai?'AED':'NKF',
-    exchangeRate:isDubai?rate:1
-  };
+  const purSupplier=document.getElementById('pur-supplier').value.trim();
+  const purNotes=document.getElementById('pur-notes').value;
+  const purTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const recordedBy=currentUser?currentUser.name:'';
+  const batchId=Date.now(); // shared batch id so you can see they came in together
+
   if(!DB.purchases) DB.purchases=[];
-  DB.purchases.push(record);
 
-  // Per line: add stock to Unlocated + record batch on product
   const findMatch=name=>DB.products.find(p=>p.name.toLowerCase().trim()===name.toLowerCase().trim());
-  const costPriceUpdates=[]; // collect items where cost changed
+  const costPriceUpdates=[];
 
-  validLines.forEach(l=>{
-    const match=findMatch(l.item);
-    const lineSupplier=purSupplier||'';
-    const batch={
-      purchaseId:record.id,
+  validLines.forEach((l,i)=>{
+    const lineId=batchId+i;
+    const record={
+      id:lineId,
+      batchId,
       date:purDate,
-      supplier:lineSupplier,
-      qty:Math.floor(l.qty),
-      unitPrice:l.unitPrice,
-      unit:l.unit||'pcs'
+      time:purTime,
+      supplier:purSupplier,
+      lines:[l],
+      grandTotal:l.total||0,
+      notes:purNotes,
+      recordedBy,
+      currency:isDubai?'AED':'NKF',
+      exchangeRate:isDubai?rate:1
     };
+    DB.purchases.push(record);
+
+    const match=findMatch(l.item);
+    const batch={purchaseId:lineId,date:purDate,supplier:purSupplier,qty:Math.floor(l.qty),unitPrice:l.unitPrice,unit:l.unit||'pcs'};
+
     if(match){
-      const purchasedQty=Math.floor(l.qty);
-      match.stock=(match.stock||0)+purchasedQty;
+      const purchasedQty=Math.floor(l.qty)||0;
+      if(purchasedQty>0) match.stock=(match.stock||0)+purchasedQty;
+      if(l.cat&&l.cat!=='Other'&&(!match.cat||match.cat==='Other')) match.cat=l.cat;
       if(!match.locations) match.locations=getLocations(match);
       const unlocZone='⚠ Open / Unlocated';
-      const existing=match.locations.find(loc=>loc.zone===unlocZone);
-      if(existing){ existing.qty=(existing.qty||0)+purchasedQty; }
-      else { match.locations.push({zone:unlocZone,qty:purchasedQty}); }
-      if(!match.openSince) match.openSince=Date.now();
-      // Record batch history on product
+      if(purchasedQty>0){
+        const existing=match.locations.find(loc=>loc.zone===unlocZone);
+        if(existing){ existing.qty=(existing.qty||0)+purchasedQty; }
+        else { match.locations.push({zone:unlocZone,qty:purchasedQty}); }
+        if(!match.openSince) match.openSince=Date.now();
+      }
       if(!match.batches) match.batches=[];
       match.batches.push(batch);
-      // Update selling price if provided
       if(l.sellPrice>0) match.price=l.sellPrice;
-      // Check if cost price changed
-      if(match.cost&&match.cost!==l.unitPrice){
-        costPriceUpdates.push({product:match,newCost:l.unitPrice,oldCost:match.cost,supplier:lineSupplier});
+      if(match.cost&&l.unitPrice>0&&match.cost!==l.unitPrice){
+        costPriceUpdates.push({product:match,newCost:l.unitPrice,oldCost:match.cost,supplier:purSupplier});
       } else if(!match.cost&&l.unitPrice>0){
         match.cost=l.unitPrice;
       }
@@ -4644,9 +4815,22 @@ function savePurchase(){
     }
   }
 
-  // Ask about storage locations
-  _purNewQueue=validLines;
+  // Only show storage modal for items with actual qty
+  _purNewQueue=validLines.filter(l=>Math.floor(l.qty||0)>0);
   _purNewIdx=0;
+  // Items with no qty — still create in products if new
+  validLines.filter(l=>!(Math.floor(l.qty||0)>0)).forEach(l=>{
+    const exists=DB.products.find(p=>p.name.toLowerCase().trim()===l.item.toLowerCase().trim());
+    if(!exists){
+      DB.products.push({
+        id:Date.now()+Math.floor(Math.random()*1000),name:l.item.trim(),
+        cat:l.cat||'Other',price:l.sellPrice||0,cost:l.unitPrice||0,
+        stock:0,unit:l.unit||'pcs',zone:'',zones:[],locations:[],
+        desc:'',sku:'',pcsPerBox:0,needsPrice:!(l.sellPrice>0)
+      });
+    }
+  });
+  save();
   processNextPurItem();
 }
 
@@ -4683,11 +4867,11 @@ function processNextPurItem(){
         ${currentLocs.length?`<div style="font-size:12px;color:var(--accent);margin-top:4px">\u{1F4CD} Also at: ${currentLocs.map(loc=>loc.zone.split('\u203a').pop().trim()+' ('+loc.qty+')').join(', ')}</div>`:''}
         ${!existing?`<div style="font-size:12px;color:var(--green);margin-top:3px">\u2728 New item \u2014 will be added to products</div>`:''}
       </div>
-      ${!existing?`<div class="form-row"><div class="form-label">Category</div>
+      <div class="form-row"><div class="form-label">Category</div>
         <select class="form-select" id="pur-item-cat">
-          ${getCategories().map(c=>`<option>${c}</option>`).join('')}
-          <option value="Other">Other</option>
-        </select></div>`:''}
+          ${getCategories().map(c=>`<option${c===(existing?existing.cat:l.cat||'Other')?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">
         Split ${purchasedQty} ${l.unit||'pcs'} across locations:
         <span style="font-weight:400;color:var(--text3)">(leftovers stay in Open/Unlocated)</span>
@@ -4783,11 +4967,16 @@ function confirmPurItem(){
       zone:'',zones:[],locations:[],
       desc:'',sku:'',pcsPerBox:0,needsPrice:!(l.sellPrice>0)
     };
-    // Start with all in unlocated
     existing.locations=[{zone:'⚠ Open / Unlocated',qty:purchasedQty}];
     existing.openSince=Date.now();
     DB.products.push(existing);
     logActivity('inventory',`New product from purchase: ${existing.name} (${purchasedQty} ${existing.unit})`);
+  } else {
+    // Always apply category from modal (allows correction)
+    if(cat&&cat!==existing.cat){
+      logActivity('inventory',`Category updated: ${existing.name} → ${cat}`);
+      existing.cat=cat;
+    }
   }
 
   if(!existing.locations) existing.locations=getLocations(existing);
@@ -6042,27 +6231,28 @@ function getLocations(p){
   if(p.locations&&p.locations.length){
     const totalQty=p.locations.reduce((a,l)=>a+(l.qty||0),0);
     if(totalQty===0&&p.stock>0){
-      // Find unlocated entry first, otherwise use first location
       const unloc=p.locations.find(l=>l.zone.includes('Unlocated'));
       if(unloc){ unloc.qty=p.stock; }
       else { p.locations[0].qty=p.stock; }
     }
     return p.locations;
   }
-  // Migrate from old zones/zone string
-  const oldZones=p.zones&&p.zones.length?p.zones:(p.zone?[p.zone]:[]);
-  if(oldZones.length){
-    const perZone=Math.floor((p.stock||0)/oldZones.length);
-    const rem=(p.stock||0)%oldZones.length;
-    p.locations=oldZones.map((z,i)=>({zone:z,qty:perZone+(i===0?rem:0)}));
-    return p.locations;
-  }
-  // No location — put in unlocated
-  if((p.stock||0)>0){
+  // Migrate from old zones/zone string — only if stock > 0
+  if(p.stock>0){
+    const oldZones=p.zones&&p.zones.length?p.zones:(p.zone&&p.zone!==''?[p.zone]:[]);
+    if(oldZones.length){
+      const perZone=Math.floor((p.stock||0)/oldZones.length);
+      const rem=(p.stock||0)%oldZones.length;
+      p.locations=oldZones.map((z,i)=>({zone:z,qty:perZone+(i===0?rem:0)}));
+      return p.locations;
+    }
+    // No zone set — put in unlocated
     p.locations=[{zone:'⚠ Open / Unlocated',qty:p.stock}];
     if(!p.openSince) p.openSince=Date.now();
     return p.locations;
   }
+  // Stock is 0 — return empty, don't create ghost locations
+  p.locations=[];
   return [];
 }
 
@@ -7276,6 +7466,7 @@ if(!DB.drawerSessions) DB.drawerSessions=[];
 if(!DB.recycleBin) DB.recycleBin=[];
 if(!DB.stockAlerts) DB.stockAlerts=[];
 if(!DB.notifications) DB.notifications=[];
+if(!DB.categories||!DB.categories.length) DB.categories=[...DEFAULT_CATS];
 
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
 if(!DB.settings.lang) DB.settings.lang='en';
