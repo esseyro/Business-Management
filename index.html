@@ -700,10 +700,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <!-- Dead Stock -->
         <div class="panel" style="margin-bottom:16px">
           <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--red)"></span> Dead Stock — Not Sold Recently</div>
-          <div id="deadstock-summary"></div>
-          <div id="deadstock-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-            <div id="deadstock-detail-content"></div>
-          </div>
+          <div id="deadstock-list"></div>
         </div>
         <!-- Customers -->
         <div class="panel" style="margin-bottom:16px">
@@ -715,18 +712,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <!-- Profit breakdown -->
         <div class="panel" style="margin-bottom:16px">
-          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--accent)"></span> ${t('Profit Breakdown')} by ${t('Category')}</div>
+          <div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--accent)"></span> Profit Breakdown by Category</div>
           <div id="profit-summary"></div>
           <div id="profit-detail" style="margin-top:10px">
             <div id="profit-detail-content"></div>
-          </div>
-        </div>
-        <!-- Staff sales -->
-        <div class="panel" style="margin-bottom:16px">
-          <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--purple)"></span> Staff Performance</div>
-          <div id="staff-perf-list"></div>
-          <div id="staff-detail" style="margin-top:10px">
-            <div id="staff-detail-content"></div>
           </div>
         </div>
         <!-- Full sales history -->
@@ -771,17 +760,30 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div id="page-purchases" class="page">
         <div class="inv-toolbar" style="margin-bottom:16px">
           <input class="search-input" placeholder="🔍 Search purchases..." id="pur-search" oninput="filterPurchases()" style="max-width:260px">
+          <div style="display:flex;gap:6px;background:var(--bg3);border-radius:var(--radius2);padding:3px">
+            <button id="pur-tab-all" onclick="switchPurTab('all')" class="action-btn" style="font-size:12px;background:var(--accent);color:#fff;border-color:var(--accent)">📋 All Purchases</button>
+            <button id="pur-tab-sup" onclick="switchPurTab('suppliers')" class="action-btn" style="font-size:12px">🏭 By Supplier</button>
+          </div>
           <div class="spacer"></div>
           <button class="topbar-btn" onclick="showAddPurchaseModal()">+ Record Purchase</button>
         </div>
         <div class="stats-row" id="pur-stats" style="margin-bottom:16px"></div>
-        <div class="inv-table-wrap">
-          <table class="inv-table">
-            <thead><tr>
-              <th>Date / Time</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Category</th><th>Zone</th><th>By</th><th></th>
-            </tr></thead>
-            <tbody id="pur-tbody"></tbody>
-          </table>
+
+        <!-- All Purchases tab -->
+        <div id="pur-panel-all">
+          <div class="inv-table-wrap">
+            <table class="inv-table">
+              <thead><tr>
+                <th>Date / Time</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Category</th><th>Zone</th><th>By</th><th></th>
+              </tr></thead>
+              <tbody id="pur-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- By Supplier tab -->
+        <div id="pur-panel-suppliers" style="display:none">
+          <div id="pur-supplier-list"></div>
         </div>
       </div>
 
@@ -1411,7 +1413,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <datalist id="ret-customer-list"></datalist>
           <div id="ret-customer-err" style="font-size:11px;color:var(--red);margin-top:3px;display:none">Must be a known customer or exactly "Walk-in"</div>
         </div>
-        <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="ret-date" type="date"></div>
+        <div class="form-row"><div class="form-label">Date Sale Was Made</div><input class="form-input" id="ret-date" type="date" oninput="updateReturnDrawerNote()" title="When was the original sale? Today = drawer deducted. Earlier = no drawer change."></div>
+        <div id="ret-drawer-note" style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.25);border-radius:var(--radius2);padding:8px 12px;font-size:12px;color:var(--text2);margin-top:6px;display:none"></div>
       </div>
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Items Being Returned *</div>
       <div id="ret-items-rows"></div>
@@ -1780,12 +1783,12 @@ function load() {
 function seedData() {
   if(DB.products.length) return;
   DB.products = [
-    {id:1,name:'LED Bulb 9W',cat:'Bulbs & Lighting',price:45,cost:28,stock:120,unit:'pcs',zone:'Zone A – Shelves (Bulbs)',desc:'9W E27 LED bulb, warm white 3000K, 806 lm',sku:'BLB-001'},
-    {id:2,name:'LED Bulb 15W',cat:'Bulbs & Lighting',price:75,cost:48,stock:80,unit:'pcs',zone:'Zone A – Shelves (Bulbs)',desc:'15W E27 LED bulb, daylight 6500K',sku:'BLB-002'},
-    {id:3,name:'Fluorescent Tube 36W',cat:'Bulbs & Lighting',price:65,cost:40,stock:60,unit:'pcs',zone:'Zone A – Shelves (Bulbs)',desc:'T8 fluorescent tube 120cm',sku:'BLB-003'},
-    {id:4,name:'Cable 1.5mm (per meter)',cat:'Cables & Wiring',price:18,cost:11,stock:500,unit:'meters',zone:'Zone B – Cabinet (Cables)',desc:'1.5mm copper cable, single core',sku:'CBL-001'},
-    {id:5,name:'Cable 2.5mm (per meter)',cat:'Cables & Wiring',price:28,cost:18,stock:400,unit:'meters',zone:'Zone B – Cabinet (Cables)',desc:'2.5mm copper cable, single core',sku:'CBL-002'},
-    {id:6,name:'Cable 4mm (per meter)',cat:'Cables & Wiring',price:42,cost:27,stock:200,unit:'meters',zone:'Zone B – Cabinet (Cables)',desc:'4mm copper cable, single core',sku:'CBL-003'},
+    {id:1,name:'LED Bulb 9W',cat:'Bulbs & Lighting',price:45,cost:28,stock:120,unit:'pcs',zone:'EH Main › Sales Room',desc:'9W E27 LED bulb, warm white 3000K, 806 lm',sku:'BLB-001'},
+    {id:2,name:'LED Bulb 15W',cat:'Bulbs & Lighting',price:75,cost:48,stock:80,unit:'pcs',zone:'EH Main › Sales Room',desc:'15W E27 LED bulb, daylight 6500K',sku:'BLB-002'},
+    {id:3,name:'Fluorescent Tube 36W',cat:'Bulbs & Lighting',price:65,cost:40,stock:60,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'T8 fluorescent tube 120cm',sku:'BLB-003'},
+    {id:4,name:'Cable 1.5mm (per meter)',cat:'Cables & Wiring',price:18,cost:11,stock:500,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'1.5mm copper cable, single core',sku:'CBL-001'},
+    {id:5,name:'Cable 2.5mm (per meter)',cat:'Cables & Wiring',price:28,cost:18,stock:400,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'2.5mm copper cable, single core',sku:'CBL-002'},
+    {id:6,name:'Cable 4mm (per meter)',cat:'Cables & Wiring',price:42,cost:27,stock:200,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'4mm copper cable, single core',sku:'CBL-003'},
     {id:7,name:'Single Switch 1-way',cat:'Switches & Sockets',price:35,cost:20,stock:150,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Surface mount single switch, 10A',sku:'SWT-001'},
     {id:8,name:'Double Socket Outlet',cat:'Switches & Sockets',price:85,cost:55,stock:80,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'13A double socket, surface mount',sku:'SWT-002'},
     {id:9,name:'MCB 20A Single Pole',cat:'Circuit Breakers',price:120,cost:75,stock:60,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'DIN rail MCB 20A 1P, 6kA',sku:'MCB-001'},
@@ -1800,8 +1803,8 @@ function seedData() {
     {id:18,name:'Junction Box 4x4',cat:'Conduit & Fittings',price:28,cost:16,stock:100,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'4"x4" surface mount junction box with cover',sku:'CDT-002'},
     {id:19,name:'Digital Multimeter',cat:'Meters & Testers',price:380,cost:240,stock:10,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Digital multimeter AC/DC voltage, current, resistance',sku:'MET-001'},
     {id:20,name:'Cable Stripper Tool',cat:'Tools',price:150,cost:90,stock:8,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Professional cable stripper and wire cutter',sku:'TLS-001'},
-    {id:21,name:'LED Strip 5m RGB',cat:'Bulbs & Lighting',price:420,cost:280,stock:4,unit:'rolls',zone:'Zone A – Shelves (Bulbs)',desc:'5m RGB LED strip with controller, 12V',sku:'BLB-004'},
-    {id:22,name:'Outdoor Light Sensor Bulb',cat:'Bulbs & Lighting',price:180,cost:110,stock:25,unit:'pcs',zone:'Zone A – Shelves (Bulbs)',desc:'E27 18W with built-in dusk-dawn sensor',sku:'BLB-005'},
+    {id:21,name:'LED Strip 5m RGB',cat:'Bulbs & Lighting',price:420,cost:280,stock:4,unit:'rolls',zone:'EH Main › Sales Room',desc:'5m RGB LED strip with controller, 12V',sku:'BLB-004'},
+    {id:22,name:'Outdoor Light Sensor Bulb',cat:'Bulbs & Lighting',price:180,cost:110,stock:25,unit:'pcs',zone:'EH Main › Sales Room',desc:'E27 18W with built-in dusk-dawn sensor',sku:'BLB-005'},
   ];
   DB.customers = [
     {id:1,name:'Tesfaye Haile',phone:'+291711234567',notes:'Contractor – buys in bulk',totalSpent:12400,visits:8},
@@ -4113,20 +4116,17 @@ function renderReports(){
   // ── DEAD STOCK ──
   const soldNames=new Set(sales.flatMap(s=>s.items.map(i=>i.name)));
   const dead=DB.products.filter(p=>!soldNames.has(p.name)&&p.stock>0);
-  document.getElementById('deadstock-summary').innerHTML=dead.length
-    ?`<span style="font-size:13px;color:var(--text3)">${dead.length} product${dead.length!==1?'s':''} with stock but no sales in this period</span>`
-    :'<span style="font-size:13px;color:var(--green)">✓ All stocked products have sold recently</span>';
-  document.getElementById('deadstock-detail-content').innerHTML=dead.length
-    ?dead.map(p=>`
+  document.getElementById('deadstock-list').innerHTML=dead.length
+    ?`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${dead.length} product${dead.length!==1?'s':''} with stock but no sales in the selected period</div>`
+      +dead.map(p=>`
       <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500">${p.name}</div>
-          <div style="font-size:11px;color:var(--text3)">${p.cat} · ${p.zone||'No location'}</div>
+          <div style="font-size:11px;color:var(--text3)">${p.cat} · ${getTotalStock(p)} ${p.unit} in stock</div>
         </div>
-        <span class="badge orange">${p.stock} ${p.unit} in stock</span>
         <span style="font-size:12px;color:var(--text3)">${p.price?cur+' '+p.price:'No price'}</span>
       </div>`).join('')
-    :'<div style="color:var(--green);font-size:13px">No dead stock!</div>';
+    :'<div style="color:var(--green);font-size:13px">✓ All stocked products have sold recently</div>';
 
   // ── TOP CUSTOMERS ──
   const custSpend={};
@@ -4184,55 +4184,36 @@ function renderReports(){
       </table>
     </div>`;
 
-  // ── STAFF PERFORMANCE ──
-  const staffSales={};const staffRev={};
-  sales.forEach(s=>{
-    const who=s.servedBy||s.openedBy||'Unknown';
-    staffSales[who]=(staffSales[who]||0)+1;
-    staffRev[who]=(staffRev[who]||0)+s.total;
-  });
-  const staffList=Object.entries(staffRev).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('staff-perf-list').innerHTML=staffList.length
-    ?staffList.map(([name,rev])=>`
-      <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)">
-        <div style="width:30px;height:30px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--blue)">${name.charAt(0)}</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:500">${name}</div><div style="font-size:11px;color:var(--text3)">${staffSales[name]} sales</div></div>
-        <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(rev).toLocaleString()}</span>
-      </div>`).join('')
-    :'<div style="color:var(--text3);font-size:13px;padding:8px 0">Staff sales tracking will show once sales are logged with staff names</div>';
-  document.getElementById('staff-detail-content').innerHTML=`
-    <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Sales are attributed to whoever was logged in when the sale was made.</div>
-    <div class="inv-table-wrap">
-      <table class="inv-table">
-        <thead><tr><th>Staff Member</th><th>Sales Count</th><th>Total Revenue</th><th>Avg per Sale</th></tr></thead>
-        <tbody>${staffList.map(([name,rev])=>`<tr>
-          <td style="font-weight:500">${name}</td>
-          <td>${staffSales[name]}</td>
-          <td style="color:var(--green)">${cur} ${Math.round(rev).toLocaleString()}</td>
-          <td>${cur} ${Math.round(rev/staffSales[name]).toLocaleString()}</td>
-        </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3)">No data</td></tr>'}</tbody>
-      </table>
-    </div>`;
-
   // ── SALES HISTORY TABLE ──
-  document.getElementById('sales-history-tbody').innerHTML=[...sales].reverse().map(s=>`
-    <tr style="cursor:pointer" onclick="toggleSaleRow(this,'${s.id}')">
+  const histLabel=reportDays?`Showing last ${reportDays} days (${sales.length} sales)`:`All time (${sales.length} sales)`;
+  const histEl=document.querySelector('#page-reports .panel:last-child .panel-title');
+  if(histEl) histEl.innerHTML=`<span class="dot" style="background:var(--green)"></span> Sales History <span style="font-size:11px;font-weight:400;color:var(--text3)">— ${histLabel}</span>`;
+  document.getElementById('sales-history-tbody').innerHTML=[...sales].reverse().map(s=>{
+    const saleReturns=(DB.returns||[]).filter(r=>r.saleDate===s.date&&r.customer===s.customer&&(r.status==='refunded'||r.status==='exchanged')&&(r.items||[]).some(ri=>s.items.some(si=>si.name===ri.item)));
+    const hasReturn=saleReturns.length>0;
+    const returnNote=hasReturn?`<div style="font-size:10px;color:var(--red);margin-top:2px">↩ Return: ${saleReturns.map(r=>r.item).join(', ')}</div>`:'';
+    return `
+    <tr style="cursor:pointer;${hasReturn?'opacity:0.75':''}" onclick="toggleSaleRow(this,'${s.id}')">
       <td>${s.date}</td>
       <td style="font-size:12px;color:var(--text3)">${s.time||'—'}</td>
       <td>${s.customer}</td>
       <td style="font-size:12px;color:var(--text3)">${s.servedBy||'—'}</td>
-      <td>${s.items.length} item(s)</td>
+      <td>${s.items.length} item(s)${returnNote}</td>
       <td>${s.discount?cur+' '+s.discount.toFixed(0):'-'}</td>
-      <td style="font-family:var(--font-head);color:var(--accent)">${cur} ${s.total.toLocaleString()}</td>
+      <td style="font-family:var(--font-head);color:${hasReturn?'var(--red)':'var(--accent)'}">${cur} ${s.total.toLocaleString()}${hasReturn?` <span style="font-size:10px">↩</span>`:''}
+        ${s.returned?`<div style="font-size:10px;color:var(--red)">−${cur} ${s.returned} returned</div>`:''}
+      </td>
     </tr>
     <tr id="sale-row-${s.id}" style="display:none;background:var(--bg3)">
       <td colspan="7" style="padding:10px 14px">
         <table style="width:100%;font-size:12px;border-collapse:collapse">
           ${s.items.map(i=>`<tr><td style="padding:3px 8px 3px 0;color:var(--text2)">${i.name}</td><td style="padding:3px 4px;color:var(--text3)">×${i.qty}</td><td style="padding:3px 0;color:var(--text2);text-align:right">${cur} ${i.price}</td><td style="padding:3px 0 3px 12px;color:var(--accent);text-align:right;font-family:var(--font-head)">${cur} ${(i.qty*i.price).toLocaleString()}</td></tr>`).join('')}
           ${s.discount?`<tr><td colspan="3" style="padding-top:6px;border-top:1px solid var(--border);color:var(--text3)">Discount</td><td style="padding-top:6px;border-top:1px solid var(--border);color:var(--red);text-align:right;font-family:var(--font-head)">− ${cur} ${s.discount}</td></tr>`:''}
+          ${hasReturn?`<tr><td colspan="3" style="padding-top:6px;border-top:1px solid var(--border);color:var(--red)">↩ Return</td><td style="padding-top:6px;border-top:1px solid var(--border);color:var(--red);text-align:right;font-family:var(--font-head)">− ${cur} ${saleReturns.reduce((a,r)=>a+(r.amount||0),0)}</td></tr>`:''}
         </table>
       </td>
-    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">No sales yet</td></tr>';
 }
 
 function toggleSaleRow(row,id){
@@ -4529,7 +4510,10 @@ function filterPurchases(){
       <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:10px;color:var(--text2)">${l.cat||'—'}</span></td>
       <td style="font-size:11px;color:var(--text3)">${l.zone||'—'}</td>
       <td style="font-size:11px;color:var(--text3)">${i===0?p.recordedBy||'':''}</td>
-      <td style="white-space:nowrap">${i===0?`<button class="action-btn" style="font-size:11px" onclick="undoPurchase(${p.id})">↩ Undo</button>`:''}</td>
+      <td style="white-space:nowrap;display:flex;gap:4px">${i===0?`
+        <button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>
+        <button class="action-btn del" style="font-size:11px" onclick="deletePurchase(${p.id})">🗑</button>
+      `:''}</td>
     </tr>`);
   }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">No purchases recorded yet</td></tr>';
 }
@@ -4569,37 +4553,273 @@ function editPurchaseSupplier(id){
 function saveEditedSupplier(id){
   const p=(DB.purchases||[]).find(x=>x.id===id);
   if(!p) return;
-  p.supplier=document.getElementById('edit-sup-input').value.trim();
+  p.supplier=document.getElementById('edit-sup-input').value.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
   save();
   closeModal('modal-edit-supplier');
   filterPurchases();
   toast('Supplier updated ✓');
 }
 
-function undoPurchase(id){
-  const p=(DB.purchases||[]).find(x=>x.id===id);
+function editPurchase(id){
+  const p=(DB.purchases||[]).find(x=>x.id==id);
+  if(!p) return;
+  const l=(p.lines||[])[0]||{};
+  const cur=DB.settings.currency;
+  let modal=document.getElementById('modal-edit-purchase');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-edit-purchase';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-edit-purchase');});
+  }
+  modal.innerHTML=`<div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">✏ Edit Purchase</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-purchase')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Changing qty will automatically adjust stock by the difference.</div>
+      <div class="form-row"><div class="form-label">Item Name</div>
+        <input class="form-input" id="ep-item" value="${l.item||''}"></div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Date</div>
+          <input class="form-input" id="ep-date" type="date" value="${p.date||''}"></div>
+        <div class="form-row"><div class="form-label">Supplier</div>
+          <input class="form-input" id="ep-supplier" value="${p.supplier||''}" placeholder="Supplier name"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Qty</div>
+          <input class="form-input" id="ep-qty" type="number" value="${l.qty||''}"></div>
+        <div class="form-row"><div class="form-label">Unit Price (${cur})</div>
+          <input class="form-input" id="ep-price" type="number" value="${l.unitPrice||''}"></div>
+      </div>
+      <div class="form-row"><div class="form-label">Category</div>
+        <select class="form-select" id="ep-cat">
+          ${getCategories().map(c=>`<option${c===(l.cat||'Other')?' selected':''}>${c}</option>`).join('')}
+        </select></div>
+      <div class="form-row"><div class="form-label">Notes</div>
+        <input class="form-input" id="ep-notes" value="${p.notes||''}" placeholder="Optional notes"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-edit-purchase')">Cancel</button>
+      <button class="btn-save" onclick="saveEditedPurchase(${id})">Save Changes</button>
+    </div>
+  </div>`;
+  openModal('modal-edit-purchase');
+}
+
+function saveEditedPurchase(id){
+  const p=(DB.purchases||[]).find(x=>x.id==id);
+  if(!p) return;
+  const item=document.getElementById('ep-item').value.trim();
+  const newQty=parseFloat(document.getElementById('ep-qty').value)||0;
+  const price=parseFloat(document.getElementById('ep-price').value)||0;
+  const cat=document.getElementById('ep-cat').value;
+  const date=document.getElementById('ep-date').value;
+  const supplier=document.getElementById('ep-supplier').value.trim();
+  const notes=document.getElementById('ep-notes').value.trim();
+  if(!item){toast('Item name is required');return;}
+
+  const oldLine=(p.lines&&p.lines[0])||{};
+  const oldQty=oldLine.qty||0;
+  const qtyDiff=newQty-oldQty;
+
+  // Apply stock difference to matching product
+  if(qtyDiff!==0){
+    const prod=DB.products.find(pr=>pr.name.toLowerCase().trim()===item.toLowerCase().trim());
+    if(prod){
+      prod.stock=Math.max(0,(prod.stock||0)+qtyDiff);
+      if(!prod.locations) prod.locations=[];
+      const zone=oldLine.zone||'⚠ Open / Unlocated';
+      if(qtyDiff>0){
+        const loc=prod.locations.find(l=>l.zone===zone)||prod.locations.find(l=>l.zone.includes('Unlocated'));
+        if(loc) loc.qty=(loc.qty||0)+qtyDiff;
+        else prod.locations.push({zone:'⚠ Open / Unlocated',qty:qtyDiff});
+      } else {
+        // Remove stock — deduct from unlocated first
+        let toRemove=Math.abs(qtyDiff);
+        for(const loc of prod.locations){
+          if(toRemove<=0) break;
+          const take=Math.min(loc.qty||0,toRemove);
+          loc.qty=(loc.qty||0)-take;
+          toRemove-=take;
+        }
+      }
+    }
+  }
+  // Update purchase record
+  p.date=date||p.date;
+  p.supplier=supplier.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())||supplier;
+  p.notes=notes;
+  p.grandTotal=newQty*price;
+  p.lines=[{...oldLine,item,qty:newQty,unitPrice:price,cat,total:newQty*price}];
+
+  const qtyNote=qtyDiff!==0?` · stock ${qtyDiff>0?'+':''}${qtyDiff} (${oldQty}→${newQty})`:'';
+  logActivity('purchase',`Purchase edited: ${item}${qtyNote} · price:${price} · supplier:${supplier||'—'} · by ${currentUser?currentUser.name:''}`);
+  save();
+  closeModal('modal-edit-purchase');
+  filterPurchases();
+  if(document.getElementById('pur-panel-suppliers')&&document.getElementById('pur-panel-suppliers').style.display!=='none') renderSupplierView();
+  toast(`Purchase updated${qtyDiff!==0?' — stock adjusted by '+(qtyDiff>0?'+':'')+qtyDiff:''} ✓`);
+}
+
+function deletePurchase(id){
+  const p=(DB.purchases||[]).find(x=>x.id==id);
   if(!p) return;
   const lines=p.lines||[];
-  const names=lines.map(l=>`• ${l.item} ×${l.qty||0}`).join('\n');
-  if(!confirm(`Undo this purchase from ${p.date}?\n\n${names}\n\nThis will reverse the stock and remove the record.`)) return;
+  const preview=lines.slice(0,3).map(l=>`<div style="font-size:12px;color:var(--text2)">• ${l.item} ×${l.qty||0}</div>`).join('')+(lines.length>3?`<div style="font-size:11px;color:var(--text3)">+ ${lines.length-3} more</div>`:'');
+  let modal=document.getElementById('modal-del-purchase');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-del-purchase';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeModal('modal-del-purchase');});
+  }
+  modal.innerHTML=`<div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">🗑 Delete Purchase</div>
+      <button class="modal-close" onclick="closeModal('modal-del-purchase')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px">${preview}</div>
+      <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:var(--radius2);padding:10px 12px;font-size:12px;color:var(--text2)">
+        ⚠ Stock will be <strong>reversed</strong>. Record moves to Recycle Bin where it can be restored.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-del-purchase')">Cancel</button>
+      <button class="btn-save" style="background:var(--red)" onclick="confirmDeletePurchase(${id})">🗑 Delete</button>
+    </div>
+  </div>`;
+  openModal('modal-del-purchase');
+}
+
+function confirmDeletePurchase(id){
+  const p=(DB.purchases||[]).find(x=>x.id==id);
+  if(!p) return;
+  const lines=p.lines||[];
   // Reverse stock for each line
   lines.forEach(l=>{
+    if(!l.item||!(l.qty>0)) return;
     const prod=DB.products.find(pr=>pr.name.toLowerCase().trim()===l.item.toLowerCase().trim());
-    if(prod&&l.qty>0){
+    if(prod){
       prod.stock=Math.max(0,(prod.stock||0)-l.qty);
-      // Also remove from locations
       if(prod.locations){
-        const loc=prod.locations.find(loc=>loc.zone===(l.zone||'⚠ Open / Unlocated'));
+        // Try to deduct from the zone it was placed in, fall back to unlocated
+        const zone=l.zone||'⚠ Open / Unlocated';
+        const loc=prod.locations.find(loc=>loc.zone===zone)||prod.locations.find(loc=>loc.zone.includes('Unlocated'));
         if(loc) loc.qty=Math.max(0,(loc.qty||0)-l.qty);
       }
     }
   });
-  // Remove purchase record
-  DB.purchases=DB.purchases.filter(x=>x.id!==id);
-  logActivity('purchase',`⚠ Purchase undone: ${lines.length} item(s) from ${p.date} (${p.supplier||'unnamed'}) by ${currentUser?currentUser.name:''}`);
+  sendToRecycleBin('purchase',{...p},currentUser?currentUser.name:'',`Deleted purchase from ${p.date}`);
+  DB.purchases=DB.purchases.filter(x=>x.id!=id);
+  logActivity('purchase',`⚠ Purchase deleted + stock reversed: ${lines.length} item(s) from ${p.date} (${p.supplier||'unnamed'}) by ${currentUser?currentUser.name:''}`);
   save();
-  renderPurchases();
-  toast('Purchase reversed ✓');
+  closeModal('modal-del-purchase');
+  filterPurchases();
+  if(document.getElementById('pur-panel-suppliers')&&document.getElementById('pur-panel-suppliers').style.display!=='none') renderSupplierView();
+  toast('Purchase deleted — stock reversed ✓');
+}
+
+function switchPurTab(tab){
+  const isAll=tab==='all';
+  document.getElementById('pur-panel-all').style.display=isAll?'':'none';
+  document.getElementById('pur-panel-suppliers').style.display=isAll?'none':'';
+  document.getElementById('pur-tab-all').style.cssText=isAll?'font-size:12px;background:var(--accent);color:#fff;border-color:var(--accent)':'font-size:12px';
+  document.getElementById('pur-tab-sup').style.cssText=isAll?'font-size:12px':'font-size:12px;background:var(--accent);color:#fff;border-color:var(--accent)';
+  document.getElementById('pur-search').style.display=isAll?'':'none';
+  if(!isAll) renderSupplierView();
+}
+
+function renderSupplierView(expandedName){
+  const container=document.getElementById('pur-supplier-list');
+  if(!container) return;
+  const cur=DB.settings.currency;
+  const purchases=DB.purchases||[];
+
+  // Group by supplier
+  const groups={};
+  purchases.forEach(p=>{
+    const sup=p.supplier&&p.supplier.trim()?p.supplier.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):'Unknown Supplier';
+    if(!groups[sup]) groups[sup]={name:sup,records:[],total:0,items:0,lastDate:''};
+    groups[sup].records.push(p);
+    groups[sup].total+=(p.grandTotal||p.total||0);
+    const lines=p.lines||[{item:p.item,qty:p.qty}];
+    groups[sup].items+=lines.length;
+    if(!groups[sup].lastDate||p.date>groups[sup].lastDate) groups[sup].lastDate=p.date;
+  });
+
+  const sorted=Object.values(groups).sort((a,b)=>b.total-a.total);
+
+  if(!sorted.length){
+    container.innerHTML=`<div style="text-align:center;color:var(--text3);padding:40px">No purchases recorded yet</div>`;
+    return;
+  }
+
+  container.innerHTML=sorted.map(g=>{
+    const isExpanded=expandedName===g.name;
+    const allLines=g.records.flatMap(p=>(p.lines||[{item:p.item,cat:p.cat,qty:p.qty,unit:p.unit,unitPrice:p.unitPrice,total:p.total}]).map(l=>({...l,date:p.date,time:p.time,id:p.id})));
+
+    // Get unique items bought from this supplier
+    const itemMap={};
+    allLines.forEach(l=>{
+      if(!l.item) return;
+      if(!itemMap[l.item]) itemMap[l.item]={name:l.item,cat:l.cat||'—',totalQty:0,totalSpent:0,times:0};
+      itemMap[l.item].totalQty+=(l.qty||0);
+      itemMap[l.item].totalSpent+=(l.total||0);
+      itemMap[l.item].times++;
+    });
+    const uniqueItems=Object.values(itemMap).sort((a,b)=>b.totalSpent-a.totalSpent);
+
+    return `<div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;cursor:pointer" onclick="renderSupplierView('${isExpanded?'':g.name.replace(/'/g,"\\'")}')">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏭</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:15px">${g.name}</div>
+          <div style="font-size:12px;color:var(--text3)">${g.items} item${g.items!==1?'s':''} across ${g.records.length} purchase${g.records.length!==1?'s':''} · Last: ${g.lastDate}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--font-head);font-size:16px;color:var(--accent)">${cur} ${g.total.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3)">total spent</div>
+        </div>
+        <span style="color:var(--text3);font-size:18px">${isExpanded?'▲':'▼'}</span>
+      </div>
+
+      ${isExpanded?`
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        ${uniqueItems.map(item=>{
+          const itemRecords=allLines.filter(l=>l.item===item.name);
+          return `<div style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:6px">
+              <div>
+                <span style="font-weight:600;font-size:13px">${item.name}</span>
+                <span style="margin-left:8px;background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:10px;color:var(--text3)">${item.cat}</span>
+              </div>
+              <div style="text-align:right;font-size:12px;color:var(--text3)">
+                ${item.times} purchase${item.times!==1?'s':''} · ${item.totalQty?item.totalQty+' units':'no qty'} · <span style="color:var(--accent);font-family:var(--font-head)">${item.totalSpent?cur+' '+item.totalSpent.toLocaleString():'—'}</span>
+              </div>
+            </div>
+            <div style="padding:0 4px">
+              ${itemRecords.map(l=>`
+                <div style="display:flex;align-items:center;gap:10px;padding:5px 6px;border-bottom:1px solid var(--border);font-size:12px">
+                  <span style="color:var(--text3);width:80px;flex-shrink:0">${l.date} ${l.time||''}</span>
+                  <span style="flex:1">${l.qty||'—'} ${l.unit||''}</span>
+                  <span style="color:var(--text3)">${l.unitPrice?cur+' '+l.unitPrice+'/unit':'no price'}</span>
+                  <span style="font-family:var(--font-head);color:var(--accent)">${l.total?cur+' '+l.total.toLocaleString():'—'}</span>
+                  <div style="display:flex;gap:4px">
+                    <button class="action-btn" style="font-size:10px;padding:2px 6px" onclick="editPurchase(${l.id})">✏</button>
+                    <button class="action-btn del" style="font-size:10px;padding:2px 6px" onclick="deletePurchase(${l.id})">🗑</button>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
 }
 
 function showAddPurchaseModal(){
@@ -4640,11 +4860,13 @@ const ZONE_NAMES=[
 function renderPurLines(){
   const tbody=document.getElementById('pur-lines-body');
   if(!tbody) return;
-  const unitOpts=['pcs','rolls','boxes','kg','sets','pairs'].map(u=>`<option value="${u}">${u}</option>`).join('');
-  tbody.innerHTML=purLines.map((l,i)=>`
+  tbody.innerHTML=purLines.map((l,i)=>{
+    const isRoll=l.unit==='rolls';
+    return `
     <tr id="pur-line-${i}" style="border-bottom:1px solid var(--border)">
       <td style="padding:4px">
-        <input class="search-input" style="min-width:140px;padding:5px 8px;font-size:12px" value="${l.item}" placeholder="Item name" oninput="purLines[${i}].item=this.value" list="product-datalist">
+        <input class="search-input" style="min-width:140px;padding:5px 8px;font-size:12px" value="${l.item}" placeholder="Item name" oninput="purLines[${i}].item=this.value;updatePurLineVariant(${i})" list="product-datalist">
+        ${isRoll&&l.metersPerRoll?`<div style="font-size:10px;color:var(--accent);margin-top:2px">→ saved as: ${l.item?(l.item+' ('+l.metersPerRoll+'m/roll)'):'...'}</div>`:''}
       </td>
       <td style="padding:4px">
         <select class="form-select" style="padding:5px 6px;font-size:11px;min-width:110px" onchange="purLines[${i}].cat=this.value">
@@ -4653,9 +4875,10 @@ function renderPurLines(){
       </td>
       <td style="padding:4px"><input class="search-input" style="width:60px;padding:5px 6px;font-size:12px" type="number" value="${l.qty}" placeholder="0" min="0" step="any" oninput="purLines[${i}].qty=parseFloat(this.value)||0;calcPurLineTotal(${i})"></td>
       <td style="padding:4px">
-        <select class="search-input" style="width:65px;padding:5px 4px;font-size:12px" onchange="purLines[${i}].unit=this.value">
+        <select class="search-input" style="width:65px;padding:5px 4px;font-size:12px" onchange="purLines[${i}].unit=this.value;renderPurLines()">
           ${['pcs','rolls','boxes','kg','sets','pairs'].map(u=>`<option value="${u}"${u===l.unit?' selected':''}>${u}</option>`).join('')}
         </select>
+        ${isRoll?`<input class="search-input" style="width:65px;padding:3px 6px;font-size:11px;margin-top:3px" type="number" value="${l.metersPerRoll||''}" placeholder="m/roll" min="1" title="Meters per roll" oninput="purLines[${i}].metersPerRoll=parseFloat(this.value)||0;renderPurLines()">`:'' }
       </td>
       <td style="padding:4px"><input class="search-input" style="width:75px;padding:5px 6px;font-size:12px" type="number" value="${l.unitPrice}" placeholder="0.00" step="0.01" oninput="purLines[${i}].unitPrice=parseFloat(this.value)||0;calcPurLineTotal(${i})"></td>
       <td style="padding:4px"><input class="search-input" style="width:75px;padding:5px 6px;font-size:12px" type="number" value="${l.sellPrice||''}" placeholder="0.00" step="0.01" oninput="purLines[${i}].sellPrice=parseFloat(this.value)||0" title="Selling price — shown to customers"></td>
@@ -4667,11 +4890,32 @@ function renderPurLines(){
         </select>
       </td>
       <td style="padding:4px"><button onclick="removePurLine(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   let dl=document.getElementById('product-datalist');
   if(!dl){dl=document.createElement('datalist');dl.id='product-datalist';document.body.appendChild(dl);}
   dl.innerHTML=DB.products.map(p=>`<option value="${p.name}">`).join('');
   updatePurGrandTotal();
+}
+
+function updatePurLineVariant(i){
+  // no-op — variant name is computed at save time
+}
+
+function getPurLineItemName(l){
+  // For rolls with custom metersPerRoll, create a variant name
+  if(l.unit==='rolls'&&l.metersPerRoll&&l.item){
+    // Check if existing product already has metersPerRoll set to the same value
+    const existing=DB.products.find(p=>p.name.toLowerCase().trim()===l.item.toLowerCase().trim());
+    if(existing&&existing.metersPerRoll===l.metersPerRoll) return l.item; // same roll length — use original name
+    if(existing&&existing.metersPerRoll&&existing.metersPerRoll!==l.metersPerRoll){
+      // Different roll length — create variant
+      return `${l.item} (${l.metersPerRoll}m/roll)`;
+    }
+    // New product — embed meters in name
+    return `${l.item} (${l.metersPerRoll}m/roll)`;
+  }
+  return l.item;
 }
 
 function importPurchaseExcel(e){
@@ -4746,7 +4990,7 @@ function savePurchase(){
   const isDubai=document.getElementById('pur-is-dubai').checked;
   const rate=getExchangeRate();
   const purDate=document.getElementById('pur-date').value||todayMinus(0);
-  const purSupplier=document.getElementById('pur-supplier').value.trim();
+  const purSupplier=document.getElementById('pur-supplier').value.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
   const purNotes=document.getElementById('pur-notes').value;
   const purTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const recordedBy=currentUser?currentUser.name:'';
@@ -4758,6 +5002,8 @@ function savePurchase(){
   const costPriceUpdates=[];
 
   validLines.forEach((l,i)=>{
+    // Compute final item name (variant if different roll length)
+    const itemName=getPurLineItemName(l);
     const lineId=batchId+i;
     const record={
       id:lineId,
@@ -4765,7 +5011,7 @@ function savePurchase(){
       date:purDate,
       time:purTime,
       supplier:purSupplier,
-      lines:[l],
+      lines:[{...l,item:itemName}],
       grandTotal:l.total||0,
       notes:purNotes,
       recordedBy,
@@ -4774,13 +5020,14 @@ function savePurchase(){
     };
     DB.purchases.push(record);
 
-    const match=findMatch(l.item);
+    const match=findMatch(itemName);
     const batch={purchaseId:lineId,date:purDate,supplier:purSupplier,qty:Math.floor(l.qty),unitPrice:l.unitPrice,unit:l.unit||'pcs'};
 
     if(match){
       const purchasedQty=Math.floor(l.qty)||0;
       if(purchasedQty>0) match.stock=(match.stock||0)+purchasedQty;
       if(l.cat&&l.cat!=='Other'&&(!match.cat||match.cat==='Other')) match.cat=l.cat;
+      if(l.metersPerRoll&&!match.metersPerRoll) match.metersPerRoll=l.metersPerRoll;
       if(!match.locations) match.locations=getLocations(match);
       const unlocZone='⚠ Open / Unlocated';
       if(purchasedQty>0){
@@ -4816,17 +5063,18 @@ function savePurchase(){
   }
 
   // Only show storage modal for items with actual qty
-  _purNewQueue=validLines.filter(l=>Math.floor(l.qty||0)>0);
+  _purNewQueue=validLines.filter(l=>Math.floor(l.qty||0)>0).map(l=>({...l,item:getPurLineItemName(l)}));
   _purNewIdx=0;
-  // Items with no qty — still create in products if new
   validLines.filter(l=>!(Math.floor(l.qty||0)>0)).forEach(l=>{
-    const exists=DB.products.find(p=>p.name.toLowerCase().trim()===l.item.toLowerCase().trim());
+    const vName=getPurLineItemName(l);
+    const exists=DB.products.find(p=>p.name.toLowerCase().trim()===vName.toLowerCase().trim());
     if(!exists){
       DB.products.push({
-        id:Date.now()+Math.floor(Math.random()*1000),name:l.item.trim(),
+        id:Date.now()+Math.floor(Math.random()*1000),name:vName,
         cat:l.cat||'Other',price:l.sellPrice||0,cost:l.unitPrice||0,
         stock:0,unit:l.unit||'pcs',zone:'',zones:[],locations:[],
-        desc:'',sku:'',pcsPerBox:0,needsPrice:!(l.sellPrice>0)
+        desc:'',sku:'',pcsPerBox:0,metersPerRoll:l.metersPerRoll||0,
+        needsPrice:!(l.sellPrice>0)
       });
     }
   });
@@ -4841,7 +5089,8 @@ function processNextPurItem(){
   if(_purNewIdx>=_purNewQueue.length){
     if(modal) modal.style.display='none';
     renderPurchases();
-    toast('Purchase saved! All items sent to Open/Unlocated. Assign locations in Storage.');
+    checkOpenZoneItems();
+    toast('Purchase saved! Items assigned to storage.');
     return;
   }
   const l=_purNewQueue[_purNewIdx];
@@ -4855,6 +5104,11 @@ function processNextPurItem(){
   if(!modal){modal=document.createElement('div');modal.id='pur-add-modal';document.body.appendChild(modal);}
   modal.style.cssText='display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
 
+  const isRollPurchase=l.unit==='rolls'&&existing&&existing.metersPerRoll;
+  const displayQty=purchasedQty;
+  const displayUnit=l.unit||'pcs';
+  const displayLabel=isRollPurchase?`${purchasedQty} roll${purchasedQty!==1?'s':''} (${purchasedQty*existing.metersPerRoll}m total)`:`${purchasedQty} ${displayUnit}`;
+
   modal.innerHTML=`<div class="modal" style="max-width:500px;width:100%">
     <div class="modal-header">
       <div class="modal-title">\u{1F4E6} Where to store this?</div>
@@ -4863,9 +5117,9 @@ function processNextPurItem(){
     <div class="modal-body">
       <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.2);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px">
         <div style="font-size:14px;font-weight:600">${l.item}</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px">${purchasedQty} ${l.unit||'pcs'} purchased \u00b7 Cost: NKF ${l.unitPrice} \u2014 currently in Open/Unlocated</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${displayLabel} purchased · Cost: NKF ${l.unitPrice} — currently in Open/Unlocated</div>
         ${currentLocs.length?`<div style="font-size:12px;color:var(--accent);margin-top:4px">\u{1F4CD} Also at: ${currentLocs.map(loc=>loc.zone.split('\u203a').pop().trim()+' ('+loc.qty+')').join(', ')}</div>`:''}
-        ${!existing?`<div style="font-size:12px;color:var(--green);margin-top:3px">\u2728 New item \u2014 will be added to products</div>`:''}
+        ${!existing?`<div style="font-size:12px;color:var(--green);margin-top:3px">\u2728 New item — will be added to products</div>`:''}
       </div>
       <div class="form-row"><div class="form-label">Category</div>
         <select class="form-select" id="pur-item-cat">
@@ -4873,7 +5127,7 @@ function processNextPurItem(){
         </select>
       </div>
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">
-        Split ${purchasedQty} ${l.unit||'pcs'} across locations:
+        Split ${displayLabel} across locations:
         <span style="font-weight:400;color:var(--text3)">(leftovers stay in Open/Unlocated)</span>
       </div>
       <div id="pur-loc-rows">
@@ -4882,12 +5136,12 @@ function processNextPurItem(){
             <option value="">Open / Unlocated</option>
             ${locOpts}
           </select>
-          <input class="search-input pur-qty-inp" type="number" placeholder="Qty" min="0" style="width:70px;padding:5px 8px" value="${purchasedQty}">
+          <input class="search-input pur-qty-inp" type="number" placeholder="${isRollPurchase?'Rolls':'Qty'}" min="0" style="width:70px;padding:5px 8px" value="${purchasedQty}">
           <button onclick="removePurLocRow(this)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 4px">\u2715</button>
         </div>
       </div>
       <button onclick="addPurLocRow()" class="action-btn" style="font-size:12px;margin-top:4px">+ Add another location</button>
-      <div id="pur-qty-status" style="font-size:11px;color:var(--text3);margin-top:8px">Total to assign: <strong>${purchasedQty} ${l.unit||'pcs'}</strong></div>
+      <div id="pur-qty-status" style="font-size:11px;color:var(--text3);margin-top:8px">Total to assign: <strong>${displayLabel}</strong></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="skipPurItem()">Skip (keep in Unlocated)</button>
@@ -4965,41 +5219,63 @@ function confirmPurItem(){
       price:l.sellPrice||0,cost:l.unitPrice,
       stock:purchasedQty,unit:l.unit||'pcs',
       zone:'',zones:[],locations:[],
-      desc:'',sku:'',pcsPerBox:0,needsPrice:!(l.sellPrice>0)
+      desc:'',sku:'',pcsPerBox:0,
+      metersPerRoll:l.metersPerRoll||0,
+      pricePerRoll:l.pricePerRoll||0,
+      pricePerMeter:l.pricePerMeter||0,
+      needsPrice:!(l.sellPrice>0)
     };
-    existing.locations=[{zone:'⚠ Open / Unlocated',qty:purchasedQty}];
+    const isRollNew=existing.unit==='rolls'&&existing.metersPerRoll;
+    if(isRollNew){
+      existing.locations=[{zone:'⚠ Open / Unlocated',fullRolls:purchasedQty,partialMeters:0,qty:purchasedQty*existing.metersPerRoll}];
+    } else {
+      existing.locations=[{zone:'⚠ Open / Unlocated',qty:purchasedQty}];
+    }
     existing.openSince=Date.now();
     DB.products.push(existing);
     logActivity('inventory',`New product from purchase: ${existing.name} (${purchasedQty} ${existing.unit})`);
   } else {
-    // Always apply category from modal (allows correction)
     if(cat&&cat!==existing.cat){
       logActivity('inventory',`Category updated: ${existing.name} → ${cat}`);
       existing.cat=cat;
     }
   }
 
+  const isRoll=existing.unit==='rolls'&&existing.metersPerRoll;
   if(!existing.locations) existing.locations=getLocations(existing);
 
   // Move from Unlocated to each assigned location
   assignments.forEach(a=>{
     const unlocLoc=existing.locations.find(loc=>loc.zone.includes('Open / Unlocated'));
-    if(unlocLoc&&unlocLoc.qty>=a.qty){
-      unlocLoc.qty-=a.qty;
+    if(!unlocLoc) return;
+    if(isRoll){
+      // a.qty here = number of rolls
+      const rollsToMove=a.qty;
+      const metersToMove=rollsToMove*existing.metersPerRoll;
+      if((unlocLoc.fullRolls||0)<rollsToMove) return;
+      unlocLoc.fullRolls=(unlocLoc.fullRolls||0)-rollsToMove;
+      unlocLoc.qty=unlocLoc.fullRolls*existing.metersPerRoll+(unlocLoc.partialMeters||0);
       const dest=existing.locations.find(loc=>loc.zone===a.zone);
-      if(dest){ dest.qty+=a.qty; }
-      else { existing.locations.push({zone:a.zone,qty:a.qty}); }
-      logActivity('inventory',`Stored ${a.qty} ${existing.unit} of ${existing.name} in ${a.zone.split('\u203a').pop().trim()}`);
+      if(dest){ dest.fullRolls=(dest.fullRolls||0)+rollsToMove; dest.qty=(dest.fullRolls*existing.metersPerRoll)+(dest.partialMeters||0); }
+      else { existing.locations.push({zone:a.zone,fullRolls:rollsToMove,partialMeters:0,qty:metersToMove}); }
+      logActivity('inventory',`Stored ${rollsToMove} roll(s) (${metersToMove}m) of ${existing.name} in ${a.zone.split('\u203a').pop().trim()}`);
+    } else {
+      if(unlocLoc.qty>=a.qty){
+        unlocLoc.qty-=a.qty;
+        const dest=existing.locations.find(loc=>loc.zone===a.zone);
+        if(dest){ dest.qty+=a.qty; }
+        else { existing.locations.push({zone:a.zone,qty:a.qty}); }
+        logActivity('inventory',`Stored ${a.qty} ${existing.unit} of ${existing.name} in ${a.zone.split('\u203a').pop().trim()}`);
+      }
     }
   });
 
-  // Remove empty locations except unlocated with remainder
-  existing.locations=existing.locations.filter(loc=>{
-    if(loc.zone.includes('Open / Unlocated')) return loc.qty>0;
-    return loc.qty>0;
-  });
+  // Remove empty locations
+  existing.locations=existing.locations.filter(loc=>loc.qty>0||(loc.fullRolls||0)>0||(loc.partialMeters||0)>0);
 
-  if(remainder<=0&&!existing.locations.some(loc=>loc.zone.includes('Unlocated'))){
+  // Clear unlocated flag if nothing left there
+  const hasUnloc=existing.locations.some(loc=>loc.zone.includes('Open / Unlocated')&&(loc.qty>0||(loc.fullRolls||0)>0));
+  if(!hasUnloc){
     delete existing.openSince;
   }
 
@@ -5334,13 +5610,26 @@ function filterReturns(){
   const isManager=currentUser&&currentUser.role==='Manager';
   const statusColors={refunded:'green',exchanged:'blue',pending:'orange',pending_approval:'orange',rejected:'red'};
   const statusLabels={refunded:'Refunded',exchanged:'Exchanged',pending:'Pending',pending_approval:'⏳ Awaiting Approval',rejected:'Rejected'};
-  document.getElementById('ret-tbody').innerHTML=filtered.map(r=>`
+  document.getElementById('ret-tbody').innerHTML=filtered.map(r=>{
+    const today=todayMinus(0);
+    const isSameDay=(r.saleDate||r.date)===today;
+    const isApproved=r.status==='refunded'||r.status==='exchanged';
+    const refundSource=r.status==='exchanged'?'Exchange — no cash'
+      :isApproved?(isSameDay?'💸 From drawer (same day)':'📋 External (prev. day)'):
+      (r.saleDate===today?'💸 Will deduct drawer':'📋 External — no drawer');
+    return `
     <tr>
-      <td>${r.date}${r.time?' '+r.time:''}</td>
+      <td>
+        <div>${r.date}${r.time?' '+r.time:''}</div>
+        ${r.saleDate&&r.saleDate!==r.date?`<div style="font-size:10px;color:var(--text3)">Sale: ${r.saleDate}</div>`:''}
+      </td>
       <td>${r.customer||'Walk-in'}</td>
       <td style="font-weight:500">${r.item}${r.resolution==='exchanged'&&r.exchangeItemName?`<div style="font-size:11px;color:var(--blue)">→ ${r.exchangeItemName}</div>`:''}</td>
       <td>${r.qty||1}</td>
-      <td style="font-family:var(--font-head);color:var(--red)">${cur} ${(r.amount||0).toLocaleString()}</td>
+      <td>
+        <div style="font-family:var(--font-head);color:var(--red)">${cur} ${(r.amount||0).toLocaleString()}</div>
+        <div style="font-size:10px;color:${isSameDay?'var(--red)':'var(--text3)'}">${refundSource}</div>
+      </td>
       <td style="font-size:12px;color:var(--text3)">${r.reason||'—'}</td>
       <td><span class="badge ${statusColors[r.status]||'gray'}">${statusLabels[r.status]||r.status}</span></td>
       <td style="font-size:12px;color:var(--text3)">${r.submittedBy||r.handledBy||'—'}</td>
@@ -5350,44 +5639,74 @@ function filterReturns(){
           <button class="action-btn del" onclick="rejectReturn(${r.id})">✕ Reject</button>
         `:''}
       </td>
-    </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No returns recorded</td></tr>';
+    </tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No returns recorded</td></tr>';
 }
 
 function approveReturn(id){
   const r=(DB.returns||[]).find(x=>x.id===id);if(!r)return;
   r.status=r.resolution||'refunded';
   r.approvedBy=currentUser?currentUser.name:'';
-  // Apply stock changes
-  const p=DB.products.find(x=>x.id===r.itemId||x.name===r.item);
-  if(r.resolution==='exchanged'&&r.exchangeItemId&&r.exchangeLocation){
-    // Deduct exchange item from chosen location
-    const ep=DB.products.find(x=>x.id===r.exchangeItemId);
-    if(ep){
-      const ok=moveStock(ep.id,r.exchangeLocation,'⚠ Open / Unlocated',0); // just deduct
+  r.approvedDate=todayMinus(0);
+  r.approvedTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  const today=todayMinus(0);
+  const saleDate=r.saleDate||r.date;
+  const isSameDay=saleDate===today;
+  const session=getActiveSession();
+  const cur=DB.settings.currency;
+  const items=r.items||[{itemId:r.itemId,item:r.item,qty:r.qty}];
+
+  // ── STOCK RESTORE ──
+  if(r.resolution==='exchanged'){
+    // Exchange: deduct exchange item from chosen location
+    const ep=DB.products.find(x=>x.id==r.exchangeItemId);
+    if(ep&&r.exchangeLocation){
       if(!ep.locations) ep.locations=getLocations(ep);
       const loc=ep.locations.find(l=>l.zone===r.exchangeLocation);
-      if(loc){ loc.qty=Math.max(0,(loc.qty||0)-r.qty); ep.stock=Math.max(0,getTotalStock(ep)-r.qty);}
-      ep.locations=ep.locations.filter(l=>l.qty>0);
-      logActivity('return',`Exchange approved: ${r.qty} ${ep.unit} of ${ep.name} given to ${r.customer} (deducted from ${r.exchangeLocation.split('›').pop().trim()})`);
+      if(loc){ loc.qty=Math.max(0,(loc.qty||0)-r.qty); ep.stock=Math.max(0,(ep.stock||0)-r.qty); }
+      ep.locations=ep.locations.filter(l=>(l.qty||0)>0);
+      logActivity('return',`Exchange: ${r.qty} ${ep.unit} of ${ep.name} given to ${r.customer}`);
     }
-    // Returned item — goes to unlocated if not damaged (exchange items handled same as refund)
-    if(p&&r.restock==='yes'){
-      if(!p.locations) p.locations=getLocations(p);
-      const ul=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
-      if(ul){ul.qty+=r.qty;}else{p.locations.push({zone:'⚠ Open / Unlocated',qty:r.qty});p.openSince=Date.now();}
-      p.stock=getTotalStock(p);
-      logActivity('return',`Returned item to Open/Unlocated: ${p.name} ×${r.qty}`);
-    }
-  } else if(r.restock==='yes'&&p){
-    // Regular return — add to unlocated
-    if(!p.locations) p.locations=getLocations(p);
-    const ul=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
-    if(ul){ul.qty+=r.qty;}else{p.locations.push({zone:'⚠ Open / Unlocated',qty:r.qty});p.openSince=Date.now();}
-    p.stock=getTotalStock(p);
-    logActivity('return',`Return approved: ${p.name} ×${r.qty} added to Open/Unlocated`);
   }
-  logActivity('return',`Return approved by ${r.approvedBy}: ${r.item} from ${r.customer}`);
-  save();renderReturns();checkOpenZoneItems();toast('Return approved ✓');
+
+  // Restock returned items if in good condition
+  if(r.restock==='yes'){
+    items.forEach(ri=>{
+      const p=DB.products.find(x=>x.id==ri.itemId||x.name===ri.item);
+      if(!p) return;
+      if(!p.locations) p.locations=[];
+      const ul=p.locations.find(l=>l.zone.includes('Open / Unlocated'));
+      if(ul){ ul.qty=(ul.qty||0)+ri.qty; }
+      else { p.locations.push({zone:'⚠ Open / Unlocated',qty:ri.qty}); p.openSince=Date.now(); }
+      p.stock=(p.stock||0)+ri.qty;
+      logActivity('return',`Restocked: ${ri.item} ×${ri.qty} → Open/Unlocated`);
+    });
+  }
+
+  // ── DRAWER LOGIC ──
+  const refund=r.refundAmount||r.amount||0;
+  if(r.resolution!=='exchanged'&&refund>0){
+    if(isSameDay&&session){
+      if(!session.returns) session.returns=[];
+      session.returns.push({
+        item:r.item,amount:refund,customer:r.customer,
+        time:r.approvedTime,approvedBy:r.approvedBy
+      });
+      // Mark original sale as partially returned
+      const origSale=DB.sales.find(s=>s.date===today&&s.customer===r.customer&&items.some(ri=>s.items.some(si=>si.name===ri.item)));
+      if(origSale) origSale.returned=(origSale.returned||0)+refund;
+      logActivity('return',`Same-day refund: ${cur} ${refund} deducted from drawer`);
+    } else {
+      logActivity('return',`Different-day return (sale: ${saleDate}): no drawer change — ${cur} ${refund} noted`);
+    }
+  }
+
+  logActivity('return',`Return approved by ${r.approvedBy}: ${r.item} from ${r.customer}${isSameDay?' (same-day)':`(sale: ${saleDate})`}`);
+  save();
+  renderReturns();
+  checkOpenZoneItems();
+  toast(`Return approved ✓${isSameDay&&refund>0?' — '+cur+' '+refund+' from drawer':' — no drawer change'}`);
 }
 
 function rejectReturn(id){
@@ -5396,6 +5715,26 @@ function rejectReturn(id){
   r.approvedBy=currentUser?currentUser.name:'';
   logActivity('return',`Return rejected by ${r.approvedBy}: ${r.item} from ${r.customer}`);
   save();renderReturns();toast('Return rejected');
+}
+
+function updateReturnDrawerNote(){
+  const dateEl=document.getElementById('ret-date');
+  const noteEl=document.getElementById('ret-drawer-note');
+  if(!dateEl||!noteEl) return;
+  const saleDate=dateEl.value;
+  if(!saleDate){noteEl.style.display='none';return;}
+  const today=todayMinus(0);
+  const isSameDay=saleDate===today;
+  noteEl.style.display='block';
+  if(isSameDay){
+    noteEl.style.background='rgba(231,76,60,0.08)';
+    noteEl.style.borderColor='rgba(231,76,60,0.3)';
+    noteEl.innerHTML='💸 <strong>Same-day sale</strong> — refund will be <strong>deducted from today\'s drawer</strong> and the sale will be marked as returned in today\'s records.';
+  } else {
+    noteEl.style.background='rgba(52,152,219,0.08)';
+    noteEl.style.borderColor='rgba(52,152,219,0.25)';
+    noteEl.innerHTML='📋 <strong>Previous sale ('+saleDate+')</strong> — refund does <strong>not affect today\'s drawer or sales</strong>. Money comes from a separate source and is tracked as a return note only.';
+  }
 }
 
 function showAddReturnModal(){
@@ -5552,13 +5891,16 @@ function saveReturn(){
   const amount=parseFloat(document.getElementById('ret-amount').value)||0;
   const r={
     id:Date.now(),
-    date:document.getElementById('ret-date').value||todayMinus(0),
+    saleDate:document.getElementById('ret-date').value||todayMinus(0),
+    date:todayMinus(0),
     time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
     customer,
     item:returnItems.map(x=>x.item+' x'+x.qty).join(', '),
     items:returnItems,
     qty:returnItems.reduce((a,x)=>a+x.qty,0),
+    itemId:returnItems[0]?.itemId,
     amount,
+    refundAmount:amount,
     reason:document.getElementById('ret-reason').value,
     status:'pending_approval',resolution:status,
     restock:status==='exchanged'?'no':restock,
@@ -7348,6 +7690,7 @@ function renderRecycle(){
   tbody.innerHTML=[...DB.recycleBin].reverse().map(item=>{
     const label=item.type==='product'?item.data.name||item.data
       :item.type==='sale'?`${DB.settings.lang==='ti'?'ሽያጥ':'Sale'} — ${item.data.customer} (NKF ${item.data.total})`
+      :item.type==='purchase'?`Purchase — ${(item.data.lines||[]).length} item(s) from ${item.data.supplier||'unnamed'} (${item.data.date})`
       :item.type==='customer'?item.data.name||item.data
       :item.type==='loan'?`${DB.settings.lang==='ti'?'ልቓሕ':'Loan'} — ${item.data.borrower} NKF ${item.data.amount}`
       :JSON.stringify(item.data).substring(0,60);
@@ -7380,6 +7723,26 @@ function restoreFromBin(id){
   } else if(item.type==='customer'){
     DB.customers.push(item.data);
     toast('Customer restored');
+  } else if(item.type==='purchase'){
+    const p=item.data;
+    if(!DB.purchases) DB.purchases=[];
+    DB.purchases.push(p);
+    // Re-add stock for each line
+    const lines=p.lines||[];
+    lines.forEach(l=>{
+      if(!l.item||!(l.qty>0)) return;
+      const prod=DB.products.find(pr=>pr.name.toLowerCase().trim()===l.item.toLowerCase().trim());
+      if(prod){
+        prod.stock=(prod.stock||0)+l.qty;
+        if(!prod.locations) prod.locations=[];
+        const zone=l.zone||'⚠ Open / Unlocated';
+        const loc=prod.locations.find(loc=>loc.zone===zone);
+        if(loc) loc.qty=(loc.qty||0)+l.qty;
+        else prod.locations.push({zone,qty:l.qty});
+      }
+    });
+    logActivity('purchase',`Restored from recycle bin: purchase from ${p.date} (${p.supplier||'unnamed'}) — stock re-added`);
+    toast(`Purchase restored + stock re-added ✓`);
   } else if(item.type==='loan'){
     if(!DB.loans) DB.loans=[];
     DB.loans.push(item.data);
@@ -7467,6 +7830,13 @@ if(!DB.recycleBin) DB.recycleBin=[];
 if(!DB.stockAlerts) DB.stockAlerts=[];
 if(!DB.notifications) DB.notifications=[];
 if(!DB.categories||!DB.categories.length) DB.categories=[...DEFAULT_CATS];
+// Migrate old Zone A/B to proper zones
+DB.products.forEach(p=>{
+  if(p.zone&&(p.zone.includes('Zone A')||p.zone.includes('Zone B'))) p.zone='EH Main › Sales Room';
+  if(p.locations) p.locations.forEach(l=>{
+    if(l.zone&&(l.zone.includes('Zone A')||l.zone.includes('Zone B'))) l.zone='EH Main › Sales Room';
+  });
+});
 
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
 if(!DB.settings.lang) DB.settings.lang='en';
