@@ -1789,10 +1789,10 @@ function seedData() {
     {id:4,name:'Cable 1.5mm (per meter)',cat:'Cables & Wiring',price:18,cost:11,stock:500,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'1.5mm copper cable, single core',sku:'CBL-001'},
     {id:5,name:'Cable 2.5mm (per meter)',cat:'Cables & Wiring',price:28,cost:18,stock:400,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'2.5mm copper cable, single core',sku:'CBL-002'},
     {id:6,name:'Cable 4mm (per meter)',cat:'Cables & Wiring',price:42,cost:27,stock:200,unit:'meters',zone:'EH Main › Storage Unit 1',desc:'4mm copper cable, single core',sku:'CBL-003'},
-    {id:7,name:'Single Switch 1-way',cat:'Switches & Sockets',price:35,cost:20,stock:150,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Surface mount single switch, 10A',sku:'SWT-001'},
-    {id:8,name:'Double Socket Outlet',cat:'Switches & Sockets',price:85,cost:55,stock:80,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'13A double socket, surface mount',sku:'SWT-002'},
-    {id:9,name:'MCB 20A Single Pole',cat:'Circuit Breakers',price:120,cost:75,stock:60,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'DIN rail MCB 20A 1P, 6kA',sku:'MCB-001'},
-    {id:10,name:'MCB 32A Double Pole',cat:'Circuit Breakers',price:220,cost:140,stock:30,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'DIN rail MCB 32A 2P, 6kA',sku:'MCB-002'},
+    {id:7,name:'Single Switch 1-way',cat:'Switches & Sockets',price:35,cost:20,stock:150,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'Surface mount single switch, 10A',sku:'SWT-001'},
+    {id:8,name:'Double Socket Outlet',cat:'Switches & Sockets',price:85,cost:55,stock:80,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'13A double socket, surface mount',sku:'SWT-002'},
+    {id:9,name:'MCB 20A Single Pole',cat:'Circuit Breakers',price:120,cost:75,stock:60,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'DIN rail MCB 20A 1P, 6kA',sku:'MCB-001'},
+    {id:10,name:'MCB 32A Double Pole',cat:'Circuit Breakers',price:220,cost:140,stock:30,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'DIN rail MCB 32A 2P, 6kA',sku:'MCB-002'},
     {id:11,name:'Solar Panel 100W',cat:'Solar Equipment',price:2800,cost:1900,stock:12,unit:'pcs',zone:'Zone C – Rack (Solar)',desc:'Monocrystalline 100W 12V solar panel',sku:'SOL-001'},
     {id:12,name:'Solar Panel 200W',cat:'Solar Equipment',price:4800,cost:3300,stock:8,unit:'pcs',zone:'Zone C – Rack (Solar)',desc:'Monocrystalline 200W 24V solar panel',sku:'SOL-002'},
     {id:13,name:'Solar Charge Controller 30A',cat:'Solar Equipment',price:950,cost:620,stock:15,unit:'pcs',zone:'Zone C – Rack (Solar)',desc:'MPPT 30A solar charge controller, 12/24V',sku:'SOL-003'},
@@ -1800,9 +1800,9 @@ function seedData() {
     {id:15,name:'Inverter 1000W Pure Sine',cat:'Inverters & Batteries',price:4200,cost:2900,stock:7,unit:'pcs',zone:'Zone D – Floor Stack (Heavy)',desc:'1000W pure sine wave inverter, 12V DC to 220V AC',sku:'INV-001'},
     {id:16,name:'Battery 100Ah Deep Cycle',cat:'Inverters & Batteries',price:5500,cost:3800,stock:6,unit:'pcs',zone:'Zone D – Floor Stack (Heavy)',desc:'100Ah 12V AGM deep cycle battery',sku:'BAT-001'},
     {id:17,name:'Conduit 20mm (2m)',cat:'Conduit & Fittings',price:32,cost:20,stock:200,unit:'pcs',zone:'Zone D – Floor Stack (Heavy)',desc:'20mm PVC conduit 2m length',sku:'CDT-001'},
-    {id:18,name:'Junction Box 4x4',cat:'Conduit & Fittings',price:28,cost:16,stock:100,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'4"x4" surface mount junction box with cover',sku:'CDT-002'},
-    {id:19,name:'Digital Multimeter',cat:'Meters & Testers',price:380,cost:240,stock:10,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Digital multimeter AC/DC voltage, current, resistance',sku:'MET-001'},
-    {id:20,name:'Cable Stripper Tool',cat:'Tools',price:150,cost:90,stock:8,unit:'pcs',zone:'Zone E – Drawer Unit (Small Parts)',desc:'Professional cable stripper and wire cutter',sku:'TLS-001'},
+    {id:18,name:'Junction Box 4x4',cat:'Conduit & Fittings',price:28,cost:16,stock:100,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'4"x4" surface mount junction box with cover',sku:'CDT-002'},
+    {id:19,name:'Digital Multimeter',cat:'Meters & Testers',price:380,cost:240,stock:10,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'Digital multimeter AC/DC voltage, current, resistance',sku:'MET-001'},
+    {id:20,name:'Cable Stripper Tool',cat:'Tools',price:150,cost:90,stock:8,unit:'pcs',zone:'EH Main › Storage Unit 1',desc:'Professional cable stripper and wire cutter',sku:'TLS-001'},
     {id:21,name:'LED Strip 5m RGB',cat:'Bulbs & Lighting',price:420,cost:280,stock:4,unit:'rolls',zone:'EH Main › Sales Room',desc:'5m RGB LED strip with controller, 12V',sku:'BLB-004'},
     {id:22,name:'Outdoor Light Sensor Bulb',cat:'Bulbs & Lighting',price:180,cost:110,stock:25,unit:'pcs',zone:'EH Main › Sales Room',desc:'E27 18W with built-in dusk-dawn sensor',sku:'BLB-005'},
   ];
@@ -2719,7 +2719,28 @@ function showReceipt(sale){
     <div class="receipt-footer">Thank you for choosing Weyni Electric!<br>Come back soon ⚡</div>`;
   openModal('modal-receipt');
 }
-function printReceipt(){window.print();}
+function printReceipt(){
+  const el=document.getElementById('receipt-content');
+  if(!el) return;
+  const shopName=DB.settings.shopName||'Weyni General Electric Shop';
+  const win=window.open('','_blank','width=400,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><title>Receipt — ${shopName}</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Courier New',monospace;font-size:12px;margin:0;padding:20px;color:#000;background:#fff;max-width:320px}
+    .receipt-head{text-align:center;margin-bottom:12px;border-bottom:1px dashed #000;padding-bottom:10px}
+    .receipt-shop{font-size:15px;font-weight:bold;margin-bottom:4px}
+    .receipt-sub{font-size:11px;color:#444;margin:1px 0}
+    .receipt-line{display:flex;justify-content:space-between;margin:3px 0;font-size:12px}
+    .receipt-line.total{font-weight:bold;font-size:14px;border-top:1px dashed #000;margin-top:8px;padding-top:6px}
+    .receipt-footer{text-align:center;font-size:10px;color:#555;margin-top:14px;padding-top:10px;border-top:1px dashed #000}
+    @media print{body{padding:4px}}
+  </style></head><body>
+  ${el.innerHTML}
+  <script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}<\/script>
+  </body></html>`);
+  win.document.close();
+}
 
 // ─── INVENTORY ───
 function renderInventory(){
@@ -6785,12 +6806,62 @@ function openSessionForDate(dateStr){
     return null;
   }
   const s={id:Date.now(),date:dateStr,openedBy:currentUser?currentUser.name:'',
-    openedAt:Date.now(),startingCash:DRAWER_START,expenses:[],closed:false,closedBy:'',closedAt:''};
+    openedAt:Date.now(),startingCash:200,expenses:[],closed:false,closedBy:'',closedAt:''};
   DB.drawerSessions.push(s);
   activeDrawerDate=dateStr;
   logActivity('inventory',`Day opened by ${s.openedBy} for ${dateStr}`);
   save();
+  // Prompt for starting cash immediately
+  showStartingCashModal(s);
   return s;
+}
+
+function showStartingCashModal(session){
+  let modal=document.getElementById('modal-starting-cash');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='modal-starting-cash';
+    modal.className='modal-overlay';
+    document.body.appendChild(modal);
+    // Prevent closing by clicking outside
+    modal.addEventListener('click',e=>e.stopPropagation());
+  }
+  const cur=DB.settings.currency;
+  const defaultCash=session.startingCash||200;
+  modal.innerHTML=`<div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title">💵 Starting Cash — ${session.date}</div>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">How much cash is in the drawer as you open today? Default is ${cur} 200.</div>
+      <div class="form-row"><div class="form-label">Starting Cash (${cur})</div>
+        <input class="form-input" id="starting-cash-input" type="number" placeholder="200" min="0" value="${defaultCash}">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" style="width:100%" onclick="saveStartingCash(${session.id})">✓ Confirm & Open Day</button>
+    </div>
+  </div>`;
+  openModal('modal-starting-cash');
+  setTimeout(()=>{const inp=document.getElementById('starting-cash-input');if(inp){inp.focus();inp.select();}},300);
+}
+
+function saveStartingCash(sessionId){
+  const s=DB.drawerSessions.find(x=>x.id==sessionId);
+  if(!s) return;
+  const val=parseFloat(document.getElementById('starting-cash-input').value);
+  s.startingCash=isNaN(val)?200:val;
+  logActivity('inventory',`Starting cash set to NKF ${s.startingCash} for ${s.date} by ${currentUser?currentUser.name:''}`);
+  save();
+  closeModal('modal-starting-cash');
+  renderDrawer();
+  toast(`Day opened — Starting cash: NKF ${s.startingCash}`);
+}
+
+function editStartingCash(sessionId){
+  const s=DB.drawerSessions.find(x=>x.id==sessionId);
+  if(!s) return;
+  showStartingCashModal(s);
 }
 
 function renderDrawer(){
@@ -6912,7 +6983,7 @@ function renderDrawer(){
       <span style="color:var(--text3)">Day</span><span style="font-weight:700;color:${dayColor}">${dayLabel} \u2014 ${sessionDate}</span>
     </div>
     <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px">
-      <span style="color:var(--text3)">Starting float</span><span style="font-family:var(--font-head);color:var(--accent);font-size:16px">${cur} ${session.startingCash}</span>
+      <span style="color:var(--text3)">Starting float</span><span style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-head);color:var(--accent);font-size:16px">${cur} ${session.startingCash}</span><button class="action-btn" style="font-size:11px" onclick="editStartingCash(${session.id})">✏ Edit</button></span>
     </div>`;
 
   document.getElementById('drawer-expenses-list').innerHTML=(session.expenses||[]).length
@@ -7830,11 +7901,11 @@ if(!DB.recycleBin) DB.recycleBin=[];
 if(!DB.stockAlerts) DB.stockAlerts=[];
 if(!DB.notifications) DB.notifications=[];
 if(!DB.categories||!DB.categories.length) DB.categories=[...DEFAULT_CATS];
-// Migrate old Zone A/B to proper zones
+// Migrate old Zone A/B/E to proper zones
 DB.products.forEach(p=>{
-  if(p.zone&&(p.zone.includes('Zone A')||p.zone.includes('Zone B'))) p.zone='EH Main › Sales Room';
+  if(p.zone&&(p.zone.includes('Zone A')||p.zone.includes('Zone B')||p.zone.includes('Zone E'))) p.zone='EH Main › Sales Room';
   if(p.locations) p.locations.forEach(l=>{
-    if(l.zone&&(l.zone.includes('Zone A')||l.zone.includes('Zone B'))) l.zone='EH Main › Sales Room';
+    if(l.zone&&(l.zone.includes('Zone A')||l.zone.includes('Zone B')||l.zone.includes('Zone E'))) l.zone='EH Main › Sales Room';
   });
 });
 
