@@ -352,17 +352,145 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 #toast.show { transform: translateY(0); opacity: 1; }
 
+
 /* ── MOBILE ── */
 @media(max-width:700px){
-  #sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
-  #sidebar.open { transform: translateX(0); }
+
+  /* Layout */
+  #app { flex-direction: column; }
+  #sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    transform: translateX(-100%); z-index: 200;
+    width: 240px; min-width: 240px;
+    transition: transform 0.25s ease;
+  }
+  #sidebar.open { transform: translateX(0); box-shadow: 4px 0 30px rgba(0,0,0,0.5); }
   #hamburger { display: block; }
-  .pos-layout { grid-template-columns: 1fr; }
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); }
-  .dash-grid { grid-template-columns: 1fr; }
-  .inv-toolbar .search-input { max-width: 100%; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
+  #main { width: 100%; overflow-x: hidden; }
+  .page { padding: 10px; }
+
+  /* Topbar */
+  #topbar { padding: 0 10px; height: 50px; }
+  .topbar-title { font-size: 14px; }
+  .topbar-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* Stats */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 10px 12px; }
+  .stat-value { font-size: 18px; }
+
+  /* Toolbar */
+  .inv-toolbar {
+    flex-wrap: wrap; gap: 6px;
+  }
+  .inv-toolbar .search-input,
+  .inv-toolbar .form-input,
+  .inv-toolbar select { max-width: 100%; font-size: 12px; }
+  .inv-toolbar .spacer { display: none; }
+  .inv-toolbar .topbar-btn { margin-left: auto; }
+
+  /* Tables — make scrollable */
+  .inv-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .inv-table { font-size: 11px; min-width: 500px; }
+  .inv-table th, .inv-table td { padding: 6px 8px; }
+
+  /* Dashboard grid */
+  .dash-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dash-grid .panel:last-child { grid-column: 1 / -1; }
+
+  /* POS */
+  .pos-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .pos-products { height: 55vh; overflow-y: auto; }
+  .pos-cart { height: auto; max-height: 45vh; overflow-y: auto; border-left: none; border-top: 1px solid var(--border); }
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(90px,1fr)); gap: 6px; }
+  .product-card { padding: 8px 6px; }
+  .product-card-name { font-size: 11px; }
+  .product-card-price { font-size: 12px; }
+  .pay-btn { font-size: 14px; padding: 12px; }
+
+  /* Cart */
+  .cart-item { font-size: 12px; }
+  #cart-total-line { font-size: 14px; }
+
+  /* Modals */
+  .modal-overlay { padding: 8px; align-items: flex-end; }
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    margin: 0;
+  }
+  .modal-body { padding: 12px; }
+  .modal-footer { padding: 10px 12px; gap: 8px; }
+  .form-row-2 { flex-direction: column; gap: 0; }
+
+  /* Forms */
+  .form-input, .form-select, .form-textarea { font-size: 14px; padding: 9px 12px; }
+  .form-label { font-size: 11px; }
+
+  /* Storage */
   .room-layout { grid-template-columns: 1fr; }
+  #loc-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; gap: 6px; }
+  #loc-tabs button { flex-shrink: 0; font-size: 11px; padding: 6px 10px; }
+  #storage-main-grid { grid-template-columns: 1fr !important; }
+
+  /* Panels */
+  .panel { padding: 12px; }
+  .panel-title { font-size: 13px; }
+
+  /* Nav items on mobile sidebar */
+  .nav-item { font-size: 13px; padding: 10px 14px; }
+  .nav-label { font-size: 10px; padding: 8px 14px 4px; }
+
+  /* Purchase lines table */
+  #pur-lines-body tr { display: flex; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  #pur-lines-body td { border: none; }
+
+  /* Reports charts */
+  #chart-container { height: 140px; }
+
+  /* Receipts */
+  .receipt { font-size: 12px; }
+
+  /* Action buttons */
+  .action-btn { padding: 4px 8px; font-size: 11px; }
+
+  /* Loans/Credit page */
+  .loan-card { padding: 10px; }
+
+  /* Suppliers page */
+  #supplier-list .panel { padding: 10px; }
+
+  /* Shifts summary */
+  #shifts-summary .panel > div { flex-direction: column; }
+
+  /* Damaged/Transfer pages */
+  #damaged-list .panel, #transfers-list .panel { padding: 10px; font-size: 13px; }
+
+  /* Drawer page */
+  #page-drawer .panel { padding: 10px; }
+  #emp-sales-panel, #emp-expense-panel { padding: 10px; }
+
+  /* Toast */
+  #toast { bottom: 70px; left: 10px; right: 10px; text-align: center; font-size: 13px; }
+
+  /* Login card */
+  .login-card { padding: 24px 16px; margin: 10px; }
+  .staff-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .staff-card { padding: 12px 8px; }
+}
+
+/* Extra small phones */
+@media(max-width:380px){
+  .stats-row { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .product-grid { grid-template-columns: repeat(auto-fill, minmax(80px,1fr)); }
+  .staff-grid { grid-template-columns: 1fr; }
 }
 
 /* ── ANIMATIONS ── */
@@ -518,11 +646,17 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="nav-label">Inventory</div>
       <div class="nav-item" onclick="nav('inventory')"><span class="icon">📦</span> Products <span class="nav-badge" id="low-stock-badge" style="display:none">!</span></div>
       <div class="nav-item" onclick="nav('storage')"><span class="icon">🗄️</span> Storage Room <span class="nav-badge" id="open-zone-badge" style="display:none">⚠</span></div>
+      <div class="nav-item" onclick="nav('transfers')"><span class="icon">🔄</span> Stock Transfers</div>
+      <div class="nav-item" onclick="nav('damaged')"><span class="icon">⚠️</span> Damaged Goods</div>
       <div class="nav-label">Business</div>
       <div class="nav-item" onclick="nav('reports')"><span class="icon">📈</span> Reports</div>
       <div class="nav-item" onclick="nav('purchases')"><span class="icon">🛍️</span> Purchases</div>
-      <div class="nav-item" onclick="nav('loans')"><span class="icon">💳</span> Loans <span class="nav-badge" id="loan-due-badge" style="display:none">!</span></div>
+      <div class="nav-item" onclick="nav('suppliers')"><span class="icon">🏭</span> Suppliers <span class="nav-badge" id="supplier-debt-badge" style="display:none">!</span></div>
+      <div class="nav-item" onclick="nav('loans')"><span class="icon">💳</span> Credit & Loans <span class="nav-badge" id="loan-due-badge" style="display:none">!</span></div>
       <div class="nav-item" onclick="nav('customers')"><span class="icon">👥</span> Customers</div>
+      <div class="nav-item" onclick="nav('expenses')"><span class="icon">💸</span> Expenses</div>
+      <div class="nav-item" onclick="nav('shifts')"><span class="icon">📅</span> Shifts</div>
+      <div class="nav-item" onclick="nav('stockcount')"><span class="icon">🔢</span> Stock Count</div>
       <div class="nav-item" onclick="nav('requests')"><span class="icon">📬</span> Requests <span class="nav-badge" id="requests-badge" style="display:none">!</span></div>
       <div class="nav-item" onclick="nav('drawer')"><span class="icon">💵</span> Cash Drawer</div>
       <div class="nav-item" onclick="nav('returns')"><span class="icon">↩️</span> Returns</div>
@@ -557,6 +691,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
       <!-- DASHBOARD -->
       <div id="page-dashboard" class="page active">
+        <div id="dash-alerts"></div>
         <div class="stats-row" id="dash-stats"></div>
         <div class="dash-grid">
           <div class="panel">
@@ -579,7 +714,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="pos-layout">
           <div>
             <div class="product-search-bar">
-              <input class="search-input" placeholder="🔍 Search products..." id="pos-search" oninput="filterPOS()">
+              <input class="search-input" placeholder="🔍 Search products by name..." id="pos-search" oninput="filterPOS()" style="font-size:15px;padding:10px 14px;border-radius:var(--radius2)">
             </div>
             <div class="category-tabs" id="pos-cats"></div>
             <div class="product-grid" id="pos-products"></div>
@@ -607,6 +742,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
               <div class="cart-line" id="discount-row-line" style="display:none"><span id="discount-row-label">Discount</span><span id="cart-discount-amt">NKF 0.00</span></div>
               <div class="cart-total-line"><span>Total</span><span id="cart-total">NKF 0.00</span></div>
               <button class="pay-btn" onclick="completeSale()">⚡ COMPLETE SALE</button>
+              <button class="pay-btn" style="background:var(--blue);margin-top:6px;font-size:13px" onclick="showPartialPaymentModal()">💳 Partial Payment</button>
             </div>
           </div>
         </div>
@@ -666,7 +802,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
             </div>
           </div>
         </div>
-        @media(max-width:700px){#storage-main-grid{grid-template-columns:1fr!important}}
+        
       </div>
 
       <!-- REPORTS -->
@@ -709,6 +845,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <div id="customers-detail" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
             <div id="customers-detail-content"></div>
           </div>
+        </div>
+        <!-- P&L Statement -->
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-title" style="margin-bottom:12px"><span class="dot" style="background:var(--green)"></span> Profit & Loss</div>
+          <div id="pl-panel"></div>
         </div>
         <!-- Profit breakdown -->
         <div class="panel" style="margin-bottom:16px">
@@ -774,7 +915,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           <div class="inv-table-wrap">
             <table class="inv-table">
               <thead><tr>
-                <th>Date / Time</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Category</th><th>Zone</th><th>By</th><th></th>
+                <th>Date / Time</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Category</th><th>Zone</th><th>By</th><th>Payment</th><th></th>
               </tr></thead>
               <tbody id="pur-tbody"></tbody>
             </table>
@@ -1054,6 +1195,17 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </div>
         </div>
         <div class="settings-section">
+          <div class="settings-title">📍 Storage Locations</div>
+          <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px">
+            <div style="font-size:12px;color:var(--text3)">Manage your storage locations and sub-units. Changes apply everywhere automatically.</div>
+            <div id="storage-loc-manager"></div>
+            <div style="display:flex;gap:8px;width:100%;flex-wrap:wrap">
+              <input class="form-input" id="new-loc-name" placeholder="New location name (e.g. Warehouse)" style="flex:1;min-width:140px">
+              <input class="form-input" id="new-loc-short" placeholder="Short name (e.g. WH)" style="width:110px">
+              <button class="btn-save" style="white-space:nowrap" onclick="addStorageLocation()">+ Add Location</button>
+            </div>
+          </div>
+
           <div class="settings-title">🏷️ Product Categories</div>
           <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px">
             <div style="font-size:12px;color:var(--text3)">Add or remove categories. Used in product forms and import.</div>
@@ -1102,6 +1254,84 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     </div>
   </div>
 </div>
+      <!-- SUPPLIERS PAGE -->
+      <div id="page-suppliers" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="showAddSupplierModal()">+ Add Supplier</button>
+        </div>
+        <div class="stats-row" id="supplier-stats" style="margin-bottom:16px"></div>
+        <div id="supplier-list"></div>
+      </div>
+
+      <!-- EXPENSES PAGE -->
+      <div id="page-expenses" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <input class="search-input" placeholder="🔍 Search expenses..." id="exp-search" oninput="filterExpenses()" style="max-width:240px">
+          <select class="search-input" id="exp-filter-source" onchange="filterExpenses()" style="max-width:160px">
+            <option value="">All Sources</option>
+            <option value="drawer">From Drawer</option>
+            <option value="safe">From Safe</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="showAddExpenseModal()">+ Record Expense</button>
+        </div>
+        <div class="stats-row" id="expense-stats" style="margin-bottom:16px"></div>
+        <div class="inv-table-wrap">
+          <table class="inv-table">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount (NKF)</th><th>Source</th><th>Recorded By</th><th></th></tr></thead>
+            <tbody id="expense-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SHIFTS PAGE -->
+      <div id="page-shifts" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <input class="form-input" id="shift-date-filter" type="month" style="max-width:180px" oninput="renderShifts()">
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="showAddShiftModal()">+ Record Today's Shifts</button>
+        </div>
+        <div id="shifts-summary" style="margin-bottom:16px"></div>
+        <div id="shifts-list"></div>
+      </div>
+
+      <!-- STOCK TRANSFERS PAGE -->
+      <div id="page-transfers" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="showTransferModal()">+ New Transfer</button>
+        </div>
+        <div id="transfers-list"></div>
+      </div>
+
+      <!-- DAMAGED GOODS PAGE -->
+      <div id="page-damaged" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="showDamagedModal()">+ Record Damaged Item</button>
+        </div>
+        <div class="stats-row" id="damaged-stats" style="margin-bottom:16px"></div>
+        <div id="damaged-list"></div>
+      </div>
+      <!-- STOCK COUNT PAGE -->
+      <div id="page-stockcount" class="page">
+        <div class="inv-toolbar" style="margin-bottom:16px">
+          <input class="search-input" placeholder="🔍 Filter products..." id="sc-search" oninput="renderStockCount()" style="max-width:220px">
+          <select class="search-input" id="sc-cat-filter" onchange="renderStockCount()" style="max-width:160px">
+            <option value="">All Categories</option>
+          </select>
+          <div class="spacer"></div>
+          <button class="topbar-btn" onclick="saveStockCount()">✓ Save Count</button>
+        </div>
+        <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.25);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+          📋 Count a few products at a time — no need to do all at once. Enter the physical count you see in the shop. Leave blank to skip.
+        </div>
+        <div id="sc-sessions" style="margin-bottom:14px"></div>
+        <div id="sc-list"></div>
+      </div>
+
+</div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal-product">
@@ -1133,6 +1363,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
             <option value="Mekzen › Small Unit 2">Mekzen › Small Unit 2</option>
             <option value="Mekzen › Small Unit 3">Mekzen › Small Unit 3</option>
             <option value="Mekzen › Large Unit">Mekzen › Large Unit</option>
+          </select>
           </select>
         </div>
       </div>
@@ -1276,6 +1507,28 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2)">Record all items bought in one session. Each line is a separate item.</div>
       <div class="form-row-2">
         <div class="form-row"><div class="form-label">Supplier / Seller Name</div><input class="form-input" id="pur-supplier" placeholder="Who sold it to you"></div>
+
+        <!-- Payment Terms -->
+        <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-top:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">💳 Payment to Supplier</div>
+          <div style="display:flex;gap:10px;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+              <input type="radio" name="pur-payment-type" value="paid" id="pur-paid-now" checked onchange="togglePurPaymentType()"> Paid in Full
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+              <input type="radio" name="pur-payment-type" value="partial" onchange="togglePurPaymentType()"> Partial
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+              <input type="radio" name="pur-payment-type" value="credit" onchange="togglePurPaymentType()"> Full Credit
+            </label>
+          </div>
+          <div id="pur-payment-extra" style="display:none">
+            <div class="form-row-2">
+              <div class="form-row" id="pur-paid-now-row"><div class="form-label">Amount Paid Now (NKF)</div><input class="form-input" id="pur-paid-amount" type="number" placeholder="0" min="0"></div>
+              <div class="form-row"><div class="form-label">Due Date <span style="font-size:10px;color:var(--text3)">(leave blank if unknown)</span></div><input class="form-input" id="pur-due-date" type="date"></div>
+            </div>
+          </div>
+        </div>
         <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="pur-date" type="date"></div>
       </div>
       <!-- Dubai / AED toggle -->
@@ -1627,9 +1880,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="form-label">Move to — Location *</div>
         <select class="form-select" id="asgn-location" onchange="updateAsgnUnits()">
           <option value="">— Select —</option>
-          <option value="EH_MAIN">Edaga Hamus Main Shop</option>
-          <option value="EH_SECOND">Edaga Hamus Second Shop</option>
-          <option value="MEKZEN">Mekzen</option>
+          ${getStorageLocations().map(l=>`<option value="${l.id}">${l.label}</option>`).join('')}
           <option value="OPEN">⚠ Open / Unlocated</option>
         </select>
       </div>
@@ -1845,6 +2096,14 @@ const TI = {
   'Purchases & Stock Bought':'ምግዛእ','Loans & Credit':'ልቓሕ',
   'Customers':'ዓሚልቲ','Staff':'ሰራሕተኛ','Settings':'ምቕናዕ',
   'Cash Drawer':'ካሳ','Requests':'ጠለባት','Returns':'ምምላስ',
+  'Stock Transfers':'ምርቃቕ ዕቃ','Damaged Goods':'ዝተጎድአ ዕቃ',
+  'Suppliers':'ሸቐጥቲ','Expenses':'ወጻኢታት','Shifts':'ሸፍቲ',
+  'Credit & Loans':'ልቓሕ','From Drawer':'ካብ ካሳ','From Safe':'ካብ ካዝና',
+  'Write Off':'ሰርዝ','Damaged Stock':'ዝተጎድአ ዕቃ ንሽያጥ',
+  'Add Supplier':'ሸቐጣዪ ወሲኽ','Supplier Debt':'ዕዳ ሸቐጣዪ',
+  'Record Payment':'ክፍሊት መዝግብ','Full Day':'ሙሉእ መዓልቲ','Half Day':'ፍርቂ መዓልቲ',
+  'New Transfer':'ሓዲሽ ምርቃቕ','Transfer From':'ካብ','Transfer To':'ናብ',
+  'Partial Payment':'ከፊል ክፍሊት','Remaining Balance':'ዝተረፈ',
   'Activity Log':'ናይ ስርሒት ቅዳሕ','Recycle Bin':'ቆሻሻ',
   // Dashboard
   "Today's Revenue":"ናይ ሎሚ እቶት","Total Products":"ጠቕላሊ ፍርያት",
@@ -2103,6 +2362,86 @@ function autoDetectCategory(name){
   return 'Other';
 }
 
+// ─── STORAGE LOCATION MANAGER ───
+function renderStorageLocManager(){
+  const el=document.getElementById('storage-loc-manager');
+  if(!el) return;
+  const locs=getStorageLocations();
+  el.innerHTML=locs.map((loc,li)=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <span style="font-weight:600;font-size:13px">${loc.label}</span>
+          <span style="font-size:11px;color:var(--text3);margin-left:8px">(${loc.short})</span>
+        </div>
+        <button class="action-btn del" style="font-size:11px" onclick="removeStorageLocation(${li})">Remove</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        ${loc.units.map((u,ui)=>`
+          <div style="display:flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px">
+            <span>${u.label}</span>
+            <button onclick="removeStorageUnit(${li},${ui})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 0 0 4px">×</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px">
+        <input class="form-input" id="new-unit-${li}" placeholder="Add sub-unit (e.g. Shelf 1)" style="flex:1;font-size:12px;padding:5px 8px">
+        <button class="action-btn" style="font-size:11px" onclick="addStorageUnit(${li})">+ Add</button>
+      </div>
+    </div>`).join('')||'<div style="color:var(--text3);font-size:13px">No locations yet</div>';
+}
+
+function addStorageLocation(){
+  const name=document.getElementById('new-loc-name').value.trim();
+  const short=document.getElementById('new-loc-short').value.trim();
+  if(!name||!short){toast('Enter both a name and short name');return;}
+  if(!DB.storageLocations) DB.storageLocations=JSON.parse(JSON.stringify(DEFAULT_STORAGE_LOCATIONS));
+  const id='LOC_'+Date.now();
+  const colors=['#9b59b6','#e74c3c','#1abc9c','#3498db','#f39c12'];
+  const color=colors[DB.storageLocations.length%colors.length];
+  DB.storageLocations.push({id,label:name,short,color,units:[]});
+  document.getElementById('new-loc-name').value='';
+  document.getElementById('new-loc-short').value='';
+  save();
+  renderStorageLocManager();
+  toast(`"${name}" added ✓`);
+}
+
+function removeStorageLocation(idx){
+  if(!DB.storageLocations) DB.storageLocations=JSON.parse(JSON.stringify(DEFAULT_STORAGE_LOCATIONS));
+  const loc=DB.storageLocations[idx];
+  const inUse=DB.products.some(p=>p.locations&&p.locations.some(l=>l.zone.startsWith(loc.short)));
+  if(inUse){toast(`Products are stored in ${loc.label} — reassign them first`);return;}
+  DB.storageLocations.splice(idx,1);
+  save();
+  renderStorageLocManager();
+  renderStorage();
+  toast(`"${loc.label}" removed`);
+}
+
+function addStorageUnit(locIdx){
+  if(!DB.storageLocations) DB.storageLocations=JSON.parse(JSON.stringify(DEFAULT_STORAGE_LOCATIONS));
+  const name=document.getElementById(`new-unit-${locIdx}`).value.trim();
+  if(!name){toast('Enter a unit name');return;}
+  const id='UNIT_'+Date.now();
+  DB.storageLocations[locIdx].units.push({id,label:name,icon:'📦'});
+  save();
+  renderStorageLocManager();
+  toast(`"${name}" added ✓`);
+}
+
+function removeStorageUnit(locIdx,unitIdx){
+  if(!DB.storageLocations) DB.storageLocations=JSON.parse(JSON.stringify(DEFAULT_STORAGE_LOCATIONS));
+  const loc=DB.storageLocations[locIdx];
+  const unit=loc.units[unitIdx];
+  const zoneName=`${loc.short} \u203a ${unit.label}`;
+  const inUse=DB.products.some(p=>p.locations&&p.locations.some(l=>l.zone===zoneName&&l.qty>0));
+  if(inUse){toast(`Products are stored in "${unit.label}" — move them first`);return;}
+  loc.units.splice(unitIdx,1);
+  save();
+  renderStorageLocManager();
+  toast(`"${unit.label}" removed`);
+}
+
 function renderCategoryManager(){
   const list=document.getElementById('cat-manager-list');
   if(!list) return;
@@ -2120,10 +2459,8 @@ function addCategory(){
   if(!name){toast('Enter a category name');return;}
   if(!DB.categories) DB.categories=[...DEFAULT_CATS];
   if(DB.categories.find(c=>c.toLowerCase()===name.toLowerCase())){toast('Category already exists');return;}
-  // Insert before 'Other'
-  const otherIdx=DB.categories.indexOf('Other');
-  if(otherIdx>=0) DB.categories.splice(otherIdx,0,name);
-  else DB.categories.push(name);
+  DB.categories.push(name);
+  DB.categories.sort((a,b)=>a==='Other'?1:b==='Other'?-1:a.localeCompare(b));
   input.value='';
   save();
   renderCategoryManager();
@@ -2150,8 +2487,11 @@ function removeCategory(idx){
 function nav(page){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  // Close sidebar on mobile
+  const sb=document.getElementById('sidebar');
+  if(sb.classList.contains('open')){ sb.classList.remove('open'); const ov=document.getElementById('sidebar-overlay');if(ov)ov.style.display='none'; }
   const navItems = document.querySelectorAll('.nav-item');
-  const pageNav = {dashboard:'dashboard',pos:'point of sale',inventory:'products',storage:'storage',reports:'reports',purchases:'purchases',loans:'loans',customers:'customers',staff:'staff',settings:'settings'};
+  const pageNav = {dashboard:'dashboard',pos:'point of sale',inventory:'products',storage:'storage',reports:'reports',purchases:'purchases',loans:'credit & loans',customers:'customers',staff:'staff',settings:'settings',transfers:'stock transfers',damaged:'damaged goods',suppliers:'suppliers',expenses:'expenses',shifts:'shifts'};
   navItems.forEach(n=>{ if(n.textContent.toLowerCase().includes(pageNav[page]||page)) n.classList.add('active'); });
   document.getElementById('page-'+page).classList.add('active');
   currentPage = page;
@@ -2171,7 +2511,7 @@ function topbarAction(){
 
 function renderPage(page){
   if(page==='dashboard') renderDashboard();
-  else if(page==='pos') renderPOS();
+  else if(page==='pos'){renderPOS();setTimeout(()=>{const s=document.getElementById('pos-search');if(s)s.focus();},300);}
   else if(page==='inventory') renderInventory();
   else if(page==='storage') renderStorage();
   else if(page==='reports') renderReports();
@@ -2184,7 +2524,13 @@ function renderPage(page){
   else if(page==='activity') renderActivity();
   else if(page==='recycle') renderRecycle();
   else if(page==='staff') renderStaff();
-  else if(page==='settings') renderCategoryManager();
+  else if(page==='stockcount') renderStockCount();
+  else if(page==='transfers') renderTransfers();
+  else if(page==='damaged') renderDamaged();
+  else if(page==='suppliers') renderSuppliers();
+  else if(page==='expenses') filterExpenses();
+  else if(page==='shifts') renderShifts();
+  else if(page==='settings') { renderCategoryManager(); renderStorageLocManager(); }
   checkOpenZoneItems();
   renderEmployeeNotifications();
 }
@@ -2198,16 +2544,59 @@ function renderDashboard(){
   const today = todayMinus(0);
   const viewDate = dashViewDate||today;
 
-  // No-price reminder banner (manager only)
-  const noPriceProds = DB.products.filter(p=>!p.price||p.price===0);
-  let dpBanner=document.getElementById('dash-noprice-banner');
-  if(!dpBanner){dpBanner=document.createElement('div');dpBanner.id='dash-noprice-banner';document.getElementById('page-dashboard').prepend(dpBanner);}
-  dpBanner.innerHTML=(isManager&&noPriceProds.length)?`<div style="background:rgba(231,176,0,0.12);border:1px solid rgba(231,176,0,0.35);border-radius:var(--radius);padding:10px 16px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:12px">
-    <span style="font-size:20px">⚠</span>
-    <div style="flex:1"><strong>${noPriceProds.length} product${noPriceProds.length>1?'s need':'needs'} a selling price:</strong> <span style="color:var(--text3)">${noPriceProds.map(p=>p.name).join(', ')}</span></div>
-    <button onclick="nav('inventory')" class="action-btn" style="white-space:nowrap">Set prices →</button>
-  </div>`:'';
+  // ── NEEDS ATTENTION ALERTS ──
+  if(isManager){
+    const alerts=[];
+    const today=todayMinus(0);
 
+    // Low stock
+    const lowStockItems=DB.products.filter(p=>isLowStock(p)&&getTotalStock(p)>0);
+    if(lowStockItems.length) alerts.push({level:'orange',icon:'📦',msg:`${lowStockItems.length} item${lowStockItems.length>1?'s are':' is'} low on stock`,action:"nav('inventory')",actionLabel:'View →'});
+
+    // Out of stock
+    const outOfStock=DB.products.filter(p=>getTotalStock(p)===0&&p.price>0);
+    if(outOfStock.length) alerts.push({level:'red',icon:'🚫',msg:`${outOfStock.length} item${outOfStock.length>1?'s are':' is'} completely out of stock`,action:"nav('inventory')",actionLabel:'View →'});
+
+    // Open/unlocated items
+    const unlocatedCount=DB.products.filter(p=>p.openSince&&getLocations(p).some(l=>l.zone.includes('Unlocated')&&l.qty>0)).length;
+    if(unlocatedCount) alerts.push({level:'orange',icon:'📍',msg:`${unlocatedCount} product${unlocatedCount>1?'s have':' has'} stock in Open/Unlocated — assign to a location`,action:"nav('storage')",actionLabel:'Assign →'});
+
+    // Supplier debt with no due date
+    const noDateDebt=(DB.purchases||[]).filter(p=>p.needsAttention);
+    if(noDateDebt.length) alerts.push({level:'red',icon:'🏭',msg:`${noDateDebt.length} supplier purchase${noDateDebt.length>1?'s have':' has'} no payment due date`,action:"nav('suppliers')",actionLabel:'Review →'});
+
+    // Overdue loans
+    const overdueLoans=(DB.loans||[]).filter(l=>{
+      if(l.status!=='active') return false;
+      const paid=(l.repayments||[]).reduce((a,r)=>a+r.amount,0);
+      return paid<l.amount&&l.nextFollowup&&l.nextFollowup<today;
+    });
+    if(overdueLoans.length) alerts.push({level:'red',icon:'💳',msg:`${overdueLoans.length} loan${overdueLoans.length>1?'s are':' is'} overdue for follow-up`,action:"nav('loans')",actionLabel:'View →'});
+
+    // Pending approvals
+    const pendingLoans=(DB.loans||[]).filter(l=>l.status==='pending').length;
+    if(pendingLoans) alerts.push({level:'blue',icon:'⏳',msg:`${pendingLoans} loan${pendingLoans>1?'s':''} waiting for approval`,action:"nav('loans')",actionLabel:'Approve →'});
+
+    // Items not priced
+    const noPriceCount=DB.products.filter(p=>!p.price||p.price===0).length;
+    if(noPriceCount) alerts.push({level:'orange',icon:'💰',msg:`${noPriceCount} product${noPriceCount>1?'s have':' has'} no selling price set`,action:"nav('inventory')",actionLabel:'Fix →'});
+
+    // Day not opened
+    const todaySess=DB.drawerSessions.find(s=>s.date===today);
+    if(!todaySess) alerts.push({level:'orange',icon:'🏪',msg:`Today's drawer hasn't been opened yet`,action:"nav('drawer')",actionLabel:'Open Day →'});
+
+    const alertEl=document.getElementById('dash-alerts');
+    if(alertEl){
+      alertEl.innerHTML=alerts.length?`<div style="margin-bottom:12px">
+        ${alerts.map(a=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg3);border-left:3px solid var(--${a.level==='red'?'red':a.level==='orange'?'orange,#e67e22':a.level==='blue'?'blue':'green'});border-radius:0 var(--radius2) var(--radius2) 0;margin-bottom:6px;font-size:13px">
+            <span>${a.icon}</span>
+            <span style="flex:1;color:var(--text2)">${a.msg}</span>
+            <button onclick="${a.action}" class="action-btn" style="font-size:11px;white-space:nowrap">${a.actionLabel}</button>
+          </div>`).join('')}
+      </div>`:'';
+    }
+  }
   // Day picker for employees (and managers too)
   const session=DB.drawerSessions.find(s=>s.date===viewDate);
   const dayLabel=viewDate===today?'Today':viewDate;
@@ -2294,11 +2683,20 @@ function renderDashboard(){
   const loanBadge=document.getElementById('loan-due-badge');
   if(loanBadge){loanBadge.style.display=dueLoanCount?'inline':'none';loanBadge.textContent=dueLoanCount;}
   if(isManager) updateStockAlertBadge();
-  document.getElementById('low-stock-list').innerHTML=lowStock.length?lowStock.slice(0,6).map(p=>`
-    <div class="low-stock-item">
-      <div class="low-stock-name">${p.name}</div>
-      <span class="badge ${getTotalStock(p)===0?'red':'orange'}">${getTotalStock(p)} ${p.unit}</span>
-    </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">✓ All stock levels OK</div>';
+  document.getElementById('low-stock-list').innerHTML=lowStock.length?lowStock.slice(0,6).map(p=>{
+    const lastPurchase=(DB.purchases||[]).filter(pur=>pur.lines?.some(l=>l.item===p.name)).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const lastSupplier=lastPurchase?.supplier;
+    const lastPrice=lastPurchase?.lines?.find(l=>l.item===p.name)?.unitPrice;
+    const cur=DB.settings.currency;
+    return `<div style="padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:500">${p.name}</div>
+        <span class="badge ${getTotalStock(p)===0?'red':'orange'}">${getTotalStock(p)} ${p.unit}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${lastSupplier?`🏭 ${lastSupplier}${lastPrice?' · '+cur+' '+lastPrice+'/unit':''}`:
+      `<span style="color:#e67e22">💡 No supplier — record one on next purchase</span>`}</div>
+    </div>`;
+  }).join(''):'<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">✓ All stock levels OK</div>';
 
   document.getElementById('low-stock-badge').style.display=lowStock.length?'inline':'none';
   document.getElementById('low-stock-badge').textContent=lowStock.length;
@@ -2608,6 +3006,108 @@ function updateCartTotals(){
   if(el('discount-row-label')) el('discount-row-label').textContent=discLabel;
 }
 
+function showPartialPaymentModal(){
+  if(!cart.length){toast('Cart is empty');return;}
+  const cur=DB.settings.currency;
+  const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
+  const disc=parseFloat(document.getElementById('discount-amt').value||0)||0;
+  const total=Math.max(0,sub-disc);
+  const customer=document.getElementById('sale-customer').value.trim();
+
+  let m=document.getElementById('modal-partial-payment');
+  if(!m){m=document.createElement('div');m.id='modal-partial-payment';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-partial-payment');});}
+
+  // Pre-fill customer info if already known
+  const existingCust=DB.customers.find(c=>c.name.toLowerCase()===customer.toLowerCase());
+
+  m.innerHTML=`<div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">💳 Partial Payment</div><button class="modal-close" onclick="closeModal('modal-partial-payment')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:var(--radius2);padding:8px 12px;font-size:12px;margin-bottom:14px">
+        ⚠ Partial payment requires a named customer with a phone number.
+      </div>
+      <div class="form-row"><div class="form-label">Customer Name *</div>
+        <input class="form-input" id="pp-name" placeholder="Full name required" value="${customer&&customer.toLowerCase()!=='walk-in'?customer:''}" list="pp-cust-list">
+        <datalist id="pp-cust-list">${(DB.customers||[]).map(c=>`<option value="${c.name}">`).join('')}</datalist>
+      </div>
+      <div class="form-row"><div class="form-label">Phone Number *</div>
+        <input class="form-input" id="pp-phone" type="tel" placeholder="Required for credit tracking" value="${existingCust?.phone||''}">
+      </div>
+      <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px;display:flex;justify-content:space-between">
+        <span style="color:var(--text3)">Total Due</span>
+        <span style="font-family:var(--font-head);font-size:16px;color:var(--accent)">${cur} ${total.toLocaleString()}</span>
+      </div>
+      <div class="form-row"><div class="form-label">Paying Now (${cur}) *</div>
+        <input class="form-input" id="partial-amount" type="number" placeholder="0" min="1" max="${total-1}" oninput="updatePartialBalance(${total})">
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px">
+        <span style="color:var(--text3)">Remaining owed</span>
+        <span style="color:var(--red);font-family:var(--font-head)" id="partial-balance">${cur} ${total.toLocaleString()}</span>
+      </div>
+      <div style="background:rgba(45,156,219,0.08);border:1px solid rgba(45,156,219,0.25);border-radius:var(--radius2);padding:8px 12px;font-size:12px">
+        📋 Remaining balance saved as customer credit in Credit & Loans.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-partial-payment')">Cancel</button>
+      <button class="btn-save" onclick="completePartialSale(${total})">Complete Sale</button>
+    </div>
+  </div>`;
+  openModal('modal-partial-payment');
+}
+
+function updatePartialBalance(total){
+  const paid=parseFloat(document.getElementById('partial-amount')?.value)||0;
+  const remaining=Math.max(0,total-paid);
+  const el=document.getElementById('partial-balance');
+  if(el) el.textContent=`${DB.settings.currency} ${remaining.toLocaleString()}`;
+}
+
+function completePartialSale(total){
+  const name=document.getElementById('pp-name').value.trim();
+  const phone=document.getElementById('pp-phone').value.trim();
+  const paid=parseFloat(document.getElementById('partial-amount').value)||0;
+
+  if(!name||name.toLowerCase()==='walk-in'){toast('Enter the customer\'s full name');return;}
+  if(!phone){toast('Phone number is required for credit tracking');return;}
+  if(!paid||paid<=0){toast('Enter amount paid');return;}
+  if(paid>=total){closeModal('modal-partial-payment');completeSale();return;}
+
+  const remaining=total-paid;
+
+  // Update customer name in sale form
+  document.getElementById('sale-customer').value=name;
+
+  // Save/update customer record
+  if(!DB.customers) DB.customers=[];
+  let cust=DB.customers.find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(!cust){ cust={id:Date.now(),name,phone,visits:0,totalSpent:0,createdAt:todayMinus(0)}; DB.customers.push(cust); }
+  else if(!cust.phone&&phone){ cust.phone=phone; }
+
+  closeModal('modal-partial-payment');
+  // Complete the sale normally
+  _doCompleteSale();
+  // Add remaining as customer credit
+  if(!DB.loans) DB.loans=[];
+  DB.loans.push({
+    id:Date.now(),
+    borrower:name,
+    phone,
+    amount:remaining,
+    paid:0,
+    date:todayMinus(0),
+    dueDate:'',
+    type:'informal',
+    notes:`Partial payment — paid ${DB.settings.currency} ${paid}, owes ${DB.settings.currency} ${remaining}`,
+    status:'active',
+    approvedBy:currentUser?currentUser.name:'',
+    isCredit:true
+  });
+  logActivity('loan',`Partial payment: ${name} (${phone}) paid ${DB.settings.currency} ${paid}, owes ${DB.settings.currency} ${remaining}`);
+  save();
+  toast(`Sale complete — ${name} owes ${DB.settings.currency} ${remaining.toLocaleString()} (saved as credit)`);
+}
+
 function completeSale(){
   if(!cart.length){toast('Cart is empty');return;}
   const isManager=currentUser&&currentUser.role==='Manager';
@@ -2670,22 +3170,28 @@ function _doCompleteSale(){
   const customer=document.getElementById('sale-customer').value||'Walk-in';
   const sale={id:Date.now(),date:saleDate,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),customer,servedBy:currentUser?currentUser.name:'',items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),subtotal:sub,discount:discAmt,discNote,total};
   DB.sales.push(sale);
+  const needsSource=[];
   cart.forEach(c=>{
     const p=DB.products.find(x=>x.id===c.id);
     if(p){
       if(p.unit==='rolls'&&p.metersPerRoll&&c.rollMeters){
-        // Deduct meters from roll product
         deductRollMeters(p,c.rollMeters);
       } else {
         p.stock=Math.max(0,(getTotalStock(p)||p.stock||0)-c.qty);
         if(p.locations&&p.locations.length){
           let rem=c.qty;
-          const salesRoomLoc=p.locations.find(l=>l.zone.includes('Sales Room'));
-          if(salesRoomLoc){ const take=Math.min(salesRoomLoc.qty||0,rem); salesRoomLoc.qty-=take; rem-=take; }
+          // Deduct from EH Main Sales Room first
+          const ehMain=p.locations.find(l=>l.zone.includes('EH Main')&&l.zone.includes('Sales Room'));
+          if(ehMain){ const take=Math.min(ehMain.qty||0,rem); ehMain.qty-=take; rem-=take; }
+          // If still remaining, deduct from other EH Main locations
           for(const loc of p.locations){
             if(rem<=0) break;
-            if(loc.zone.includes('Sales Room')) continue;
-            const take=Math.min(loc.qty||0,rem); loc.qty-=take; rem-=take;
+            if(loc.zone.includes('EH Main')&&!loc.zone.includes('Sales Room')){ const take=Math.min(loc.qty||0,rem); loc.qty-=take; rem-=take; }
+          }
+          // Track if we still need more from other locations
+          if(rem>0){
+            const ehMainTotal=(p.locations.filter(l=>l.zone.includes('EH Main')).reduce((a,l)=>a+(l.qty||0),0));
+            needsSource.push({name:c.name,qty:c.qty,coveredByEH:c.qty-rem,remaining:rem});
           }
           p.locations=p.locations.filter(l=>l.qty>0);
         }
@@ -2701,6 +3207,8 @@ function _doCompleteSale(){
   renderCart();
   document.getElementById('discount-amt').value='';
   document.getElementById('sale-customer').value='';
+  // Trigger stock source popup if EH Main couldn't cover
+  if(needsSource.length) setTimeout(()=>checkStockSourceNeeded(needsSource),800);
 }
 
 function showReceipt(sale){
@@ -2798,7 +3306,7 @@ function filterInventory(){
       </td>
       <td onclick="event.stopPropagation()">
         <button class="action-btn" onclick="editProduct(${p.id})">✏ Edit</button>
-        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button>`:`<button class="action-btn" onclick="showRequestModal('stock');setTimeout(()=>{document.getElementById('req-product').value='${p.name.replace(/'/g,"\\'")}'},100)">± Request</button>`}
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button><button class="action-btn" style="color:var(--orange,#e67e22);border-color:var(--orange,#e67e22);font-size:11px" onclick="quickMarkDamaged('${p.name.replace(/'/g,"\\'")}')">⚠ Damaged</button>`:`<button class="action-btn" onclick="showRequestModal('stock');setTimeout(()=>{document.getElementById('req-product').value='${p.name.replace(/'/g,"\\'")}'},100)">± Request</button>`}
         <button class="action-btn del" onclick="deleteProduct(${p.id})">✕</button>
       </td>
     </tr>
@@ -3019,6 +3527,8 @@ function editProduct(id){
   catSel.innerHTML=CATS.map(c=>`<option${c===p.cat?' selected':''}>${c}</option>`).join('');
   for(let o of catSel.options){if(o.value===p.cat)o.selected=true;}
   const zoneSel=document.getElementById('f-zone');
+  zoneSel.innerHTML='<option value="">— Not set —</option>'+
+    getZoneNames().map(z=>`<option value="${z}"${z===p.zone?' selected':''}>${z.replace('⚠ ','')}</option>`).join('');
   for(let o of zoneSel.options){if(o.value===p.zone)o.selected=true;}
   toggleBoxField();
   openModal('modal-product');
@@ -3405,43 +3915,44 @@ function saveStockAdjust(){
 }
 
 // ─── STORAGE SYSTEM ───
-const LOCATIONS = {
-  EH_MAIN: {
-    id:'EH_MAIN', label:'Edaga Hamus Main Shop', short:'EH Main',
-    color:'#f5a623',
-    units: [
-      {id:'SALES_ROOM', label:'Sales Room', icon:'🏪'},
-      {id:'UNIT_1',     label:'Storage Unit 1', icon:'📦'},
-      {id:'UNIT_2',     label:'Storage Unit 2', icon:'📦'},
-      {id:'UNIT_3',     label:'Storage Unit 3', icon:'📦'},
-      {id:'UNIT_4',     label:'Storage Unit 4', icon:'📦'},
-      {id:'UNIT_5',     label:'Storage Unit 5', icon:'📦'},
-    ]
+const DEFAULT_STORAGE_LOCATIONS = [
+  {id:'EH_MAIN', label:'Edaga Hamus Main Shop', short:'EH Main', color:'#f5a623',
+    units:[{id:'SALES_ROOM',label:'Sales Room',icon:'🏪'},{id:'UNIT_1',label:'Storage Unit 1',icon:'📦'},{id:'UNIT_2',label:'Storage Unit 2',icon:'📦'},{id:'UNIT_3',label:'Storage Unit 3',icon:'📦'},{id:'UNIT_4',label:'Storage Unit 4',icon:'📦'},{id:'UNIT_5',label:'Storage Unit 5',icon:'📦'}]},
+  {id:'EH_SECOND', label:'Edaga Hamus Second Shop', short:'EH Second', color:'#2d9cdb',
+    units:[{id:'MAIN_FLOOR',label:'Main Floor',icon:'🏬'}]},
+  {id:'MEKZEN', label:'Mekzen', short:'Mekzen', color:'#27ae60',
+    units:[{id:'SMALL_1',label:'Small Unit 1',icon:'📦'},{id:'SMALL_2',label:'Small Unit 2',icon:'📦'},{id:'SMALL_3',label:'Small Unit 3',icon:'📦'},{id:'LARGE_1',label:'Large Unit',icon:'🏭'}]},
+];
+
+function getStorageLocations(){
+  return DB.storageLocations&&DB.storageLocations.length?DB.storageLocations:DEFAULT_STORAGE_LOCATIONS;
+}
+
+// Dynamic LOCATIONS object built from DB
+const LOCATIONS_PROXY = new Proxy({},{
+  get(t,key){
+    if(key==='OPEN') return {id:'OPEN',label:'Open / Unlocated',short:'Unlocated',color:'#e67e22',units:[{id:'OPEN_FLOOR',label:'Unlocated Items',icon:'⚠'}],temp:true};
+    const locs=getStorageLocations();
+    const loc=locs.find(l=>l.id===key);
+    return loc||undefined;
   },
-  EH_SECOND: {
-    id:'EH_SECOND', label:'Edaga Hamus Second Shop', short:'EH Second',
-    color:'#2d9cdb',
-    units: [
-      {id:'MAIN_FLOOR', label:'Main Floor', icon:'🏬'},
-    ]
-  },
-  MEKZEN: {
-    id:'MEKZEN', label:'Mekzen', short:'Mekzen',
-    color:'#27ae60',
-    units: [
-      {id:'SMALL_1', label:'Small Unit 1', icon:'📦'},
-      {id:'SMALL_2', label:'Small Unit 2', icon:'📦'},
-      {id:'SMALL_3', label:'Small Unit 3', icon:'📦'},
-      {id:'LARGE_1', label:'Large Unit',   icon:'🏭'},
-    ]
-  },
-  OPEN: {
-    id:'OPEN', label:'Open / Unlocated', short:'Unlocated',
-    color:'#e67e22',
-    units:[{id:'OPEN_FLOOR', label:'Unlocated Items', icon:'⚠'}],
-    temp:true
-  }
-};
+  ownKeys(){ return [...getStorageLocations().map(l=>l.id),'OPEN']; },
+  has(t,key){ return key==='OPEN'||getStorageLocations().some(l=>l.id===key); },
+  getOwnPropertyDescriptor(t,key){ return {enumerable:true,configurable:true}; }
+});
+
+// Use proxy as LOCATIONS
+const LOCATIONS = LOCATIONS_PROXY;
+
+// Dynamic ZONE_NAMES from DB
+function getZoneNames(){
+  const locs=getStorageLocations();
+  const zones=locs.flatMap(loc=>loc.units.map(u=>`${loc.short} \u203a ${u.label}`));
+  zones.push('⚠ Open / Unlocated');
+  return zones;
+}
+// Keep ZONE_NAMES as getter for backwards compat
+Object.defineProperty(window,'ZONE_NAMES',{get:()=>getZoneNames()});
 
 const WALLS = ['Front','Back','Left','Right'];
 
@@ -3486,7 +3997,8 @@ function renderStorage(){
 function renderLocTabs(){
   const tabs = document.getElementById('loc-tabs');
   if(!tabs) return;
-  tabs.innerHTML = Object.values(LOCATIONS).map(loc=>{
+  const allLocs=[...getStorageLocations(),{id:'OPEN',label:'Open / Unlocated',short:'Unlocated',color:'#e67e22',units:[{id:'OPEN_FLOOR',label:'Unlocated Items',icon:'⚠'}],temp:true}];
+  tabs.innerHTML = allLocs.map(loc=>{
     const count = DB.products.filter(p=>getLocations(p).some(l=>l.qty>0&&l.zone.startsWith(loc.short))).length;
     const isOpen = loc.temp;
     const openCount = isOpen ? DB.products.filter(p=>getLocations(p).some(l=>l.zone.includes('Open / Unlocated')&&l.qty>0)).length : 0;
@@ -3505,7 +4017,9 @@ function renderLocTabs(){
 
 function selectLocation(locId){
   selectedLocId = locId;
-  const loc = LOCATIONS[locId];
+  const allLocs=[...getStorageLocations(),{id:'OPEN',label:'Open / Unlocated',short:'Unlocated',color:'#e67e22',units:[{id:'OPEN_FLOOR',label:'Unlocated Items',icon:'⚠'}],temp:true}];
+  const loc = allLocs.find(l=>l.id===locId);
+  if(!loc) return;
   selectedUnitId = loc.units[0].id;
   selectedWall = '';
   renderUnitsList();
@@ -3946,7 +4460,11 @@ function openAssignModal(){
   if(dl) dl.innerHTML=DB.products.map(p=>`<option value="${p.name}">`).join('');
   ['asgn-product','asgn-qty','asgn-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('asgn-wall').value='';
-  document.getElementById('asgn-location').value='';
+  // Populate location dropdown dynamically
+  const locSel=document.getElementById('asgn-location');
+  locSel.innerHTML='<option value="">— Select —</option>'+
+    getStorageLocations().map(l=>`<option value="${l.id}">${l.label}</option>`).join('')+
+    '<option value="OPEN">⚠ Open / Unlocated</option>';
   document.getElementById('asgn-unit').innerHTML='<option value="">— Select location first —</option>';
   document.getElementById('asgn-from-zone').innerHTML='<option value="">— Select product first —</option>';
   document.getElementById('asgn-from-info').textContent='';
@@ -3958,6 +4476,48 @@ function openAssignModal(){
 function openAssignModalForWall(){
   openAssignModal();
   if(selectedWall) document.getElementById('asgn-wall').value=selectedWall;
+}
+
+function updateAsgnUnits(){
+  const locId=document.getElementById('asgn-location').value;
+  const allLocs=getStorageLocations();
+  const loc=locId==='OPEN'?null:allLocs.find(l=>l.id===locId);
+  const sel=document.getElementById('asgn-unit');
+  if(!loc){sel.innerHTML='<option value="">— N/A —</option>';return;}
+  sel.innerHTML='<option value="">— Select unit —</option>'+loc.units.map(u=>`<option value="${u.id}">${u.label}</option>`).join('');
+}
+
+function updateAsgnWalls(){}
+function updateAsgnZone(){}
+
+function saveAssignLocation(){
+  const name=document.getElementById('asgn-product').value.trim();
+  const fromZone=document.getElementById('asgn-from-zone').value;
+  const locId=document.getElementById('asgn-location').value;
+  const unitId=document.getElementById('asgn-unit').value;
+  const wall=document.getElementById('asgn-wall').value;
+  const notes=document.getElementById('asgn-notes').value.trim();
+  const qty=parseInt(document.getElementById('asgn-qty').value)||0;
+  if(!name){toast('Select a product');return;}
+  if(!fromZone){toast('Select where the item is moving FROM');return;}
+  if(!locId){toast('Select a destination location');return;}
+  if(locId!=='OPEN'&&!unitId){toast('Select a unit / room');return;}
+  if(!qty||qty<=0){toast('Enter quantity to move');return;}
+  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!p){toast('Product not found');return;}
+  if(!p.locations) p.locations=getLocations(p);
+  const fromLoc=p.locations.find(l=>l.zone===fromZone);
+  if(!fromLoc||(fromLoc.qty||0)<qty){
+    toast(`Only ${fromLoc?fromLoc.qty:0} ${p.unit} available at that location`);return;
+  }
+  const toZone=locId==='OPEN'?'⚠ Open / Unlocated':buildZoneStr(locId,unitId,wall,notes);
+  if(fromZone===toZone){toast('Source and destination are the same');return;}
+  const ok=moveStock(p.id,fromZone,toZone,qty);
+  if(!ok){toast('Move failed — check stock availability');return;}
+  closeModal('modal-assign-loc');
+  renderStorage();
+  filterInventory();
+  toast(`Moved ${qty} ${p.unit} of ${p.name} → ${toZone.replace('⚠ ','').split('›').pop().trim()}`);
 }
 
 function openAssignModalFor(productId){
@@ -4005,47 +4565,6 @@ function onAsgnFromChange(){
 
 function filterAsgnProduct(){onAsgnProductChange();}
 
-function updateAsgnUnits(){
-  const locId=document.getElementById('asgn-location').value;
-  const loc=LOCATIONS[locId];
-  const sel=document.getElementById('asgn-unit');
-  if(!loc||loc.temp){sel.innerHTML='<option value="">— N/A —</option>';return;}
-  sel.innerHTML='<option value="">— Select unit —</option>'+loc.units.map(u=>`<option value="${u.id}">${u.label}</option>`).join('');
-}
-
-function updateAsgnWalls(){}
-
-function saveAssignLocation(){
-  const name=document.getElementById('asgn-product').value.trim();
-  const fromZone=document.getElementById('asgn-from-zone').value;
-  const locId=document.getElementById('asgn-location').value;
-  const unitId=document.getElementById('asgn-unit').value;
-  const wall=document.getElementById('asgn-wall').value;
-  const notes=document.getElementById('asgn-notes').value.trim();
-  const qty=parseInt(document.getElementById('asgn-qty').value)||0;
-  if(!name){toast('Select a product');return;}
-  if(!fromZone){toast('Select where the item is moving FROM');return;}
-  if(!locId){toast('Select a destination location');return;}
-  if(locId!=='OPEN'&&!unitId){toast('Select a unit / room');return;}
-  if(!qty||qty<=0){toast('Enter quantity to move');return;}
-  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(!p){toast('Product not found');return;}
-  if(!p.locations) p.locations=getLocations(p);
-  const fromLoc=p.locations.find(l=>l.zone===fromZone);
-  if(!fromLoc||(fromLoc.qty||0)<qty){
-    toast(`Only ${fromLoc?fromLoc.qty:0} ${p.unit} available at that location`);return;
-  }
-  const toZone=locId==='OPEN'?'⚠ Open / Unlocated':buildZoneStr(locId,unitId,wall,notes);
-  if(fromZone===toZone){toast('Source and destination are the same');return;}
-  const ok=moveStock(p.id,fromZone,toZone,qty);
-  if(!ok){toast('Move failed — check stock availability');return;}
-  closeModal('modal-assign-loc');
-  renderStorage();
-  filterInventory();
-  toast(`Moved ${qty} ${p.unit} of ${p.name} → ${toZone.replace('⚠ ','').split('›').pop().trim()}`);
-}
-
-
 function promptAssignZone(productId){
   openAssignModalFor(productId);
 }
@@ -4078,18 +4597,111 @@ function toggleReportSection(id){
 function renderReports(){
   const cur=DB.settings.currency;
   const sales=getReportSales();
-  const totalRev=sales.reduce((a,s)=>a+s.total,0);
   const today=todayMinus(0);
   const todayRev=DB.sales.filter(s=>s.date===today).reduce((a,s)=>a+s.total,0);
-  const totalProfit=sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{const p=DB.products.find(pp=>pp.name===i.name);return b+(p?(i.price-(p.cost||0))*i.qty:0);},0),0);
   const label=reportDays?`Last ${reportDays} days`:'All time';
+
+  // ── FULL P&L CALCULATIONS ──
+  // Revenue
+  const totalRev=sales.reduce((a,s)=>a+s.total,0);
+  const totalReturns=sales.reduce((a,s)=>a+(s.returned||0),0);
+  const netRevenue=totalRev-totalReturns;
+
+  // COGS
+  const totalCOGS=sales.reduce((a,s)=>a+s.items.reduce((b,i)=>{
+    const p=DB.products.find(pp=>pp.name===i.name);
+    return b+(p&&p.cost?(p.cost*i.qty):0);
+  },0),0);
+  const grossProfit=netRevenue-totalCOGS;
+
+  // Expenses in period
+  const periodStart=reportDays?todayMinus(reportDays-1):'0000-00-00';
+  const periodExpenses=(DB.expenses||[]).filter(e=>e.date>=periodStart);
+  const drawerExpenses=periodExpenses.filter(e=>e.source==='drawer').reduce((a,e)=>a+e.amount,0);
+  const safeExpenses=periodExpenses.filter(e=>e.source==='safe').reduce((a,e)=>a+e.amount,0);
+  const totalExpenses=drawerExpenses+safeExpenses;
+
+  // Damaged goods losses in period
+  const damagedLoss=(DB.damagedGoods||[]).filter(d=>d.date>=periodStart&&d.type==='writeoff')
+    .reduce((a,d)=>a+(d.loss||0),0);
+
+  // Net profit
+  const netProfit=grossProfit-totalExpenses-damagedLoss;
+
+  // Outstanding balances (all time)
+  const customerCreditOwed=(DB.loans||[]).filter(l=>l.status==='active'||l.status==='overdue')
+    .reduce((a,l)=>{
+      const paid=(l.repayments||[]).reduce((x,r)=>x+r.amount,0);
+      return a+Math.max(0,l.amount-paid);
+    },0);
+
+  const supplierDebtOwed=(DB.purchases||[]).filter(p=>p.onCredit).reduce((a,p)=>{
+    const payments=(DB.supplierPayments||[]).filter(sp=>sp.supplier?.toLowerCase()===p.supplier?.toLowerCase())
+      .reduce((x,sp)=>x+sp.amount,0);
+    return a+Math.max(0,(p.grandTotal||0)-payments);
+  },0);
 
   // Stat cards
   document.getElementById('report-stats').innerHTML=`
     <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-label">Today</div><div class="stat-value">${cur} ${todayRev.toLocaleString()}</div></div>
     <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">Sales (${label})</div><div class="stat-value">${sales.length}</div></div>
-    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Revenue (${label})</div><div class="stat-value">${cur} ${totalRev.toLocaleString()}</div></div>
-    <div class="stat-card red"><div class="stat-icon">💹</div><div class="stat-label">Est. Profit (${label})</div><div class="stat-value">${cur} ${Math.round(totalProfit).toLocaleString()}</div></div>`;
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Net Revenue</div><div class="stat-value">${cur} ${Math.round(netRevenue).toLocaleString()}</div></div>
+    <div class="stat-card ${netProfit>=0?'green':'red'}"><div class="stat-icon">💹</div><div class="stat-label">Net Profit</div><div class="stat-value">${cur} ${Math.round(netProfit).toLocaleString()}</div></div>`;
+
+  // ── P&L PANEL ──
+  const plEl=document.getElementById('pl-panel');
+  if(plEl) plEl.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Profit & Loss — ${label}</div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span>Gross Sales</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(totalRev).toLocaleString()}</span>
+        </div>
+        ${totalReturns>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text3)">− Returns/Refunds</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalReturns).toLocaleString()}</span>
+        </div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">
+          <span>Net Revenue</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(netRevenue).toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text3)">− Cost of Goods Sold</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalCOGS).toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:2px solid var(--border);font-size:13px;font-weight:600">
+          <span>Gross Profit</span><span style="font-family:var(--font-head);color:${grossProfit>=0?'var(--green)':'var(--red)'}">${cur} ${Math.round(grossProfit).toLocaleString()}</span>
+        </div>
+        ${drawerExpenses>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text3)">− Drawer Expenses</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(drawerExpenses).toLocaleString()}</span>
+        </div>`:''}
+        ${safeExpenses>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text3)">− Safe Expenses (Rent etc.)</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(safeExpenses).toLocaleString()}</span>
+        </div>`:''}
+        ${damagedLoss>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <span style="color:var(--text3)">− Damaged Goods Loss</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(damagedLoss).toLocaleString()}</span>
+        </div>`:''}
+        <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;margin-top:4px">
+          <span>Net Profit</span>
+          <span style="font-family:var(--font-head);color:${netProfit>=0?'var(--green)':'var(--red)'};font-size:18px">${cur} ${Math.round(netProfit).toLocaleString()}</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Outstanding Balances</div>
+        <div style="background:rgba(46,213,115,0.08);border:1px solid rgba(46,213,115,0.3);border-radius:var(--radius2);padding:12px;margin-bottom:8px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">💚 Customers owe you</div>
+          <div style="font-family:var(--font-head);font-size:20px;color:var(--green)">${cur} ${Math.round(customerCreditOwed).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Credit & partial payments outstanding</div>
+        </div>
+        <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:var(--radius2);padding:12px;margin-bottom:8px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">❤ You owe suppliers</div>
+          <div style="font-family:var(--font-head);font-size:20px;color:var(--red)">${cur} ${Math.round(supplierDebtOwed).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Unpaid & partial supplier purchases</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:12px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">📊 Net Position</div>
+          <div style="font-family:var(--font-head);font-size:20px;color:${customerCreditOwed-supplierDebtOwed>=0?'var(--green)':'var(--red)'}">${cur} ${Math.round(customerCreditOwed-supplierDebtOwed).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">What you're owed minus what you owe</div>
+        </div>
+      </div>
+    </div>`;
 
   // ── REVENUE BY DAY ──
   const days=Math.min(reportDays||30,30);
@@ -4282,6 +4894,13 @@ function showProductDetail(name){
   const custFreq={};
   prodSales.forEach(s=>{custFreq[s.customer]=(custFreq[s.customer]||0)+1;});
   const topCust=Object.entries(custFreq).sort((a,b)=>b[1]-a[1])[0];
+  // Purchase history for this product
+  const purchaseHistory=(DB.purchases||[]).filter(p=>
+    p.lines&&p.lines.some(l=>l.item&&l.item.toLowerCase()===name.toLowerCase())
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+  const lastPurchase=purchaseHistory[0];
+  const lastSupplier=lastPurchase?.supplier||null;
+
   content.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <strong style="font-size:14px">${name}</strong>
@@ -4293,10 +4912,24 @@ function showProductDetail(name){
       <div style="background:var(--bg3);padding:10px;border-radius:var(--radius2);text-align:center"><div style="font-size:11px;color:var(--text3)">Est. Profit</div><div style="font-size:18px;font-weight:600;color:var(--green)">${profit!==null?cur+' '+Math.round(profit).toLocaleString():'--'}</div></div>
     </div>
     ${topCust?`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Top buyer: <strong style="color:var(--text)">${topCust[0]}</strong> (${topCust[1]}×)</div>`:''}
-    ${[...prodSales].reverse().slice(0,8).map(s=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+    <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Recent Sales</div>
+    ${[...prodSales].reverse().slice(0,5).map(s=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
       <span style="color:var(--text3)">${s.date}</span><span>${s.customer}</span>
       <span style="color:var(--text3);font-size:11px">${s.servedBy||''}</span>
-      <span style="color:var(--accent)">×${s.items.find(i=>i.name===name)?.qty}</span></div>`).join('')}`;
+      <span style="color:var(--accent)">×${s.items.find(i=>i.name===name)?.qty}</span></div>`).join('')||'<div style="color:var(--text3);font-size:12px;padding:6px 0">No sales yet</div>'}
+    <div style="font-size:12px;font-weight:600;color:var(--text3);margin:12px 0 6px;text-transform:uppercase;letter-spacing:0.5px">Purchase History</div>
+    ${purchaseHistory.length?purchaseHistory.slice(0,5).map(p=>{
+      const line=p.lines.find(l=>l.item?.toLowerCase()===name.toLowerCase());
+      return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <span style="color:var(--text3)">${p.date}</span>
+        <span style="color:var(--text2)">${p.supplier||'—'}</span>
+        <span>×${line?.qty||'?'}</span>
+        <span style="color:var(--accent)">${line?.unitPrice?cur+' '+line.unitPrice+'/unit':'—'}</span>
+      </div>`;
+    }).join(''):`<div style="color:var(--text3);font-size:12px;padding:6px 0">No purchase records</div>`}
+    ${!lastSupplier?`<div style="background:rgba(231,176,0,0.1);border:1px solid rgba(231,176,0,0.3);border-radius:var(--radius2);padding:8px 12px;font-size:12px;margin-top:8px">
+      💡 No supplier recorded for this product — add one when you next purchase it for better reorder tracking.
+    </div>`:''}`;
   detail.style.display='block';
 }
 
@@ -4431,11 +5064,15 @@ function saveNewPin(){
 // ─── DATA TRANSFER ───
 function exportData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`weyni-backup-${todayMinus(0)}.json`;
+  a.href=url;
+  a.download=`Weyni-Backup-${todayMinus(0)}.json`;
+  document.body.appendChild(a);
   a.click();
-  toast('Data exported!');
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup downloaded ✓');
 }
 function importData(e){
   const file=e.target.files[0];if(!file)return;
@@ -4484,7 +5121,22 @@ setInterval(updateClock,1000);updateClock();
 
 // ─── SIDEBAR TOGGLE ───
 function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('open');
+  const sb=document.getElementById('sidebar');
+  const isOpen=sb.classList.toggle('open');
+  // Add/remove backdrop overlay
+  let overlay=document.getElementById('sidebar-overlay');
+  if(isOpen){
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.id='sidebar-overlay';
+      overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:199;display:none';
+      overlay.onclick=()=>toggleSidebar();
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display='block';
+  } else {
+    if(overlay) overlay.style.display='none';
+  }
 }
 document.addEventListener('click',function(e){
   const sb=document.getElementById('sidebar');
@@ -4531,6 +5183,7 @@ function filterPurchases(){
       <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:10px;color:var(--text2)">${l.cat||'—'}</span></td>
       <td style="font-size:11px;color:var(--text3)">${l.zone||'—'}</td>
       <td style="font-size:11px;color:var(--text3)">${i===0?p.recordedBy||'':''}</td>
+      <td>${i===0?`<span class="badge ${p.paymentStatus==='paid'?'green':p.paymentStatus==='partial'?'orange':'red'}" style="font-size:10px">${p.paymentStatus==='paid'?'✓ Paid':p.paymentStatus==='partial'?'~ Partial':'⚠ Unpaid'}</span>${p.needsAttention?`<div style="font-size:10px;color:var(--red)">⚠ No due date</div>`:p.dueDate?`<div style="font-size:10px;color:var(--text3)">Due: ${p.dueDate}</div>`:''}`:''}</td>
       <td style="white-space:nowrap;display:flex;gap:4px">${i===0?`
         <button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>
         <button class="action-btn del" style="font-size:11px" onclick="deletePurchase(${p.id})">🗑</button>
@@ -4843,6 +5496,14 @@ function renderSupplierView(expandedName){
   }).join('');
 }
 
+function togglePurPaymentType(){
+  const type=document.querySelector('input[name="pur-payment-type"]:checked')?.value||'paid';
+  const extra=document.getElementById('pur-payment-extra');
+  const paidNowRow=document.getElementById('pur-paid-now-row');
+  if(extra) extra.style.display=type==='paid'?'none':'';
+  if(paidNowRow) paidNowRow.style.display=type==='partial'?'':'none';
+}
+
 function showAddPurchaseModal(){
   purLines = [{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:''}];
   document.getElementById('pur-supplier').value='';
@@ -4866,7 +5527,10 @@ function removePurLine(i){
 }
 
 const DEFAULT_CATS=['Bulbs & Lighting','Pendant Lamps','Wall Lamps','Chandeliers','Ceiling Lamps','Table Lamps','Design Lights','Track Lights','Spot Lights','Stick Lights','Rope Lights','Decorative Lights','Neon Signs','LED Screens','LED Strips','Wooden Lamps','Flood Lights','Adaptors & Power','Cables & Wiring','Switches & Sockets','Circuit Breakers','Solar Equipment','Inverters & Batteries','Conduit & Fittings','Tools','Meters & Testers','Other'];
-function getCategories(){ return (DB&&DB.categories&&DB.categories.length)?DB.categories:DEFAULT_CATS; }
+function getCategories(){ 
+  const cats=(DB&&DB.categories&&DB.categories.length)?DB.categories:DEFAULT_CATS;
+  return [...cats].sort((a,b)=>a.localeCompare(b));
+}
 Object.defineProperty(window,'CATS',{get:()=>getCategories()});
 const ZONE_NAMES=[
   'EH Main › Sales Room',
@@ -4907,7 +5571,7 @@ function renderPurLines(){
       <td style="padding:4px">
         <select class="form-select" style="padding:5px 6px;font-size:11px;min-width:120px" onchange="purLines[${i}].zone=this.value">
           <option value="" ${!l.zone?'selected':''}>⚠ Open / Unlocated</option>
-          ${ZONE_NAMES.map(z=>`<option value="${z}"${z===l.zone?' selected':''}>${z}</option>`).join('')}
+          ${getZoneNames().filter(z=>!z.includes('Unlocated')).map(z=>`<option value="${z}"${z===l.zone?' selected':''}>${z}</option>`).join('')}
         </select>
       </td>
       <td style="padding:4px"><button onclick="removePurLine(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
@@ -5015,7 +5679,15 @@ function savePurchase(){
   const purNotes=document.getElementById('pur-notes').value;
   const purTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const recordedBy=currentUser?currentUser.name:'';
-  const batchId=Date.now(); // shared batch id so you can see they came in together
+  const batchId=Date.now();
+
+  // Payment terms
+  const paymentType=document.querySelector('input[name="pur-payment-type"]:checked')?.value||'paid';
+  const paidNow=paymentType==='partial'?parseFloat(document.getElementById('pur-paid-amount').value)||0:
+    paymentType==='paid'?grand:0;
+  const dueDate=paymentType!=='paid'?document.getElementById('pur-due-date').value:'';
+  const onCredit=paymentType!=='paid';
+  const needsAttention=onCredit&&!dueDate; // no due date set
 
   if(!DB.purchases) DB.purchases=[];
 
@@ -5037,7 +5709,12 @@ function savePurchase(){
       notes:purNotes,
       recordedBy,
       currency:isDubai?'AED':'NKF',
-      exchangeRate:isDubai?rate:1
+      exchangeRate:isDubai?rate:1,
+      onCredit,
+      paidNow:paymentType==='paid'?l.total||0:paymentType==='partial'?Math.round((paidNow/grand)*(l.total||0)):0,
+      dueDate,
+      needsAttention,
+      paymentStatus:paymentType==='paid'?'paid':paymentType==='partial'?'partial':'unpaid'
     };
     DB.purchases.push(record);
 
@@ -5069,8 +5746,17 @@ function savePurchase(){
   });
 
   const currencyNote=isDubai?` (AED @ ${rate} rate)`:'';
-  logActivity('purchase',`Purchased ${validLines.length} item(s) from ${purSupplier||'unnamed supplier'}${currencyNote}`,grand);
+  const payNote=paymentType==='paid'?' — paid in full':paymentType==='partial'?` — partial, NKF ${paidNow} paid`:' — full credit';
+  logActivity('purchase',`Purchased ${validLines.length} item(s) from ${purSupplier||'unnamed supplier'}${currencyNote}${payNote}`,grand);
+  // Flag needs attention on dashboard if due date unknown
+  if(needsAttention){
+    if(!DB.stockAlerts) DB.stockAlerts=[];
+    DB.stockAlerts.push({type:'supplier_debt',msg:`Payment due date unknown for purchase from ${purSupplier||'supplier'} on ${purDate} — NKF ${grand}`,date:purDate,id:Date.now()});
+  }
   save();
+  // Reset payment type radio
+  const paidRadio=document.getElementById('pur-paid-now');
+  if(paidRadio){paidRadio.checked=true;togglePurPaymentType();}
   closeModal('modal-purchase');
 
   // Prompt about cost price updates if any changed
@@ -5120,7 +5806,7 @@ function processNextPurItem(){
   const purchasedQty=Math.floor(l.qty);
   // Get current non-unlocated locations with qtys
   const currentLocs=existing?getLocations(existing).filter(loc=>!loc.zone.includes('Unlocated')&&loc.qty>0):[];
-  const locOpts=Object.values(LOCATIONS).flatMap(loc=>loc.units.map(u=>`<option value="${loc.short} \u203a ${u.label}">${loc.short} \u203a ${u.label}</option>`)).join('');
+  const locOpts=getZoneNames().filter(z=>!z.includes('Unlocated')).map(z=>`<option value="${z}">${z}</option>`).join('');
 
   if(!modal){modal=document.createElement('div');modal.id='pur-add-modal';document.body.appendChild(modal);}
   modal.style.cssText='display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
@@ -5359,25 +6045,31 @@ function filterLoans(){
   });
   const cur=DB.settings.currency;
   document.getElementById('loan-tbody').innerHTML=[...filtered].reverse().map(l=>{
-    const statusColors={active:'green',pending:'orange',overdue:'red',paid:'blue'};
+    const statusColors={active:'green',pending:'orange',overdue:'red',paid:'blue',rejected:'red'};
     const sc=statusColors[l.status]||'gray';
     const isDue=l.status==='active'&&l.nextFollowup&&l.nextFollowup<=today;
+    const totalPaid=(l.repayments||[]).reduce((a,r)=>a+r.amount,0);
+    const remaining=Math.max(0,l.amount-totalPaid);
     return `<tr style="${isDue?'background:rgba(231,76,60,0.05)':''}">
       <td><div style="font-weight:500">${l.borrower}</div><div style="font-size:11px;color:var(--text3)">${l.phone||''}</div></td>
-      <td style="font-family:var(--font-head);font-size:16px;color:var(--accent)">${cur} ${l.amount.toLocaleString()}</td>
+      <td>
+        <div style="font-family:var(--font-head);font-size:15px;color:${l.status==='paid'?'var(--green)':'var(--red)'}">${cur} ${remaining.toLocaleString()}</div>
+        ${totalPaid>0&&l.status!=='paid'?`<div style="font-size:10px;color:var(--text3)">of ${cur} ${l.amount.toLocaleString()} · paid ${cur} ${totalPaid.toLocaleString()}</div>`:''}
+      </td>
       <td>${l.date}</td>
       <td style="${isDue?'color:var(--red);font-weight:600':'color:var(--text2)'}">${l.nextFollowup||'—'} ${isDue?'⚠':''}
-        <div style="font-size:10px;color:var(--text3)">every ${l.interval} days</div>
+        ${l.interval?`<div style="font-size:10px;color:var(--text3)">every ${l.interval} days</div>`:''}
       </td>
       <td><span class="badge ${sc}">${l.status.toUpperCase()}</span></td>
       <td style="font-size:12px;color:var(--text3)">${l.approvedBy||'—'}</td>
       <td style="font-size:12px;color:var(--text3);max-width:120px">${l.notes||'—'}</td>
-      <td>
+      <td style="white-space:nowrap">
         ${l.status==='pending'?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="openApproveModal(${l.id})">✓ Approve</button>`:''}
         ${(l.status==='active'||l.status==='overdue')?`
           <button class="action-btn" onclick="markFollowupDone(${l.id})">✓ Checked</button>
-          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="markLoanPaid(${l.id})">💰 Paid</button>
+          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="showLoanRepaymentModal(${l.id})">💰 Payment</button>
         `:''}
+        ${l.status==='paid'?`<button class="action-btn" style="font-size:11px" onclick="showLoanRepaymentModal(${l.id})">📋 History</button>`:''}
         <button class="action-btn del" onclick="deleteLoan(${l.id})">✕</button>
       </td>
     </tr>`;
@@ -5452,11 +6144,79 @@ function markFollowupDone(id){
   l.nextFollowup=next.toISOString().split('T')[0];
   save();renderLoans();toast('Follow-up logged. Next: '+l.nextFollowup);
 }
+function showLoanRepaymentModal(id){
+  const l=(DB.loans||[]).find(x=>x.id==id);if(!l)return;
+  const cur=DB.settings.currency;
+  const totalPaid=(l.repayments||[]).reduce((a,r)=>a+r.amount,0);
+  const remaining=l.amount-totalPaid;
+  let m=document.getElementById('modal-loan-repay');
+  if(!m){m=document.createElement('div');m.id='modal-loan-repay';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-loan-repay');});}
+  m.innerHTML=`<div class="modal" style="max-width:440px">
+    <div class="modal-header"><div class="modal-title">💰 Record Payment — ${l.borrower}</div><button class="modal-close" onclick="closeModal('modal-loan-repay')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+        <span style="color:var(--text3)">Original amount</span><span style="font-family:var(--font-head)">${cur} ${l.amount.toLocaleString()}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+        <span style="color:var(--text3)">Already paid</span><span style="font-family:var(--font-head);color:var(--green)">${cur} ${totalPaid.toLocaleString()}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:14px">
+        <span style="font-weight:600">Still owed</span><span style="font-family:var(--font-head);font-size:16px;color:var(--red)">${cur} ${remaining.toLocaleString()}</span>
+      </div>
+      <div class="form-row"><div class="form-label">Amount Paying Now (${cur}) *</div>
+        <input class="form-input" id="repay-amount" type="number" placeholder="${remaining}" max="${remaining}" value="${remaining}">
+      </div>
+      <div class="form-row"><div class="form-label">Date Received</div>
+        <input class="form-input" id="repay-date" type="date" value="${todayMinus(0)}">
+      </div>
+      <div class="form-row"><div class="form-label">Notes</div>
+        <input class="form-input" id="repay-notes" placeholder="e.g. Cash, partial payment...">
+      </div>
+      ${(l.repayments||[]).length?`
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Payment History</div>
+        ${[...(l.repayments||[])].reverse().map(r=>`
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+            <span style="color:var(--text3)">${r.date}</span>
+            <span>${r.notes||'Payment'} <span style="font-size:10px;color:var(--text3)">by ${r.by||'—'}</span></span>
+            <span style="font-family:var(--font-head);color:var(--green)">+${cur} ${r.amount.toLocaleString()}</span>
+          </div>`).join('')}
+      </div>`:''}
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-loan-repay')">Cancel</button>
+      <button class="btn-save" onclick="saveLoanRepayment(${id},${remaining})">Record Payment</button>
+    </div>
+  </div>`;
+  openModal('modal-loan-repay');
+}
+
+function saveLoanRepayment(id,remaining){
+  const l=(DB.loans||[]).find(x=>x.id==id);if(!l)return;
+  const amount=parseFloat(document.getElementById('repay-amount').value)||0;
+  if(!amount||amount<=0){toast('Enter payment amount');return;}
+  if(amount>remaining){toast(`Can't pay more than owed (${DB.settings.currency} ${remaining})`);return;}
+  const date=document.getElementById('repay-date').value||todayMinus(0);
+  const notes=document.getElementById('repay-notes').value.trim();
+  if(!l.repayments) l.repayments=[];
+  l.repayments.push({id:Date.now(),amount,date,notes,by:currentUser?currentUser.name:''});
+  const totalPaid=l.repayments.reduce((a,r)=>a+r.amount,0);
+  if(totalPaid>=l.amount){
+    l.status='paid';
+    l.paidDate=date;
+    logActivity('loan',`Loan fully paid: ${l.borrower} — total ${DB.settings.currency} ${l.amount.toLocaleString()} (last payment: ${DB.settings.currency} ${amount})`);
+    toast(`Fully paid ✓ — ${l.borrower}'s debt is cleared`);
+  } else {
+    const newRemaining=l.amount-totalPaid;
+    logActivity('loan',`Partial repayment: ${l.borrower} paid ${DB.settings.currency} ${amount} — ${DB.settings.currency} ${newRemaining} still owed`);
+    toast(`Payment recorded — ${l.borrower} still owes ${DB.settings.currency} ${newRemaining.toLocaleString()}`);
+  }
+  save();closeModal('modal-loan-repay');filterLoans();
+}
+
 function markLoanPaid(id){
-  const l=(DB.loans||[]).find(x=>x.id===id);if(!l)return;
-  l.status='paid';
-  logActivity('loan',`Loan marked as paid: ${l.borrower} — NKF ${l.amount}`);
-  save();renderLoans();toast('Loan marked as paid ✓');
+  // Legacy — now opens repayment modal
+  showLoanRepaymentModal(id);
 }
 function deleteLoan(id){
   const l=(DB.loans||[]).find(x=>x.id===id);
@@ -6047,7 +6807,700 @@ function dismissAllNotifications(){
   renderEmployeeNotifications();
 }
 
-// ─── ACTIVITY LOG ───
+// ═══════════════════════════════════════════════
+// ─── SUPPLIERS & SUPPLIER DEBT ───
+// ═══════════════════════════════════════════════
+function renderSuppliers(){
+  const cur=DB.settings.currency;
+  const suppliers=DB.suppliers||[];
+
+  // Auto-create suppliers from purchase records
+  (DB.purchases||[]).forEach(p=>{
+    if(p.supplier&&!suppliers.find(s=>s.name.toLowerCase()===p.supplier.toLowerCase())){
+      suppliers.push({id:'SUP_'+Date.now()+Math.random(),name:p.supplier,phone:'',notes:'',createdAt:p.date});
+      DB.suppliers=suppliers;
+    }
+  });
+
+  // Calculate debt per supplier
+  const debtMap={};
+  (DB.purchases||[]).forEach(p=>{
+    if(!p.supplier) return;
+    const name=p.supplier.toLowerCase();
+    if(!debtMap[name]) debtMap[name]={name:p.supplier,totalPurchased:0,totalPaid:0};
+    if(p.onCredit) debtMap[name].totalPurchased+=(p.grandTotal||0);
+  });
+  (DB.supplierPayments||[]).forEach(pay=>{
+    const name=(pay.supplier||'').toLowerCase();
+    if(debtMap[name]) debtMap[name].totalPaid+=pay.amount;
+  });
+
+  const totalDebt=Object.values(debtMap).reduce((a,s)=>a+Math.max(0,s.totalPurchased-s.totalPaid),0);
+
+  // Stats
+  document.getElementById('supplier-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Suppliers</div><div class="stat-value">${suppliers.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Owed</div><div class="stat-value" style="color:var(--red)">${cur} ${totalDebt.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Suppliers with Debt</div><div class="stat-value">${Object.values(debtMap).filter(s=>s.totalPurchased>s.totalPaid).length}</div></div>`;
+
+  // Update badge
+  const badge=document.getElementById('supplier-debt-badge');
+  if(badge) badge.style.display=totalDebt>0?'':'none';
+
+  if(!suppliers.length){
+    document.getElementById('supplier-list').innerHTML=`<div class="panel" style="text-align:center;padding:40px;color:var(--text3)">No suppliers yet. Add one or record purchases with supplier names.</div>`;
+    return;
+  }
+
+  document.getElementById('supplier-list').innerHTML=suppliers.map(s=>{
+    const key=s.name.toLowerCase();
+    const debt=debtMap[key];
+    const owed=debt?Math.max(0,debt.totalPurchased-debt.totalPaid):0;
+    const paid=debt?debt.totalPaid:0;
+    const total=debt?debt.totalPurchased:0;
+    const payments=(DB.supplierPayments||[]).filter(p=>p.supplier.toLowerCase()===key).sort((a,b)=>b.date.localeCompare(a.date));
+    return `<div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:${owed>0||payments.length?'14px':'0'}">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏭</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:15px">${s.name}</div>
+          <div style="font-size:12px;color:var(--text3)">${s.phone||'No phone'} · ${total?cur+' '+total.toLocaleString()+' purchased':' No credit purchases'}</div>
+        </div>
+        <div style="text-align:right">
+          ${owed>0?`<div style="font-family:var(--font-head);font-size:16px;color:var(--red)">${cur} ${owed.toLocaleString()}</div><div style="font-size:11px;color:var(--text3)">owed</div>`
+          :`<div style="font-size:13px;color:var(--green)">✓ Clear</div>`}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${owed>0?`<button class="btn-save" style="font-size:11px;white-space:nowrap" onclick="showSupplierPaymentModal('${s.name.replace(/'/g,"\\'")}',${owed})">💳 Pay</button>`:''}
+          <button class="action-btn" style="font-size:11px" onclick="showAddCreditPurchaseModal('${s.name.replace(/'/g,"\\'")}')">+ Credit</button>
+        </div>
+      </div>
+      ${payments.length?`
+      <div style="border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Payment History</div>
+        ${payments.slice(0,5).map(p=>`
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+            <span style="color:var(--text3)">${p.date}</span>
+            <span>${p.notes||'Payment'}</span>
+            <span style="font-family:var(--font-head);color:var(--green)">+ ${cur} ${p.amount.toLocaleString()}</span>
+          </div>`).join('')}
+        ${payments.length>5?`<div style="font-size:11px;color:var(--text3);margin-top:6px">+ ${payments.length-5} more payments</div>`:''}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function showAddSupplierModal(){
+  let m=document.getElementById('modal-add-supplier');
+  if(!m){m=document.createElement('div');m.id='modal-add-supplier';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-add-supplier');});}
+  m.innerHTML=`<div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">🏭 Add Supplier</div><button class="modal-close" onclick="closeModal('modal-add-supplier')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-label">Supplier Name *</div><input class="form-input" id="sup-name" placeholder="e.g. Noh"></div>
+      <div class="form-row"><div class="form-label">Phone</div><input class="form-input" id="sup-phone" placeholder="Optional"></div>
+      <div class="form-row"><div class="form-label">Notes</div><input class="form-input" id="sup-notes" placeholder="Optional"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-add-supplier')">Cancel</button><button class="btn-save" onclick="saveSupplier()">Add Supplier</button></div>
+  </div>`;
+  openModal('modal-add-supplier');
+}
+
+function saveSupplier(){
+  const name=document.getElementById('sup-name').value.trim();
+  if(!name){toast('Enter supplier name');return;}
+  if(!DB.suppliers) DB.suppliers=[];
+  if(DB.suppliers.find(s=>s.name.toLowerCase()===name.toLowerCase())){toast('Supplier already exists');return;}
+  DB.suppliers.push({id:'SUP_'+Date.now(),name,phone:document.getElementById('sup-phone').value.trim(),notes:document.getElementById('sup-notes').value.trim(),createdAt:todayMinus(0)});
+  save();closeModal('modal-add-supplier');renderSuppliers();toast(`${name} added ✓`);
+}
+
+function showSupplierPaymentModal(supplierName,owed){
+  const cur=DB.settings.currency;
+  let m=document.getElementById('modal-sup-payment');
+  if(!m){m=document.createElement('div');m.id='modal-sup-payment';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-sup-payment');});}
+  m.innerHTML=`<div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">💳 Pay ${supplierName}</div><button class="modal-close" onclick="closeModal('modal-sup-payment')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px">
+        Currently owed: <strong style="color:var(--red)">${cur} ${owed.toLocaleString()}</strong>
+      </div>
+      <div class="form-row"><div class="form-label">Amount Paying Now (${cur}) *</div><input class="form-input" id="sup-pay-amount" type="number" placeholder="${owed}" value="${owed}"></div>
+      <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="sup-pay-date" type="date" value="${todayMinus(0)}"></div>
+      <div class="form-row"><div class="form-label">Notes</div><input class="form-input" id="sup-pay-notes" placeholder="e.g. Partial payment, cash"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-sup-payment')">Cancel</button><button class="btn-save" onclick="saveSupplierPayment('${supplierName.replace(/'/g,"\\'")}')">Record Payment</button></div>
+  </div>`;
+  openModal('modal-sup-payment');
+  setTimeout(()=>{const inp=document.getElementById('sup-pay-amount');if(inp){inp.focus();inp.select();}},300);
+}
+
+function saveSupplierPayment(supplierName){
+  const amount=parseFloat(document.getElementById('sup-pay-amount').value)||0;
+  if(!amount||amount<=0){toast('Enter amount');return;}
+  const date=document.getElementById('sup-pay-date').value||todayMinus(0);
+  const notes=document.getElementById('sup-pay-notes').value.trim();
+  if(!DB.supplierPayments) DB.supplierPayments=[];
+  DB.supplierPayments.push({id:Date.now(),supplier:supplierName,amount,date,notes,recordedBy:currentUser?currentUser.name:''});
+  logActivity('purchase',`Supplier payment: ${DB.settings.currency} ${amount} to ${supplierName}${notes?' — '+notes:''}`);
+  save();closeModal('modal-sup-payment');renderSuppliers();toast(`Payment of NKF ${amount} to ${supplierName} recorded ✓`);
+}
+
+function showAddCreditPurchaseModal(supplierName){
+  // Mark a purchase as on-credit — links to existing purchase records
+  const purchases=(DB.purchases||[]).filter(p=>p.supplier&&p.supplier.toLowerCase()===supplierName.toLowerCase()&&!p.onCredit);
+  let m=document.getElementById('modal-credit-purchase');
+  if(!m){m=document.createElement('div');m.id='modal-credit-purchase';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-credit-purchase');});}
+  const cur=DB.settings.currency;
+  m.innerHTML=`<div class="modal" style="max-width:460px">
+    <div class="modal-header"><div class="modal-title">📋 Mark Purchase as Credit</div><button class="modal-close" onclick="closeModal('modal-credit-purchase')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Select a purchase from ${supplierName} to mark as owed (on credit).</div>
+      ${purchases.length?purchases.slice(0,10).map(p=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:6px;cursor:pointer" onclick="markPurchaseCredit(${p.id},'${supplierName.replace(/'/g,"\\'")}')">
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">${(p.lines||[]).map(l=>l.item).join(', ').substring(0,50)}</div><div style="font-size:11px;color:var(--text3)">${p.date}</div></div>
+          <span style="font-family:var(--font-head);color:var(--accent)">${cur} ${(p.grandTotal||0).toLocaleString()}</span>
+          <span style="font-size:11px;color:var(--green);white-space:nowrap">Mark as credit →</span>
+        </div>`).join('')
+      :`<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">All purchases from ${supplierName} are already marked as credit or none recorded yet.</div>`}
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px">Or add a manual credit amount:</div>
+        <div class="form-row-2">
+          <div class="form-row"><div class="form-label">Amount (${cur})</div><input class="form-input" id="manual-credit-amount" type="number" placeholder="0"></div>
+          <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="manual-credit-date" type="date" value="${todayMinus(0)}"></div>
+        </div>
+        <div class="form-row"><div class="form-label">Description</div><input class="form-input" id="manual-credit-desc" placeholder="What was purchased?"></div>
+        <button class="btn-save" style="width:100%;margin-top:8px" onclick="addManualCredit('${supplierName.replace(/'/g,"\\'")}')">Add Manual Credit</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-credit-purchase')">Close</button></div>
+  </div>`;
+  openModal('modal-credit-purchase');
+}
+
+function markPurchaseCredit(purchaseId,supplierName){
+  const p=(DB.purchases||[]).find(x=>x.id==purchaseId);
+  if(!p)return;
+  p.onCredit=true;
+  save();closeModal('modal-credit-purchase');renderSuppliers();toast('Purchase marked as credit — now shows in supplier debt ✓');
+}
+
+function addManualCredit(supplierName){
+  const amount=parseFloat(document.getElementById('manual-credit-amount').value)||0;
+  const date=document.getElementById('manual-credit-date').value||todayMinus(0);
+  const desc=document.getElementById('manual-credit-desc').value.trim()||'Manual credit';
+  if(!amount){toast('Enter amount');return;}
+  if(!DB.purchases) DB.purchases=[];
+  DB.purchases.push({id:Date.now(),date,supplier:supplierName,lines:[{item:desc,qty:0,unitPrice:0,cat:'Other',total:amount}],grandTotal:amount,onCredit:true,recordedBy:currentUser?currentUser.name:'',notes:'Manual credit entry'});
+  save();closeModal('modal-credit-purchase');renderSuppliers();toast('Credit added ✓');
+}
+
+// ═══════════════════════════════════════════════
+// ─── EXPENSES ───
+// ═══════════════════════════════════════════════
+const EXPENSE_CATS=['Rent','Electricity','Water','Staff Salary','Supplies','Transport','Repairs','Other'];
+
+function filterExpenses(){
+  const cur=DB.settings.currency;
+  const q=(document.getElementById('exp-search')?.value||'').toLowerCase();
+  const src=document.getElementById('exp-filter-source')?.value||'';
+  const expenses=DB.expenses||[];
+  const filtered=expenses.filter(e=>
+    (!q||e.desc.toLowerCase().includes(q)||e.cat.toLowerCase().includes(q))&&
+    (!src||e.source===src)
+  ).sort((a,b)=>b.date.localeCompare(a.date));
+
+  const totalDrawer=expenses.filter(e=>e.source==='drawer').reduce((a,e)=>a+e.amount,0);
+  const totalSafe=expenses.filter(e=>e.source==='safe').reduce((a,e)=>a+e.amount,0);
+  const statEl=document.getElementById('expense-stats');
+  if(statEl) statEl.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Expenses</div><div class="stat-value" style="color:var(--red)">${cur} ${(totalDrawer+totalSafe).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">From Drawer</div><div class="stat-value">${cur} ${totalDrawer.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">From Safe</div><div class="stat-value">${cur} ${totalSafe.toLocaleString()}</div></div>`;
+
+  const tbody=document.getElementById('expense-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=filtered.map(e=>`<tr>
+    <td>${e.date}</td>
+    <td style="font-weight:500">${e.desc}</td>
+    <td><span style="background:var(--bg4);padding:2px 8px;border-radius:10px;font-size:10px">${e.cat}</span></td>
+    <td style="font-family:var(--font-head);color:var(--red)">${cur} ${e.amount.toLocaleString()}</td>
+    <td><span class="badge ${e.source==='drawer'?'orange':'blue'}">${e.source==='drawer'?'💵 Drawer':'🏦 Safe'}</span></td>
+    <td style="font-size:12px;color:var(--text3)">${e.recordedBy||'—'}</td>
+    <td><button class="action-btn del" style="font-size:11px" onclick="deleteExpense(${e.id})">🗑</button></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No expenses recorded</td></tr>';
+}
+
+function showAddExpenseModal(){
+  const cur=DB.settings.currency;
+  let m=document.getElementById('modal-add-expense');
+  if(!m){m=document.createElement('div');m.id='modal-add-expense';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-add-expense');});}
+  m.innerHTML=`<div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">💸 Record Expense</div><button class="modal-close" onclick="closeModal('modal-add-expense')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-label">Description *</div><input class="form-input" id="exp-desc" placeholder="e.g. Monthly rent"></div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Category</div>
+          <select class="form-select" id="exp-cat">${EXPENSE_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="form-row"><div class="form-label">Amount (${cur}) *</div><input class="form-input" id="exp-amount" type="number" placeholder="0"></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="exp-date" type="date" value="${todayMinus(0)}"></div>
+        <div class="form-row"><div class="form-label">Source *</div>
+          <select class="form-select" id="exp-source">
+            <option value="drawer">💵 From Drawer</option>
+            <option value="safe">🏦 From Safe</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-add-expense')">Cancel</button><button class="btn-save" onclick="saveExpense()">Record</button></div>
+  </div>`;
+  openModal('modal-add-expense');
+}
+
+function saveExpense(){
+  const desc=document.getElementById('exp-desc').value.trim();
+  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
+  if(!desc||!amount){toast('Fill in description and amount');return;}
+  const source=document.getElementById('exp-source').value;
+  const date=document.getElementById('exp-date').value||todayMinus(0);
+  const cat=document.getElementById('exp-cat').value;
+  if(!DB.expenses) DB.expenses=[];
+  const expense={id:Date.now(),date,desc,cat,amount,source,recordedBy:currentUser?currentUser.name:''};
+  DB.expenses.push(expense);
+  // If from drawer, also add to active session
+  if(source==='drawer'){
+    const session=getActiveSession();
+    if(session){
+      if(!session.expenses) session.expenses=[];
+      session.expenses.push({desc,amount,by:currentUser?currentUser.name:'',approvedBy:'N/A (Manager)',time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+    }
+  }
+  logActivity('inventory',`Expense: ${desc} — NKF ${amount} (${source==='drawer'?'from drawer':'from safe'})`);
+  save();closeModal('modal-add-expense');filterExpenses();toast('Expense recorded ✓');
+}
+
+function deleteExpense(id){
+  DB.expenses=(DB.expenses||[]).filter(e=>e.id!=id);
+  save();filterExpenses();toast('Expense deleted');
+}
+
+// ═══════════════════════════════════════════════
+// ─── SHIFTS ───
+// ═══════════════════════════════════════════════
+function renderShifts(){
+  const monthInput=document.getElementById('shift-date-filter');
+  const month=monthInput?.value||todayMinus(0).substring(0,7);
+  const shifts=(DB.shifts||[]).filter(s=>s.date.startsWith(month)).sort((a,b)=>b.date.localeCompare(a.date));
+  const staff=(DB.staff||[]).filter(s=>s.role!=='Manager');
+
+  // Summary per worker this month
+  const workerSummary={};
+  shifts.forEach(s=>{
+    s.workers.forEach(w=>{
+      if(!workerSummary[w.name]) workerSummary[w.name]={name:w.name,full:0,half:0};
+      if(w.type==='full') workerSummary[w.name].full++;
+      else workerSummary[w.name].half++;
+    });
+  });
+
+  const summaryEl=document.getElementById('shifts-summary');
+  if(summaryEl&&Object.keys(workerSummary).length){
+    summaryEl.innerHTML=`<div class="panel" style="margin-bottom:12px">
+      <div class="panel-title" style="margin-bottom:10px"><span class="dot" style="background:var(--blue)"></span> ${month} — Worker Summary</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        ${Object.values(workerSummary).map(w=>`
+          <div style="background:var(--bg3);border-radius:var(--radius2);padding:10px 14px;min-width:140px">
+            <div style="font-weight:600;margin-bottom:4px">${w.name}</div>
+            <div style="font-size:12px;color:var(--text3)">${w.full} full day${w.full!==1?'s':''} · ${w.half} half day${w.half!==1?'s':''}</div>
+            <div style="font-size:13px;color:var(--accent);font-family:var(--font-head)">${w.full+w.half*0.5} total days</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  } else if(summaryEl){ summaryEl.innerHTML=''; }
+
+  const listEl=document.getElementById('shifts-list');
+  if(!listEl) return;
+  listEl.innerHTML=shifts.map(s=>`
+    <div class="panel" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:600;font-size:14px">${s.date} <span style="font-size:11px;color:var(--text3);font-weight:400">${new Date(s.date+'T12:00:00').toLocaleDateString([],{weekday:'long'})}</span></div>
+        <button class="action-btn del" style="font-size:11px" onclick="deleteShift(${s.id})">🗑</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${s.workers.map(w=>`
+          <div style="display:flex;align-items:center;gap:6px;background:var(--bg3);border-radius:20px;padding:4px 12px;font-size:12px">
+            <span>${w.name}</span>
+            <span class="badge ${w.type==='full'?'green':'orange'}" style="font-size:10px">${w.type==='full'?'Full Day':'Half Day'}</span>
+          </div>`).join('')}
+        ${s.workers.length===0?'<span style="color:var(--text3);font-size:12px">No workers recorded</span>':''}
+      </div>
+      ${s.notes?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${s.notes}</div>`:''}
+    </div>`).join('')||`<div class="panel" style="text-align:center;padding:30px;color:var(--text3)">No shifts recorded for ${month}</div>`;
+}
+
+function showAddShiftModal(){
+  const today=todayMinus(0);
+  const staff=(DB.staff||[]).filter(s=>s.role!=='Manager');
+  if(!staff.length){toast('Add staff members first');return;}
+  let m=document.getElementById('modal-add-shift');
+  if(!m){m=document.createElement('div');m.id='modal-add-shift';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-add-shift');});}
+  m.innerHTML=`<div class="modal" style="max-width:440px">
+    <div class="modal-header"><div class="modal-title">📅 Record Shifts</div><button class="modal-close" onclick="closeModal('modal-add-shift')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="shift-date" type="date" value="${today}"></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Select who worked and how long:</div>
+      ${staff.map(s=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:6px">
+          <input type="checkbox" id="shift-chk-${s.id}" style="width:16px;height:16px">
+          <label for="shift-chk-${s.id}" style="flex:1;font-size:13px;cursor:pointer">${s.name}</label>
+          <select class="search-input" id="shift-type-${s.id}" style="width:110px;padding:4px 6px;font-size:12px">
+            <option value="full">Full Day</option>
+            <option value="half">Half Day</option>
+          </select>
+        </div>`).join('')}
+      <div class="form-row" style="margin-top:10px"><div class="form-label">Notes</div><input class="form-input" id="shift-notes" placeholder="Optional"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-add-shift')">Cancel</button><button class="btn-save" onclick="saveShift()">Save Shifts</button></div>
+  </div>`;
+  openModal('modal-add-shift');
+}
+
+function saveShift(){
+  const date=document.getElementById('shift-date').value||todayMinus(0);
+  const staff=(DB.staff||[]).filter(s=>s.role!=='Manager');
+  const workers=staff.filter(s=>document.getElementById(`shift-chk-${s.id}`)?.checked)
+    .map(s=>({name:s.name,type:document.getElementById(`shift-type-${s.id}`)?.value||'full'}));
+  if(!workers.length){toast('Select at least one worker');return;}
+  // Remove existing shift for this date if any
+  DB.shifts=(DB.shifts||[]).filter(s=>s.date!==date);
+  DB.shifts.push({id:Date.now(),date,workers,notes:document.getElementById('shift-notes').value.trim(),recordedBy:currentUser?currentUser.name:''});
+  logActivity('inventory',`Shifts recorded for ${date}: ${workers.map(w=>w.name+' ('+w.type+')').join(', ')}`);
+  save();closeModal('modal-add-shift');renderShifts();toast('Shifts saved ✓');
+}
+
+function deleteShift(id){
+  DB.shifts=(DB.shifts||[]).filter(s=>s.id!=id);
+  save();renderShifts();toast('Shift record deleted');
+}
+
+// ═══════════════════════════════════════════════
+// ─── STOCK TRANSFERS ───
+// ═══════════════════════════════════════════════
+function renderTransfers(){
+  const cur=DB.settings.currency;
+  const transfers=(DB.transfers||[]).sort((a,b)=>b.date.localeCompare(a.date));
+  const listEl=document.getElementById('transfers-list');
+  if(!listEl)return;
+  listEl.innerHTML=transfers.map(t=>`
+    <div class="panel" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:24px">🔄</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${t.productName}</div>
+          <div style="font-size:12px;color:var(--text3)">${t.qty} ${t.unit} · ${t.date} · by ${t.by||'—'}</div>
+          <div style="font-size:12px;margin-top:2px">
+            <span style="color:var(--red)">${t.fromZone.split('›').pop()?.trim()||t.fromZone}</span>
+            <span style="color:var(--text3)"> → </span>
+            <span style="color:var(--green)">${t.toZone.split('›').pop()?.trim()||t.toZone}</span>
+          </div>
+          ${t.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${t.notes}</div>`:''}
+        </div>
+      </div>
+    </div>`).join('')||`<div class="panel" style="text-align:center;padding:40px;color:var(--text3)">No transfers yet</div>`;
+}
+
+function showTransferModal(){
+  let m=document.getElementById('modal-transfer');
+  if(!m){m=document.createElement('div');m.id='modal-transfer';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-transfer');});}
+  const zones=getZoneNames();
+  m.innerHTML=`<div class="modal" style="max-width:460px">
+    <div class="modal-header"><div class="modal-title">🔄 Stock Transfer</div><button class="modal-close" onclick="closeModal('modal-transfer')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-label">Product *</div>
+        <input class="form-input" id="tr-product" placeholder="Type product name..." oninput="updateTransferInfo()" list="tr-product-list">
+        <datalist id="tr-product-list">${DB.products.map(p=>`<option value="${p.name}">`).join('')}</datalist>
+      </div>
+      <div id="tr-stock-info" style="font-size:12px;color:var(--text3);margin-top:-8px;margin-bottom:8px"></div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">From Zone *</div>
+          <select class="form-select" id="tr-from">${zones.map(z=>`<option value="${z}">${z.replace('⚠ ','')}</option>`).join('')}</select></div>
+        <div class="form-row"><div class="form-label">To Zone *</div>
+          <select class="form-select" id="tr-to">${zones.map(z=>`<option value="${z}">${z.replace('⚠ ','')}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row"><div class="form-label">Quantity *</div><input class="form-input" id="tr-qty" type="number" placeholder="0" min="1"></div>
+      <div class="form-row"><div class="form-label">Notes</div><input class="form-input" id="tr-notes" placeholder="Reason for transfer"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-transfer')">Cancel</button><button class="btn-save" onclick="saveTransfer()">Transfer</button></div>
+  </div>`;
+  openModal('modal-transfer');
+}
+
+function updateTransferInfo(){
+  const name=document.getElementById('tr-product')?.value.trim();
+  const infoEl=document.getElementById('tr-stock-info');
+  if(!infoEl) return;
+  const p=DB.products.find(x=>x.name.toLowerCase()===name?.toLowerCase());
+  if(!p){infoEl.textContent='';return;}
+  const locs=getLocations(p).filter(l=>l.qty>0);
+  infoEl.innerHTML=locs.length?locs.map(l=>`${l.zone.split('›').pop()?.trim()||l.zone}: <strong>${l.qty} ${p.unit}</strong>`).join(' · '):'No stock in any location';
+}
+
+function saveTransfer(){
+  const name=document.getElementById('tr-product').value.trim();
+  const fromZone=document.getElementById('tr-from').value;
+  const toZone=document.getElementById('tr-to').value;
+  const qty=parseInt(document.getElementById('tr-qty').value)||0;
+  const notes=document.getElementById('tr-notes').value.trim();
+  if(!name){toast('Select a product');return;}
+  if(!fromZone||!toZone){toast('Select from and to zones');return;}
+  if(fromZone===toZone){toast('From and to zones cannot be the same');return;}
+  if(!qty){toast('Enter quantity');return;}
+  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!p){toast('Product not found');return;}
+  if(!p.locations) p.locations=getLocations(p);
+  const fromLoc=p.locations.find(l=>l.zone===fromZone);
+  if(!fromLoc||(fromLoc.qty||0)<qty){toast(`Only ${fromLoc?.qty||0} available in ${fromZone.split('›').pop()?.trim()}`);return;}
+  // Do the transfer
+  fromLoc.qty-=qty;
+  const toLoc=p.locations.find(l=>l.zone===toZone);
+  if(toLoc) toLoc.qty+=qty;
+  else p.locations.push({zone:toZone,qty});
+  p.locations=p.locations.filter(l=>l.qty>0);
+  if(!DB.transfers) DB.transfers=[];
+  DB.transfers.push({id:Date.now(),date:todayMinus(0),productName:p.name,productId:p.id,qty,unit:p.unit,fromZone,toZone,notes,by:currentUser?currentUser.name:''});
+  logActivity('inventory',`Transfer: ${qty} ${p.unit} of ${p.name} → ${fromZone.split('›').pop()?.trim()||fromZone} to ${toZone.split('›').pop()?.trim()||toZone}`);
+  save();closeModal('modal-transfer');renderTransfers();filterInventory();checkOpenZoneItems();toast(`Transferred ${qty} ${p.unit} of ${p.name} ✓`);
+}
+
+// ═══════════════════════════════════════════════
+// ─── DAMAGED GOODS ───
+// ═══════════════════════════════════════════════
+function renderDamaged(){
+  const cur=DB.settings.currency;
+  const items=DB.damagedGoods||[];
+  const writeOffs=items.filter(i=>i.type==='writeoff');
+  const damaged=items.filter(i=>i.type==='damaged');
+  const statEl=document.getElementById('damaged-stats');
+  if(statEl) statEl.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Write-offs</div><div class="stat-value" style="color:var(--red)">${writeOffs.length} items</div></div>
+    <div class="stat-card"><div class="stat-label">Damaged (for sale)</div><div class="stat-value" style="color:var(--orange,#e67e22)">${damaged.length} items</div></div>
+    <div class="stat-card"><div class="stat-label">Total Loss</div><div class="stat-value" style="color:var(--red)">${cur} ${writeOffs.reduce((a,i)=>a+(i.loss||0),0).toLocaleString()}</div></div>`;
+  const listEl=document.getElementById('damaged-list');
+  if(!listEl)return;
+  listEl.innerHTML=items.sort((a,b)=>b.date.localeCompare(a.date)).map(i=>`
+    <div class="panel" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">${i.type==='writeoff'?'🗑️':'⚠️'}</div>
+        <div style="flex:1">
+          <div style="font-weight:600">${i.productName} <span class="badge ${i.type==='writeoff'?'red':'orange'}" style="font-size:10px">${i.type==='writeoff'?'Write-off':'Damaged Stock'}</span></div>
+          <div style="font-size:12px;color:var(--text3)">${i.qty} ${i.unit} · ${i.date} · ${i.reason||'No reason'}</div>
+          ${i.type==='writeoff'?`<div style="font-size:12px;color:var(--red)">Loss: ${cur} ${(i.loss||0).toLocaleString()}</div>`
+          :`<div style="font-size:12px;color:var(--orange,#e67e22)">Reduced price: ${cur} ${i.reducedPrice||0}</div>`}
+        </div>
+        <button class="action-btn del" style="font-size:11px" onclick="deleteDamagedRecord(${i.id})">🗑</button>
+      </div>
+    </div>`).join('')||`<div class="panel" style="text-align:center;padding:40px;color:var(--text3)">No damaged goods recorded</div>`;
+}
+
+function quickMarkDamaged(productName){
+  const p=DB.products.find(x=>x.name===productName);
+  if(!p){toast('Product not found');return;}
+  // Check cost price — required for loss tracking
+  if(!p.cost||p.cost<=0){
+    let m=document.getElementById('modal-cost-needed');
+    if(!m){m=document.createElement('div');m.id='modal-cost-needed';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-cost-needed');});}
+    m.innerHTML=`<div class="modal" style="max-width:380px">
+      <div class="modal-header"><div class="modal-title">💰 Cost Price Required</div><button class="modal-close" onclick="closeModal('modal-cost-needed')">✕</button></div>
+      <div class="modal-body">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">To track the loss on damaged goods for <strong>${productName}</strong>, we need the cost price (what you paid for it).</div>
+        <div class="form-row"><div class="form-label">Cost Price (NKF) *</div><input class="form-input" id="cost-needed-input" type="number" placeholder="0" min="0"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('modal-cost-needed')">Cancel</button>
+        <button class="btn-save" onclick="saveCostAndDamage('${productName.replace(/'/g,"\\'")}')">Save & Continue</button>
+      </div>
+    </div>`;
+    openModal('modal-cost-needed');
+    return;
+  }
+  // Pre-fill damaged modal
+  showDamagedModal();
+  setTimeout(()=>{
+    const inp=document.getElementById('dmg-product');
+    if(inp) inp.value=productName;
+  },200);
+}
+
+function saveCostAndDamage(productName){
+  const cost=parseFloat(document.getElementById('cost-needed-input').value)||0;
+  if(!cost){toast('Enter cost price');return;}
+  const p=DB.products.find(x=>x.name===productName);
+  if(p) p.cost=cost;
+  save();
+  closeModal('modal-cost-needed');
+  // Now open damaged modal
+  showDamagedModal();
+  setTimeout(()=>{const inp=document.getElementById('dmg-product');if(inp)inp.value=productName;},200);
+}
+
+function showDamagedModal(){
+  let m=document.getElementById('modal-damaged');
+  if(!m){m=document.createElement('div');m.id='modal-damaged';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-damaged');});}
+  const cur=DB.settings.currency;
+  m.innerHTML=`<div class="modal" style="max-width:440px">
+    <div class="modal-header"><div class="modal-title">⚠️ Record Damaged Item</div><button class="modal-close" onclick="closeModal('modal-damaged')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-label">Product *</div>
+        <input class="form-input" id="dmg-product" placeholder="Product name" list="dmg-product-list">
+        <datalist id="dmg-product-list">${DB.products.map(p=>`<option value="${p.name}">`).join('')}</datalist>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Quantity *</div><input class="form-input" id="dmg-qty" type="number" placeholder="1" min="1"></div>
+        <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="dmg-date" type="date" value="${todayMinus(0)}"></div>
+      </div>
+      <div class="form-row"><div class="form-label">What happened?</div><input class="form-input" id="dmg-reason" placeholder="e.g. Dropped, water damage..."></div>
+      <div style="font-size:13px;font-weight:600;margin:14px 0 8px">Action:</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <label style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius2);padding:10px;cursor:pointer">
+          <input type="radio" name="dmg-type" id="dmg-writeoff" value="writeoff" checked onchange="toggleDamageType()">
+          <div><div style="font-weight:600;font-size:13px">🗑️ Write Off</div><div style="font-size:11px;color:var(--text3)">Remove from stock, record loss</div></div>
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius2);padding:10px;cursor:pointer">
+          <input type="radio" name="dmg-type" id="dmg-sell" value="damaged" onchange="toggleDamageType()">
+          <div><div style="font-weight:600;font-size:13px">⚠️ Sell Damaged</div><div style="font-size:11px;color:var(--text3)">Keep in stock at reduced price</div></div>
+        </label>
+      </div>
+      <div id="dmg-reduced-price-row" style="display:none" class="form-row"><div class="form-label">Reduced Sell Price (${cur})</div><input class="form-input" id="dmg-reduced-price" type="number" placeholder="0"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-damaged')">Cancel</button><button class="btn-save" onclick="saveDamagedItem()">Save</button></div>
+  </div>`;
+  openModal('modal-damaged');
+}
+
+function toggleDamageType(){
+  const isSell=document.getElementById('dmg-sell')?.checked;
+  const row=document.getElementById('dmg-reduced-price-row');
+  if(row) row.style.display=isSell?'':'none';
+}
+
+function saveDamagedItem(){
+  const name=document.getElementById('dmg-product').value.trim();
+  const qty=parseInt(document.getElementById('dmg-qty').value)||1;
+  const date=document.getElementById('dmg-date').value||todayMinus(0);
+  const reason=document.getElementById('dmg-reason').value.trim();
+  const type=document.querySelector('input[name="dmg-type"]:checked')?.value||'writeoff';
+  const reducedPrice=parseFloat(document.getElementById('dmg-reduced-price')?.value)||0;
+  if(!name){toast('Enter product name');return;}
+  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!p){toast('Product not found in inventory');return;}
+  if(getTotalStock(p)<qty){toast(`Only ${getTotalStock(p)} ${p.unit} in stock`);return;}
+  // Deduct stock
+  p.stock=Math.max(0,(p.stock||0)-qty);
+  if(p.locations){
+    let rem=qty;
+    for(const loc of p.locations){if(rem<=0)break;const take=Math.min(loc.qty||0,rem);loc.qty-=take;rem-=take;}
+    p.locations=p.locations.filter(l=>(l.qty||0)>0);
+  }
+  // If selling damaged, adjust price
+  if(type==='damaged'&&reducedPrice>0){
+    p.price=reducedPrice;
+    p.damaged=true;
+    p.stock=(p.stock||0)+qty; // keep in stock at reduced price
+    if(!p.locations) p.locations=[];
+    const ul=p.locations.find(l=>l.zone.includes('Unlocated'));
+    if(ul) ul.qty=(ul.qty||0)+qty; else p.locations.push({zone:'⚠ Open / Unlocated',qty});
+  }
+  if(!DB.damagedGoods) DB.damagedGoods=[];
+  DB.damagedGoods.push({id:Date.now(),date,productName:name,productId:p.id,qty,unit:p.unit,reason,type,loss:type==='writeoff'?qty*(p.cost||0):0,reducedPrice,recordedBy:currentUser?currentUser.name:''});
+  logActivity('inventory',`⚠ Damaged goods: ${qty} ${p.unit} of ${name} — ${type==='writeoff'?'written off':'marked as damaged stock at '+DB.settings.currency+' '+reducedPrice}`);
+  save();closeModal('modal-damaged');renderDamaged();filterInventory();toast(`${name} recorded as ${type==='writeoff'?'write-off':'damaged stock'} ✓`);
+}
+
+function deleteDamagedRecord(id){
+  DB.damagedGoods=(DB.damagedGoods||[]).filter(i=>i.id!=id);
+  save();renderDamaged();toast('Record deleted');
+}
+
+// ═══════════════════════════════════════════════
+// ─── STOCK SOURCE POPUP (after sale) ───
+// ═══════════════════════════════════════════════
+function checkStockSourceNeeded(saleItems){
+  const pending=[];
+  saleItems.forEach(item=>{
+    const p=DB.products.find(x=>x.name===item.name);
+    if(!p) return;
+    // Check how much was in EH Main
+    const ehMain=p.locations?.find(l=>l.zone.includes('EH Main')&&l.zone.includes('Sales Room'));
+    const ehQty=ehMain?.qty||0;
+    if(ehQty<item.qty){
+      // EH Main couldn't fully cover
+      pending.push({...item,coveredByEH:ehQty,remaining:item.qty-ehQty,product:p});
+    }
+  });
+  if(pending.length) showStockSourceModal(pending);
+}
+
+function showStockSourceModal(pendingItems){
+  let m=document.getElementById('modal-stock-source');
+  if(!m){m=document.createElement('div');m.id='modal-stock-source';m.className='modal-overlay';document.body.appendChild(m);}
+  const zones=getZoneNames().filter(z=>!z.includes('Sales Room')&&!z.includes('Unlocated'));
+  m.innerHTML=`<div class="modal" style="max-width:500px">
+    <div class="modal-header"><div class="modal-title">📦 Where is stock coming from?</div></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">EH Main couldn't fully cover these items. Where are you getting the remaining stock from?</div>
+      ${pendingItems.map((item,i)=>{
+        const otherLocs=(item.product.locations||[]).filter(l=>!l.zone.includes('Sales Room')&&l.qty>0);
+        return `<div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:10px">
+          <div style="font-weight:600;margin-bottom:4px">${item.name}</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Need <strong>${item.remaining} more ${item.product?.unit||'units'}</strong> (EH Main had ${item.coveredByEH})</div>
+          ${otherLocs.length?`
+          <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Available at:</div>
+          ${otherLocs.map(loc=>`
+            <label style="display:flex;align-items:center;gap:8px;padding:6px;background:var(--bg2);border-radius:var(--radius2);margin-bottom:4px;cursor:pointer">
+              <input type="radio" name="src-${i}" value="${loc.zone}" data-item="${item.name}" data-idx="${i}">
+              <span style="flex:1;font-size:12px">${loc.zone.split('›').pop()?.trim()||loc.zone}</span>
+              <span style="font-size:11px;color:var(--accent)">${loc.qty} ${item.product.unit}</span>
+            </label>`).join('')}`
+          :`<div style="font-size:12px;color:var(--red)">No stock found in other locations</div>`}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="skipStockSource()">Resolve Later</button>
+      <button class="btn-save" onclick="confirmStockSource(${JSON.stringify(pendingItems.map(i=>i.name))})">Confirm Sources</button>
+    </div>
+  </div>`;
+  openModal('modal-stock-source');
+}
+
+function confirmStockSource(itemNames){
+  itemNames.forEach((name,i)=>{
+    const selected=document.querySelector(`input[name="src-${i}"]:checked`);
+    if(!selected) return;
+    const zone=selected.value;
+    const p=DB.products.find(x=>x.name===name);
+    if(!p) return;
+    const item=document.querySelector(`input[name="src-${i}"]`)?.closest?.('[data-item]');
+    // Find how many needed from this zone
+    const pending=(DB.pendingStockSource||[]).find(x=>x.productName===name)||{remaining:1};
+    const loc=p.locations?.find(l=>l.zone===zone);
+    if(loc){
+      loc.qty=Math.max(0,(loc.qty||0)-pending.remaining);
+      p.locations=p.locations.filter(l=>(l.qty||0)>0);
+      logActivity('inventory',`Stock source confirmed: ${pending.remaining} ${p.unit} of ${name} from ${zone.split('›').pop()?.trim()}`);
+    }
+  });
+  save();
+  closeModal('modal-stock-source');
+  toast('Stock sources confirmed ✓');
+}
+
+function skipStockSource(){
+  closeModal('modal-stock-source');
+  toast('Saved to pending — resolve in Inventory later');
+}
+
+// ─── END NEW FEATURES ───
 function logActivity(type, detail, amount=0){
   if(!DB.activityLog) DB.activityLog=[];
   DB.activityLog.push({
@@ -6240,6 +7693,112 @@ function assignStorageZone(productId, newZone){
 
 // Every 10 min check open zone
 setInterval(checkOpenZoneItems, 10*60*1000);
+
+// ═══════════════════════════════════════════════
+// ─── STOCK COUNT ───
+// ═══════════════════════════════════════════════
+let stockCountData={};
+
+function renderStockCount(){
+  const q=(document.getElementById('sc-search')?.value||'').toLowerCase();
+  const catF=document.getElementById('sc-cat-filter')?.value||'';
+  const cur=DB.settings.currency;
+
+  // Populate category filter
+  const catSel=document.getElementById('sc-cat-filter');
+  if(catSel&&catSel.options.length<=1){
+    const cats=[...new Set(DB.products.map(p=>p.cat||'Other'))].sort();
+    catSel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+
+  const filtered=DB.products.filter(p=>
+    (!q||p.name.toLowerCase().includes(q))&&
+    (!catF||p.cat===catF)
+  ).sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Past count sessions
+  const sessions=(DB.stockCounts||[]).slice(-3).reverse();
+  const sessEl=document.getElementById('sc-sessions');
+  if(sessEl&&sessions.length){
+    sessEl.innerHTML=`<div class="panel" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:8px">Recent Counts</div>
+      ${sessions.map(s=>`
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text3)">${s.date} ${s.time}</span>
+          <span>${s.items.length} items counted</span>
+          <span style="color:${s.discrepancies>0?'var(--red)':'var(--green)'}">
+            ${s.discrepancies>0?s.discrepancies+' discrepanc'+(s.discrepancies===1?'y':'ies'):'✓ All matched'}
+          </span>
+          <span style="color:var(--text3)">by ${s.by}</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  document.getElementById('sc-list').innerHTML=`<div class="panel">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Showing ${filtered.length} products. Enter physical count next to each item you've counted — leave blank to skip.</div>
+    <table class="inv-table" style="min-width:400px">
+      <thead><tr><th>Product</th><th>Category</th><th>System Stock</th><th>Physical Count</th><th>Difference</th></tr></thead>
+      <tbody>
+        ${filtered.map(p=>{
+          const systemQty=getTotalStock(p);
+          const counted=stockCountData[p.id];
+          const diff=counted!==undefined?counted-systemQty:null;
+          return `<tr>
+            <td style="font-weight:500;font-size:12px">${p.name}</td>
+            <td style="font-size:11px;color:var(--text3)">${p.cat||'—'}</td>
+            <td style="font-family:var(--font-head)">${systemQty} <span style="font-size:10px;color:var(--text3)">${p.unit}</span></td>
+            <td><input class="search-input" type="number" id="sc-${p.id}" placeholder="—" min="0"
+                value="${counted!==undefined?counted:''}"
+                style="width:80px;padding:5px 8px;font-size:13px"
+                oninput="stockCountData['${p.id}']=this.value===''?undefined:parseInt(this.value);updateSCDiff('${p.id}',${systemQty})">
+            </td>
+            <td id="sc-diff-${p.id}" style="font-family:var(--font-head);font-size:13px">
+              ${diff!==null?`<span style="color:${diff===0?'var(--green)':diff>0?'var(--blue)':'var(--red)'}">${diff>0?'+':''}${diff}</span>`:'—'}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function updateSCDiff(productId,systemQty){
+  const val=stockCountData[String(productId)];
+  const el=document.getElementById(`sc-diff-${productId}`);
+  if(!el) return;
+  if(val===undefined){el.innerHTML='—';return;}
+  const diff=val-systemQty;
+  el.innerHTML=`<span style="color:${diff===0?'var(--green)':diff>0?'var(--blue)':'var(--red)'}">${diff>0?'+':''}${diff}</span>`;
+}
+
+function saveStockCount(){
+  const counted=Object.entries(stockCountData).filter(([,qty])=>qty!==undefined);
+  if(!counted.length){toast('No items counted yet — enter quantities first');return;}
+  const items=[];let discrepancies=0;
+  counted.forEach(([id,physicalQty])=>{
+    const p=DB.products.find(x=>x.id==id);
+    if(!p) return;
+    const systemQty=getTotalStock(p);
+    const diff=physicalQty-systemQty;
+    items.push({productId:id,name:p.name,systemQty,physicalQty,diff});
+    if(diff!==0){
+      discrepancies++;
+      p.stock=Math.max(0,(p.stock||0)+diff);
+      if(p.locations&&p.locations.length){
+        const loc=p.locations.find(l=>l.zone.includes('Unlocated'))||p.locations[0];
+        if(loc) loc.qty=Math.max(0,(loc.qty||0)+diff);
+      }
+      logActivity('inventory',`Stock count: ${p.name} adjusted ${diff>0?'+':''}${diff} (system: ${systemQty} → physical: ${physicalQty})`);
+    }
+  });
+  if(!DB.stockCounts) DB.stockCounts=[];
+  DB.stockCounts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),by:currentUser?currentUser.name:'',items,discrepancies});
+  stockCountData={};
+  save();renderStockCount();filterInventory();
+  toast(`Count saved — ${items.length} items counted, ${discrepancies} discrepanc${discrepancies===1?'y':'ies'} corrected ✓`);
+}
+
+// ─── END STOCK COUNT ───
 
 // ─── ACTIVITY LOG — EXPANDED WITH ITEM DETAIL ───
 // Override logActivity for sales to store full item list
@@ -7419,6 +8978,99 @@ function exportMonthlyReport(){
     rows.push(['ኣብዚ ወርሒ ዝተሰፈረ ዕድጊ የለን']);
   }
 
+  // ── SUPPLIER PAYMENTS THIS MONTH ──
+  const monthSupPayments=(DB.supplierPayments||[]).filter(p=>p.date&&p.date.startsWith(month));
+  const monthSupDebt=(DB.purchases||[]).filter(p=>p.date&&p.date.startsWith(month)&&p.onCredit);
+  rows.push(['═══ SUPPLIER PAYMENTS / DEBT ═══']);
+  rows.push(['ናይ ሸቐጣዪ ክፍሊት / ዕዳ','']);
+  if(monthSupPayments.length||monthSupDebt.length){
+    const totalPaid=monthSupPayments.reduce((a,p)=>a+p.amount,0);
+    const totalDebt=monthSupDebt.reduce((a,p)=>a+(p.grandTotal||0),0);
+    rows.push(['PAYMENTS MADE / ዝተኸፍለ','','']);
+    rows.push(['Date','Supplier','Amount ('+cur+')','Notes','Recorded By']);
+    monthSupPayments.sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>
+      rows.push([p.date,p.supplier||'—',p.amount,p.notes||'—',p.recordedBy||'—']));
+    rows.push(['','TOTAL PAID / ጠቕላሊ ዝተኸፍለ',totalPaid.toFixed(0),'','']);
+    rows.push([]);
+    rows.push(['CREDIT PURCHASES (DEBT CREATED) / ዕዳ ዝፈጠረ ዕድጊ','','']);
+    rows.push(['Date','Supplier','Amount ('+cur+')','Due Date','Payment Status']);
+    monthSupDebt.forEach(p=>
+      rows.push([p.date,p.supplier||'—',(p.grandTotal||0).toFixed(0),p.dueDate||'Unknown',p.paymentStatus||'unpaid']));
+    rows.push(['','TOTAL DEBT CREATED / ጠቕላሊ ዕዳ',totalDebt.toFixed(0),'','']);
+  } else {
+    rows.push(['No supplier payments or credit purchases this month']);
+  }
+  rows.push([]);
+
+  // ── STANDALONE EXPENSES (DRAWER + SAFE) ──
+  const standaloneExpenses=(DB.expenses||[]).filter(e=>e.date&&e.date.startsWith(month));
+  if(standaloneExpenses.length){
+    const drawerTotal=standaloneExpenses.filter(e=>e.source==='drawer').reduce((a,e)=>a+e.amount,0);
+    const safeTotal=standaloneExpenses.filter(e=>e.source==='safe').reduce((a,e)=>a+e.amount,0);
+    rows.push(['═══ ALL EXPENSES (DRAWER + SAFE) ═══']);
+    rows.push(['ሙሉእ ወጻኢታት (ካሳ + ካዝና)','']);
+    rows.push(['Date','Description','Category','Amount ('+cur+')','Source','Recorded By']);
+    standaloneExpenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>
+      rows.push([e.date,e.desc,e.cat||'—',e.amount,e.source==='drawer'?'From Drawer':'From Safe',e.recordedBy||'—']));
+    rows.push(['','','From Drawer Total / ካብ ካሳ',drawerTotal.toFixed(0),'','']);
+    rows.push(['','','From Safe Total / ካብ ካዝና',safeTotal.toFixed(0),'','']);
+    rows.push(['','','GRAND TOTAL / ጠቕላሊ',(drawerTotal+safeTotal).toFixed(0),'','']);
+    rows.push([]);
+  }
+
+  // ── DAMAGED GOODS THIS MONTH ──
+  const monthDamaged=(DB.damagedGoods||[]).filter(d=>d.date&&d.date.startsWith(month));
+  if(monthDamaged.length){
+    const totalLoss=monthDamaged.filter(d=>d.type==='writeoff').reduce((a,d)=>a+(d.loss||0),0);
+    rows.push(['═══ DAMAGED GOODS ═══']);
+    rows.push(['ዝተጎድኤ ዕቃ','']);
+    rows.push(['Date','Product','Qty','Type','Loss ('+cur+')','Reason','Recorded By']);
+    monthDamaged.sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>
+      rows.push([d.date,d.productName,d.qty,d.type==='writeoff'?'Write-off':'Damaged Stock',(d.loss||0).toFixed(0),d.reason||'—',d.recordedBy||'—']));
+    rows.push(['','','','TOTAL LOSS / ጠቕላሊ ክሳራ',totalLoss.toFixed(0),'','']);
+    rows.push([]);
+  }
+
+  // ── SHIFTS THIS MONTH ──
+  const monthShifts=(DB.shifts||[]).filter(s=>s.date&&s.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+  if(monthShifts.length){
+    rows.push(['═══ STAFF SHIFTS ═══']);
+    rows.push(['ሸፍቲ ሰራሕተኛ','']);
+    rows.push(['Date','Worker','Shift Type']);
+    monthShifts.forEach(s=>s.workers.forEach(w=>
+      rows.push([s.date,w.name,w.type==='full'?'Full Day':'Half Day'])));
+    // Summary
+    const workerDays={};
+    monthShifts.forEach(s=>s.workers.forEach(w=>{
+      if(!workerDays[w.name]) workerDays[w.name]={full:0,half:0};
+      if(w.type==='full') workerDays[w.name].full++;
+      else workerDays[w.name].half++;
+    }));
+    rows.push([]);
+    rows.push(['SHIFT SUMMARY / ጸብጻብ ሸፍቲ','','']);
+    rows.push(['Worker','Full Days','Half Days','Total Days']);
+    Object.entries(workerDays).forEach(([name,d])=>
+      rows.push([name,d.full,d.half,(d.full+d.half*0.5).toFixed(1)]));
+    rows.push([]);
+  }
+
+  // ── CUSTOMER CREDIT OUTSTANDING ──
+  const activeLoans=(DB.loans||[]).filter(l=>l.status==='active'||l.status==='overdue');
+  if(activeLoans.length){
+    rows.push(['═══ CUSTOMER CREDIT OUTSTANDING ═══']);
+    rows.push(['ናይ ዓሚላት ዝተረፈ ልቓሕ','']);
+    rows.push(['Customer','Phone','Original Amount ('+cur+')','Paid ('+cur+')','Remaining ('+cur+')','Date','Status']);
+    let totalOutstanding=0;
+    activeLoans.forEach(l=>{
+      const paid=(l.repayments||[]).reduce((a,r)=>a+r.amount,0);
+      const remaining=Math.max(0,l.amount-paid);
+      totalOutstanding+=remaining;
+      rows.push([l.borrower,l.phone||'—',l.amount,paid.toFixed(0),remaining.toFixed(0),l.date,l.status]);
+    });
+    rows.push(['','','','TOTAL OUTSTANDING / ጠቕላሊ ዝተረፈ','',totalOutstanding.toFixed(0),'']);
+    rows.push([]);
+  }
+
   // ── FULL TIGRINYA SECTION ──
   rows.push([]);
   rows.push(['══════════════════════════════════════']);
@@ -7901,12 +9553,29 @@ if(!DB.recycleBin) DB.recycleBin=[];
 if(!DB.stockAlerts) DB.stockAlerts=[];
 if(!DB.notifications) DB.notifications=[];
 if(!DB.categories||!DB.categories.length) DB.categories=[...DEFAULT_CATS];
-// Migrate old Zone A/B/E to proper zones
+if(!DB.storageLocations) DB.storageLocations=JSON.parse(JSON.stringify(DEFAULT_STORAGE_LOCATIONS));
+if(!DB.suppliers) DB.suppliers=[];
+if(!DB.supplierPayments) DB.supplierPayments=[];
+if(!DB.expenses) DB.expenses=[];
+if(!DB.shifts) DB.shifts=[];
+if(!DB.transfers) DB.transfers=[];
+if(!DB.damagedGoods) DB.damagedGoods=[];
+if(!DB.pendingStockSource) DB.pendingStockSource=[];
+// Migrate any old "Zone X" named locations to Open/Unlocated
 DB.products.forEach(p=>{
-  if(p.zone&&(p.zone.includes('Zone A')||p.zone.includes('Zone B')||p.zone.includes('Zone E'))) p.zone='EH Main › Sales Room';
+  if(p.zone&&/Zone\s+[A-Za-z0-9]/i.test(p.zone)) p.zone='⚠ Open / Unlocated';
   if(p.locations) p.locations.forEach(l=>{
-    if(l.zone&&(l.zone.includes('Zone A')||l.zone.includes('Zone B')||l.zone.includes('Zone E'))) l.zone='EH Main › Sales Room';
+    if(l.zone&&/Zone\s+[A-Za-z0-9]/i.test(l.zone)) l.zone='⚠ Open / Unlocated';
   });
+  // Merge duplicate Unlocated entries
+  if(p.locations){
+    const unlocated=p.locations.filter(l=>l.zone.includes('Open / Unlocated'));
+    if(unlocated.length>1){
+      const totalQty=unlocated.reduce((a,l)=>a+(l.qty||0),0);
+      p.locations=p.locations.filter(l=>!l.zone.includes('Open / Unlocated'));
+      if(totalQty>0) p.locations.push({zone:'⚠ Open / Unlocated',qty:totalQty});
+    }
+  }
 });
 
 if(!DB.settings.lowStockBig) DB.settings.lowStockBig=100;
