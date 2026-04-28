@@ -470,7 +470,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   #shifts-summary .panel > div { flex-direction: column; }
 
   /* Damaged/Transfer pages */
-  #damaged-list .panel, #transfers-list .panel { padding: 10px; font-size: 13px; }
+  #transfers-list .panel { padding: 10px; font-size: 13px; }
 
   /* Drawer page */
   #page-drawer .panel { padding: 10px; }
@@ -647,7 +647,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="nav-item" onclick="nav('inventory')"><span class="icon">📦</span> Products <span class="nav-badge" id="low-stock-badge" style="display:none">!</span></div>
       <div class="nav-item" onclick="nav('storage')"><span class="icon">🗄️</span> Storage Room <span class="nav-badge" id="open-zone-badge" style="display:none">⚠</span></div>
       <div class="nav-item" onclick="nav('transfers')"><span class="icon">🔄</span> Stock Transfers</div>
-      <div class="nav-item" onclick="nav('damaged')"><span class="icon">⚠️</span> Damaged Goods</div>
       <div class="nav-label">Business</div>
       <div class="nav-item" onclick="nav('reports')"><span class="icon">📈</span> Reports</div>
       <div class="nav-item" onclick="nav('purchases')"><span class="icon">🛍️</span> Purchases</div>
@@ -1008,11 +1007,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </div>
         <!-- Day detail panel -->
         <div id="drawer-day-detail" style="display:none;margin-top:16px"></div>
-        <!-- Weekly analysis -->
-        <div class="panel" style="margin-top:16px">
-          <div class="panel-title" style="margin-bottom:14px"><span class="dot" style="background:var(--purple)"></span> <span data-en="Weekly Analysis" data-ti="ናይ ሰሙን ትንታነ">Weekly Analysis</span></div>
-          <div id="drawer-weekly"></div>
-        </div>
       </div>
 
       <!-- REQUESTS -->
@@ -1137,7 +1131,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </div>
           <div class="inv-table-wrap">
             <table class="inv-table">
-              <thead><tr><th>Time</th><th>Staff</th><th>Action</th><th>Details</th><th>Amount</th></tr></thead>
+              <thead><tr><th>Time</th><th>Staff</th><th>Action</th><th>Details</th><th>Amount</th><th></th></tr></thead>
               <tbody id="act-tbody"></tbody>
             </table>
           </div>
@@ -1195,6 +1189,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
           </div>
         </div>
         <div class="settings-section">
+          <div class="settings-title" style="color:var(--red)">🚨 Emergency Recovery</div>
+          <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <div style="font-size:12px;color:var(--text3)">If the app won't load due to a data error, use this to clear corrupted storage. <strong>Export a JSON backup first if possible.</strong></div>
+            <button class="action-btn del" onclick="emergencyClearUndo()">Clear Undo Cache</button>
+            <button class="action-btn del" onclick="emergencyClearAll()">⚠ Full Reset (clears all data)</button>
+          </div>
+
           <div class="settings-title">📍 Storage Locations</div>
           <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px">
             <div style="font-size:12px;color:var(--text3)">Manage your storage locations and sub-units. Changes apply everywhere automatically.</div>
@@ -1208,12 +1209,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
           <div class="settings-title">🏷️ Product Categories</div>
           <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px">
-            <div style="font-size:12px;color:var(--text3)">Add or remove categories. Used in product forms and import.</div>
+            <div style="font-size:12px;color:var(--text3)">Add or remove categories. Include an emoji at the start of the name to show it on POS cards (e.g. "🔌 Cables").</div>
             <div id="cat-manager-list" style="width:100%;display:flex;flex-wrap:wrap;gap:6px"></div>
             <div style="display:flex;gap:8px;width:100%">
-              <input class="form-input" id="new-cat-input" placeholder="New category name..." style="flex:1">
+              <input class="form-input" id="new-cat-input" placeholder="e.g. 🔌 Cables & Wiring" style="flex:1">
               <button class="btn-save" style="white-space:nowrap" onclick="addCategory()">+ Add</button>
             </div>
+            <div style="font-size:11px;color:var(--text3)">Common: 💡 🔌 🔆 🔋 ⚡ 🔧 🔩 📦 ☀️ 🛠️ 🔦 ⚙️ 🧰 🔐 🏭 🏠</div>
           </div>
 
           <div class="settings-title">📱 Data & Transfer</div>
@@ -1305,15 +1307,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div id="transfers-list"></div>
       </div>
 
-      <!-- DAMAGED GOODS PAGE -->
-      <div id="page-damaged" class="page">
-        <div class="inv-toolbar" style="margin-bottom:16px">
-          <div class="spacer"></div>
-          <button class="topbar-btn" onclick="showDamagedModal()">+ Record Damaged Item</button>
-        </div>
-        <div class="stats-row" id="damaged-stats" style="margin-bottom:16px"></div>
-        <div id="damaged-list"></div>
-      </div>
       <!-- STOCK COUNT PAGE -->
       <div id="page-stockcount" class="page">
         <div class="inv-toolbar" style="margin-bottom:16px">
@@ -2000,14 +1993,63 @@ let selectedWall = '';
 let currentUser = null; // { id, name, role, pin }
 
 // ─── PERSIST ───
+function emergencyClearUndo(){
+  localStorage.removeItem('weyni_undo');
+  toast('Undo cache cleared ✓ — reload the page');
+}
+function emergencyClearAll(){
+  if(!confirm('This will delete ALL data. Are you sure? Export a backup first!')) return;
+  localStorage.removeItem('weyni_db');
+  localStorage.removeItem('weyni_undo');
+  location.reload();
+}
+
+
 function save() {
-  try { localStorage.setItem('weyni_db', JSON.stringify(DB)); } catch(e){}
+  try {
+    // Strip large undo snapshots from activityLog before saving — store separately
+    const undoStore={};
+    const logToSave=(DB.activityLog||[]).map(a=>{
+      if(a.undoData&&a.undoData!=='__ref__'){
+        undoStore[a.id]=a.undoData;
+        return {...a,undoData:'__ref__'};
+      }
+      return a;
+    });
+    const dbToSave={...DB,activityLog:logToSave};
+    localStorage.setItem('weyni_db',JSON.stringify(dbToSave));
+    if(Object.keys(undoStore).length){
+      try{ localStorage.setItem('weyni_undo',JSON.stringify(undoStore)); }catch(e){}
+    }
+  } catch(e){
+    // Storage full — trim activity log and retry
+    try {
+      const slim={...DB,activityLog:(DB.activityLog||[]).slice(-200).map(a=>({...a,undoData:undefined}))};
+      localStorage.setItem('weyni_db',JSON.stringify(slim));
+      console.warn('Storage full — activity log trimmed');
+    } catch(e2){ console.error('Critical: save failed', e2); }
+  }
 }
 function load() {
   try {
     const d = localStorage.getItem('weyni_db');
     if(d) DB = JSON.parse(d);
-  } catch(e){}
+    // Restore undo snapshots
+    const undoRaw=localStorage.getItem('weyni_undo');
+    if(undoRaw){
+      try{
+        const undoStore=JSON.parse(undoRaw);
+        (DB.activityLog||[]).forEach(a=>{
+          if(a.undoData==='__ref__'&&undoStore[a.id]) a.undoData=undoStore[a.id];
+        });
+      }catch(e){ localStorage.removeItem('weyni_undo'); }
+    }
+  } catch(e){
+    console.warn('DB corrupted, attempting recovery...');
+    localStorage.removeItem('weyni_db');
+    localStorage.removeItem('weyni_undo');
+    toast('⚠ Data file was corrupted and has been reset. Please restore from your last JSON backup.');
+  }
   // Migrate any bad 'Unlocated › Unlocated Items' zone strings to standard '⚠ Open / Unlocated'
   (DB.products||[]).forEach(p=>{
     if(p.locations){
@@ -2096,7 +2138,6 @@ const TI = {
   'Purchases & Stock Bought':'ምግዛእ','Loans & Credit':'ልቓሕ',
   'Customers':'ዓሚልቲ','Staff':'ሰራሕተኛ','Settings':'ምቕናዕ',
   'Cash Drawer':'ካሳ','Requests':'ጠለባት','Returns':'ምምላስ',
-  'Stock Transfers':'ምርቃቕ ዕቃ','Damaged Goods':'ዝተጎድአ ዕቃ',
   'Suppliers':'ሸቐጥቲ','Expenses':'ወጻኢታት','Shifts':'ሸፍቲ',
   'Credit & Loans':'ልቓሕ','From Drawer':'ካብ ካሳ','From Safe':'ካብ ካዝና',
   'Write Off':'ሰርዝ','Damaged Stock':'ዝተጎድአ ዕቃ ንሽያጥ',
@@ -2448,19 +2489,34 @@ function renderCategoryManager(){
   const cats=getCategories();
   list.innerHTML=cats.map((c,i)=>`
     <div style="display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px">
+      <span style="font-size:16px">${getCatEmoji(c)}</span>
       <span>${c}</span>
       ${c!=='Other'?`<button onclick="removeCategory(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 4px" title="Remove">×</button>`:''}
     </div>`).join('');
 }
 
+function toggleCatEmojiPicker(){}
+function selectCatEmoji(e){}
+
 function addCategory(){
   const input=document.getElementById('new-cat-input');
-  const name=input.value.trim();
-  if(!name){toast('Enter a category name');return;}
+  const raw=input.value.trim();
+  if(!raw){toast('Enter a category name');return;}
   if(!DB.categories) DB.categories=[...DEFAULT_CATS];
-  if(DB.categories.find(c=>c.toLowerCase()===name.toLowerCase())){toast('Category already exists');return;}
-  DB.categories.push(name);
-  DB.categories.sort((a,b)=>a==='Other'?1:b==='Other'?-1:a.localeCompare(b));
+  // Extract emoji prefix if present (emoji = first char if not letter/number)
+  const emojiMatch=raw.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u);
+  const emoji=emojiMatch?emojiMatch[0].trim():'';
+  const name=emoji?raw.slice(emojiMatch[0].length).trim():raw;
+  if(!name){toast('Enter a category name after the emoji');return;}
+  const existing=DB.categories.find(c=>(typeof c==='string'?c:c.name).toLowerCase()===name.toLowerCase());
+  if(existing){toast('Category already exists');return;}
+  DB.categories.push(emoji?{name,emoji}:name);
+  DB.categories.sort((a,b)=>{
+    const an=typeof a==='string'?a:a.name;
+    const bn=typeof b==='string'?b:b.name;
+    if(an==='Other') return 1; if(bn==='Other') return -1;
+    return an.localeCompare(bn);
+  });
   input.value='';
   save();
   renderCategoryManager();
@@ -2469,18 +2525,18 @@ function addCategory(){
 
 function removeCategory(idx){
   if(!DB.categories) DB.categories=[...DEFAULT_CATS];
-  const cat=DB.categories[idx];
-  if(cat==='Other'){toast("Can't remove Other");return;}
-  // Check if any products use this category
-  const inUse=DB.products.filter(p=>p.cat===cat).length;
+  const cats=getCategories();
+  const catName=cats[idx];
+  if(!catName||catName==='Other'){toast("Can't remove Other");return;}
+  const inUse=DB.products.filter(p=>p.cat===catName).length;
   if(inUse>0){
-    if(!confirm(`${inUse} product(s) use "${cat}". They will be moved to "Other". Continue?`)) return;
-    DB.products.forEach(p=>{if(p.cat===cat) p.cat='Other';});
+    if(!confirm(`${inUse} product(s) use "${catName}". They will be moved to "Other". Continue?`)) return;
+    DB.products.forEach(p=>{if(p.cat===catName) p.cat='Other';});
   }
-  DB.categories.splice(idx,1);
+  DB.categories=DB.categories.filter(c=>(typeof c==='string'?c:c.name)!==catName);
   save();
   renderCategoryManager();
-  toast(`"${cat}" removed`);
+  toast(`"${catName}" removed`);
 }
 
 // ─── NAVIGATION ───
@@ -2491,7 +2547,7 @@ function nav(page){
   const sb=document.getElementById('sidebar');
   if(sb.classList.contains('open')){ sb.classList.remove('open'); const ov=document.getElementById('sidebar-overlay');if(ov)ov.style.display='none'; }
   const navItems = document.querySelectorAll('.nav-item');
-  const pageNav = {dashboard:'dashboard',pos:'point of sale',inventory:'products',storage:'storage',reports:'reports',purchases:'purchases',loans:'credit & loans',customers:'customers',staff:'staff',settings:'settings',transfers:'stock transfers',damaged:'damaged goods',suppliers:'suppliers',expenses:'expenses',shifts:'shifts'};
+  const pageNav = {dashboard:'dashboard',pos:'point of sale',inventory:'products',storage:'storage',reports:'reports',purchases:'purchases',loans:'credit & loans',customers:'customers',staff:'staff',settings:'settings',transfers:'stock transfers',suppliers:'suppliers',expenses:'expenses',shifts:'shifts'};
   navItems.forEach(n=>{ if(n.textContent.toLowerCase().includes(pageNav[page]||page)) n.classList.add('active'); });
   document.getElementById('page-'+page).classList.add('active');
   currentPage = page;
@@ -2526,7 +2582,6 @@ function renderPage(page){
   else if(page==='staff') renderStaff();
   else if(page==='stockcount') renderStockCount();
   else if(page==='transfers') renderTransfers();
-  else if(page==='damaged') renderDamaged();
   else if(page==='suppliers') renderSuppliers();
   else if(page==='expenses') filterExpenses();
   else if(page==='shifts') renderShifts();
@@ -2789,7 +2844,7 @@ function filterPOS(){
   const emojis={'Bulbs & Lighting':'💡','Chandeliers & Decorative':'🔆','Cables & Wiring':'🔌','Switches & Sockets':'🔘','Solar Equipment':'☀️','Inverters & Batteries':'🔋','Circuit Breakers':'⚡','Tools':'🔧','Conduit & Fittings':'🔩','Meters & Testers':'📏','Other':'📦'};
   document.getElementById('pos-products').innerHTML=filtered.map(p=>`
     <div class="product-card-pos" onclick="addToCart(${p.id})">
-      <div class="product-emoji">${emojis[p.cat]||'📦'}</div>
+      <div class="product-emoji">${getCatEmoji(p.cat)}</div>
       <div class="product-name-pos">${p.name}</div>
       <div class="product-price-pos">${DB.settings.currency} ${p.price}</div>
       <div class="product-stock-pos">${p.unit==='rolls'&&p.metersPerRoll?`${getTotalFullRolls(p)} rolls${getTotalPartialMeters(p)>0?' + '+getTotalPartialMeters(p)+'m':''} · ${getTotalRollMeters(p)}m total`:getTotalStock(p)+' '+p.unit+' in stock'+(p.unit==='boxes'&&p.pcsPerBox?' ('+(getTotalStock(p)*p.pcsPerBox)+' pcs)':'')}</div>
@@ -3008,6 +3063,9 @@ function updateCartTotals(){
 
 function showPartialPaymentModal(){
   if(!cart.length){toast('Cart is empty');return;}
+  // Block if day is closed
+  const session=getActiveSession();
+  if(!session||session.closed){toast('Cannot record partial payment — the day is closed');return;}
   const cur=DB.settings.currency;
   const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
   const disc=parseFloat(document.getElementById('discount-amt').value||0)||0;
@@ -3018,7 +3076,7 @@ function showPartialPaymentModal(){
   if(!m){m=document.createElement('div');m.id='modal-partial-payment';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-partial-payment');});}
 
   // Pre-fill customer info if already known
-  const existingCust=DB.customers.find(c=>c.name.toLowerCase()===customer.toLowerCase());
+  const existingCust=(DB.customers||[]).find(c=>c.name.toLowerCase()===customer.toLowerCase());
 
   m.innerHTML=`<div class="modal" style="max-width:420px">
     <div class="modal-header"><div class="modal-title">💳 Partial Payment</div><button class="modal-close" onclick="closeModal('modal-partial-payment')">✕</button></div>
@@ -3027,7 +3085,7 @@ function showPartialPaymentModal(){
         ⚠ Partial payment requires a named customer with a phone number.
       </div>
       <div class="form-row"><div class="form-label">Customer Name *</div>
-        <input class="form-input" id="pp-name" placeholder="Full name required" value="${customer&&customer.toLowerCase()!=='walk-in'?customer:''}" list="pp-cust-list">
+        <input class="form-input" id="pp-name" placeholder="Full name required" value="${customer&&customer.toLowerCase()!=='walk-in'?customer:''}" oninput="autoFillPartialPhone()" list="pp-cust-list">
         <datalist id="pp-cust-list">${(DB.customers||[]).map(c=>`<option value="${c.name}">`).join('')}</datalist>
       </div>
       <div class="form-row"><div class="form-label">Phone Number *</div>
@@ -3054,6 +3112,16 @@ function showPartialPaymentModal(){
     </div>
   </div>`;
   openModal('modal-partial-payment');
+}
+
+function autoFillPartialPhone(){
+  const name=document.getElementById('pp-name')?.value.trim();
+  if(!name) return;
+  const cust=(DB.customers||[]).find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(cust?.phone){
+    const phoneEl=document.getElementById('pp-phone');
+    if(phoneEl&&!phoneEl.value) phoneEl.value=cust.phone;
+  }
 }
 
 function updatePartialBalance(total){
@@ -3306,8 +3374,8 @@ function filterInventory(){
       </td>
       <td onclick="event.stopPropagation()">
         <button class="action-btn" onclick="editProduct(${p.id})">✏ Edit</button>
-        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button><button class="action-btn" style="color:var(--orange,#e67e22);border-color:var(--orange,#e67e22);font-size:11px" onclick="quickMarkDamaged('${p.name.replace(/'/g,"\\'")}')">⚠ Damaged</button>`:`<button class="action-btn" onclick="showRequestModal('stock');setTimeout(()=>{document.getElementById('req-product').value='${p.name.replace(/'/g,"\\'")}'},100)">± Request</button>`}
-        <button class="action-btn del" onclick="deleteProduct(${p.id})">✕</button>
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" onclick="adjustStock(${p.id})">± Stock</button>`:`<button class="action-btn" onclick="showRequestModal('stock');setTimeout(()=>{document.getElementById('req-product').value='${p.name.replace(/'/g,"\\'")}'},100)">± Request</button>`}
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn del" onclick="deleteProduct(${p.id})">✕</button>`:`<button class="action-btn" style="font-size:11px" onclick="showDeleteRequestModal('product','${p.name.replace(/'/g,"\\'")}')">🗑 Request Delete</button>`}
       </td>
     </tr>
     <tr id="inv-detail-${p.id}" style="display:none;background:var(--bg3)">
@@ -3481,8 +3549,8 @@ function editProduct(id){
   document.getElementById('modal-product-title').textContent='Edit Product';
   document.getElementById('edit-product-id').value=id;
   document.getElementById('f-name').value=p.name;
-  document.getElementById('f-price').value=p.price;
-  document.getElementById('f-cost').value=p.cost||'';
+  document.getElementById('f-price').value=parseFloat(p.price)||0;
+  document.getElementById('f-cost').value=parseFloat(p.cost)||'';
   document.getElementById('f-stock').value=p.stock;
   document.getElementById('f-stock').style.display='none';
   document.getElementById('f-stock-label').textContent='Stock (read-only)';
@@ -3647,7 +3715,7 @@ function saveProduct(){
   const costRoll=isRoll?parseFloat(document.getElementById('f-cost-roll').value)||0:0;
   const price=isRoll?pricePerRoll:parseFloat(document.getElementById('f-price').value)||0;
   const cost=isRoll?costRoll:parseFloat(document.getElementById('f-cost').value)||0;
-  const id=parseInt(document.getElementById('edit-product-id').value)||0;
+  const id=Number(document.getElementById('edit-product-id').value)||0;
   const data={
     name,cat:document.getElementById('f-cat').value,zone:document.getElementById('f-zone').value,
     price,cost,unit,pcsPerBox,metersPerRoll,
@@ -3663,19 +3731,28 @@ function saveProduct(){
     if(idx>=0){
       const old=DB.products[idx];
       const changes=[];
+      const oldPrice=parseFloat(old.price)||0;
+      const oldCost=parseFloat(old.cost)||0;
       if(data.name!==old.name) changes.push(`Name: "${old.name}" → "${data.name}"`);
-      if(data.price!==(old.price||0)) changes.push(`Sell price: ${old.price||0} → ${data.price}`);
-      if(data.cost!==(old.cost||0)) changes.push(`Cost price: ${old.cost||0} → ${data.cost}`);
+      if(data.price!==oldPrice) changes.push(`Sell price: ${oldPrice} → ${data.price}`);
+      if(data.cost!==oldCost) changes.push(`Cost price: ${oldCost} → ${data.cost}`);
       if(data.unit!==old.unit) changes.push(`Unit: ${old.unit} → ${data.unit}`);
       if(data.cat!==old.cat) changes.push(`Category: ${old.cat} → ${data.cat}`);
       if(data.pcsPerBox!==(old.pcsPerBox||0)) changes.push(`Pcs/box: ${old.pcsPerBox||0} → ${data.pcsPerBox}`);
       if(data.metersPerRoll!==(old.metersPerRoll||0)) changes.push(`Meters/roll: ${old.metersPerRoll||0} → ${data.metersPerRoll}`);
       if((data.desc||'')!==(old.desc||'')) changes.push(`Description updated`);
       if((data.sku||'')!==(old.sku||'')) changes.push(`SKU: "${old.sku||''}" → "${data.sku||''}"`);
+      // Always clear needsPrice flag when price is set
+      if(data.price>0) data.needsPrice=false;;
+      // If product had no price before and now has one, treat as a meaningful change
+      if(old.needsPrice&&data.price>0&&!changes.some(c=>c.includes('Sell price'))){
+        changes.push(`Sell price set: ${data.price} (was unpriced)`);
+      }
+      const snapshot=JSON.parse(JSON.stringify(old));
       DB.products[idx]={...old,...data};
       const changeStr=changes.length?changes.join(' | '):'No field changes detected';
       const who=currentUser?currentUser.name:'Manager';
-      logActivity('inventory',`✏ Product edited by ${who}: ${name} — ${changeStr}`);
+      logActivity('inventory',`✏ Product edited by ${who}: ${name} — ${changeStr}`,0,{undoType:'productEdit',productId:id,snapshot});
       // Notify employees of price changes
       const priceChanges=changes.filter(c=>c.includes('price')||c.includes('Price'));
       if(priceChanges.length){
@@ -3839,6 +3916,8 @@ function saveStockAdjust(){
   if(!qty||qty<=0){toast('Enter a valid quantity');return;}
   if(!reason){toast('Reason is required — explain why the quantity is changing');return;}
   const p=DB.products.find(x=>x.id==id);if(!p)return;
+  // Snapshot before change for undo
+  const snapshot=JSON.parse(JSON.stringify({product:p}));
   const isRoll=p.unit==='rolls'&&p.metersPerRoll;
   const who=currentUser?currentUser.name:'Manager';
 
@@ -3907,7 +3986,7 @@ function saveStockAdjust(){
   }
   const action=adjMode==='add'?'added':'removed';
   const logMsg=`⚠ Stock ${action} by ${who}: ${p.name} ${adjMode==='add'?'+':'-'}${qty} ${p.unit} (${oldStock} → ${p.stock}) | Reason: ${reason}`;
-  logActivity('inventory',logMsg);
+  logActivity('inventory',logMsg,0,{undoType:'stockAdj',productId:p.id,snapshot});
   if(!DB.stockAlerts) DB.stockAlerts=[];
   DB.stockAlerts.push({id:Date.now(),date:todayMinus(0),time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),product:p.name,action,qty,unit:p.unit,oldStock,newStock:p.stock,by:who,reason,seen:false});
   save();closeModal('modal-stock-adjust');filterInventory();updateStockAlertBadge();
@@ -4622,11 +4701,7 @@ function renderReports(){
   const totalExpenses=drawerExpenses+safeExpenses;
 
   // Damaged goods losses in period
-  const damagedLoss=(DB.damagedGoods||[]).filter(d=>d.date>=periodStart&&d.type==='writeoff')
-    .reduce((a,d)=>a+(d.loss||0),0);
-
-  // Net profit
-  const netProfit=grossProfit-totalExpenses-damagedLoss;
+  const netProfit=grossProfit-totalExpenses;
 
   // Outstanding balances (all time)
   const customerCreditOwed=(DB.loans||[]).filter(l=>l.status==='active'||l.status==='overdue')
@@ -4674,9 +4749,6 @@ function renderReports(){
         </div>`:''}
         ${safeExpenses>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
           <span style="color:var(--text3)">− Safe Expenses (Rent etc.)</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(safeExpenses).toLocaleString()}</span>
-        </div>`:''}
-        ${damagedLoss>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--text3)">− Damaged Goods Loss</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(damagedLoss).toLocaleString()}</span>
         </div>`:''}
         <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;margin-top:4px">
           <span>Net Profit</span>
@@ -5185,8 +5257,8 @@ function filterPurchases(){
       <td style="font-size:11px;color:var(--text3)">${i===0?p.recordedBy||'':''}</td>
       <td>${i===0?`<span class="badge ${p.paymentStatus==='paid'?'green':p.paymentStatus==='partial'?'orange':'red'}" style="font-size:10px">${p.paymentStatus==='paid'?'✓ Paid':p.paymentStatus==='partial'?'~ Partial':'⚠ Unpaid'}</span>${p.needsAttention?`<div style="font-size:10px;color:var(--red)">⚠ No due date</div>`:p.dueDate?`<div style="font-size:10px;color:var(--text3)">Due: ${p.dueDate}</div>`:''}`:''}</td>
       <td style="white-space:nowrap;display:flex;gap:4px">${i===0?`
-        <button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>
-        <button class="action-btn del" style="font-size:11px" onclick="deletePurchase(${p.id})">🗑</button>
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>
+        <button class="action-btn del" style="font-size:11px" onclick="deletePurchase(${p.id})">🗑</button>`:`<button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>`}
       `:''}</td>
     </tr>`);
   }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">No purchases recorded yet</td></tr>';
@@ -5485,7 +5557,7 @@ function renderSupplierView(expandedName){
                   <span style="font-family:var(--font-head);color:var(--accent)">${l.total?cur+' '+l.total.toLocaleString():'—'}</span>
                   <div style="display:flex;gap:4px">
                     <button class="action-btn" style="font-size:10px;padding:2px 6px" onclick="editPurchase(${l.id})">✏</button>
-                    <button class="action-btn del" style="font-size:10px;padding:2px 6px" onclick="deletePurchase(${l.id})">🗑</button>
+                    ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn del" style="font-size:10px;padding:2px 6px" onclick="deletePurchase(${l.id})">🗑</button>`:''}
                   </div>
                 </div>`).join('')}
             </div>
@@ -5529,7 +5601,16 @@ function removePurLine(i){
 const DEFAULT_CATS=['Bulbs & Lighting','Pendant Lamps','Wall Lamps','Chandeliers','Ceiling Lamps','Table Lamps','Design Lights','Track Lights','Spot Lights','Stick Lights','Rope Lights','Decorative Lights','Neon Signs','LED Screens','LED Strips','Wooden Lamps','Flood Lights','Adaptors & Power','Cables & Wiring','Switches & Sockets','Circuit Breakers','Solar Equipment','Inverters & Batteries','Conduit & Fittings','Tools','Meters & Testers','Other'];
 function getCategories(){ 
   const cats=(DB&&DB.categories&&DB.categories.length)?DB.categories:DEFAULT_CATS;
-  return [...cats].sort((a,b)=>a.localeCompare(b));
+  return [...cats].map(c=>typeof c==='string'?c:c.name).sort((a,b)=>a==='Other'?1:b==='Other'?-1:a.localeCompare(b));
+}
+function getCatEmoji(catName){
+  // Check DB categories first for custom emoji
+  const cats=(DB&&DB.categories)||[];
+  const found=cats.find(c=>typeof c==='string'?c===catName:c.name===catName);
+  if(found&&typeof found==='object'&&found.emoji) return found.emoji;
+  // Fall back to built-in map
+  const emojis={'Bulbs & Lighting':'💡','Chandeliers & Decorative':'🔆','Cables & Wiring':'🔌','Switches & Sockets':'🔘','Solar Equipment':'☀️','Inverters & Batteries':'🔋','Circuit Breakers':'⚡','Tools':'🔧','Conduit & Fittings':'🔩','Meters & Testers':'📏','Other':'📦'};
+  return emojis[catName]||'📦';
 }
 Object.defineProperty(window,'CATS',{get:()=>getCategories()});
 const ZONE_NAMES=[
@@ -6941,7 +7022,8 @@ function saveSupplierPayment(supplierName){
   const notes=document.getElementById('sup-pay-notes').value.trim();
   if(!DB.supplierPayments) DB.supplierPayments=[];
   DB.supplierPayments.push({id:Date.now(),supplier:supplierName,amount,date,notes,recordedBy:currentUser?currentUser.name:''});
-  logActivity('purchase',`Supplier payment: ${DB.settings.currency} ${amount} to ${supplierName}${notes?' — '+notes:''}`);
+  const payId=DB.supplierPayments[DB.supplierPayments.length-1].id;
+  logActivity('purchase',`Supplier payment: ${DB.settings.currency} ${amount} to ${supplierName}${notes?' — '+notes:''}`,0,{undoType:'supplierPayment',paymentId:payId,amount,supplier:supplierName});
   save();closeModal('modal-sup-payment');renderSuppliers();toast(`Payment of NKF ${amount} to ${supplierName} recorded ✓`);
 }
 
@@ -7026,7 +7108,7 @@ function filterExpenses(){
     <td style="font-family:var(--font-head);color:var(--red)">${cur} ${e.amount.toLocaleString()}</td>
     <td><span class="badge ${e.source==='drawer'?'orange':'blue'}">${e.source==='drawer'?'💵 Drawer':'🏦 Safe'}</span></td>
     <td style="font-size:12px;color:var(--text3)">${e.recordedBy||'—'}</td>
-    <td><button class="action-btn del" style="font-size:11px" onclick="deleteExpense(${e.id})">🗑</button></td>
+    <td>${currentUser&&currentUser.role==='Manager'?`<button class="action-btn del" style="font-size:11px" onclick="deleteExpense(${e.id})">🗑</button>`:''}</td>
   </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">No expenses recorded</td></tr>';
 }
 
@@ -7124,7 +7206,7 @@ function renderShifts(){
     <div class="panel" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="font-weight:600;font-size:14px">${s.date} <span style="font-size:11px;color:var(--text3);font-weight:400">${new Date(s.date+'T12:00:00').toLocaleDateString([],{weekday:'long'})}</span></div>
-        <button class="action-btn del" style="font-size:11px" onclick="deleteShift(${s.id})">🗑</button>
+        ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn del" style="font-size:11px" onclick="deleteShift(${s.id})">🗑</button>`:''}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         ${s.workers.map(w=>`
@@ -7275,152 +7357,6 @@ function saveTransfer(){
 // ═══════════════════════════════════════════════
 // ─── DAMAGED GOODS ───
 // ═══════════════════════════════════════════════
-function renderDamaged(){
-  const cur=DB.settings.currency;
-  const items=DB.damagedGoods||[];
-  const writeOffs=items.filter(i=>i.type==='writeoff');
-  const damaged=items.filter(i=>i.type==='damaged');
-  const statEl=document.getElementById('damaged-stats');
-  if(statEl) statEl.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Write-offs</div><div class="stat-value" style="color:var(--red)">${writeOffs.length} items</div></div>
-    <div class="stat-card"><div class="stat-label">Damaged (for sale)</div><div class="stat-value" style="color:var(--orange,#e67e22)">${damaged.length} items</div></div>
-    <div class="stat-card"><div class="stat-label">Total Loss</div><div class="stat-value" style="color:var(--red)">${cur} ${writeOffs.reduce((a,i)=>a+(i.loss||0),0).toLocaleString()}</div></div>`;
-  const listEl=document.getElementById('damaged-list');
-  if(!listEl)return;
-  listEl.innerHTML=items.sort((a,b)=>b.date.localeCompare(a.date)).map(i=>`
-    <div class="panel" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="font-size:28px">${i.type==='writeoff'?'🗑️':'⚠️'}</div>
-        <div style="flex:1">
-          <div style="font-weight:600">${i.productName} <span class="badge ${i.type==='writeoff'?'red':'orange'}" style="font-size:10px">${i.type==='writeoff'?'Write-off':'Damaged Stock'}</span></div>
-          <div style="font-size:12px;color:var(--text3)">${i.qty} ${i.unit} · ${i.date} · ${i.reason||'No reason'}</div>
-          ${i.type==='writeoff'?`<div style="font-size:12px;color:var(--red)">Loss: ${cur} ${(i.loss||0).toLocaleString()}</div>`
-          :`<div style="font-size:12px;color:var(--orange,#e67e22)">Reduced price: ${cur} ${i.reducedPrice||0}</div>`}
-        </div>
-        <button class="action-btn del" style="font-size:11px" onclick="deleteDamagedRecord(${i.id})">🗑</button>
-      </div>
-    </div>`).join('')||`<div class="panel" style="text-align:center;padding:40px;color:var(--text3)">No damaged goods recorded</div>`;
-}
-
-function quickMarkDamaged(productName){
-  const p=DB.products.find(x=>x.name===productName);
-  if(!p){toast('Product not found');return;}
-  // Check cost price — required for loss tracking
-  if(!p.cost||p.cost<=0){
-    let m=document.getElementById('modal-cost-needed');
-    if(!m){m=document.createElement('div');m.id='modal-cost-needed';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-cost-needed');});}
-    m.innerHTML=`<div class="modal" style="max-width:380px">
-      <div class="modal-header"><div class="modal-title">💰 Cost Price Required</div><button class="modal-close" onclick="closeModal('modal-cost-needed')">✕</button></div>
-      <div class="modal-body">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">To track the loss on damaged goods for <strong>${productName}</strong>, we need the cost price (what you paid for it).</div>
-        <div class="form-row"><div class="form-label">Cost Price (NKF) *</div><input class="form-input" id="cost-needed-input" type="number" placeholder="0" min="0"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeModal('modal-cost-needed')">Cancel</button>
-        <button class="btn-save" onclick="saveCostAndDamage('${productName.replace(/'/g,"\\'")}')">Save & Continue</button>
-      </div>
-    </div>`;
-    openModal('modal-cost-needed');
-    return;
-  }
-  // Pre-fill damaged modal
-  showDamagedModal();
-  setTimeout(()=>{
-    const inp=document.getElementById('dmg-product');
-    if(inp) inp.value=productName;
-  },200);
-}
-
-function saveCostAndDamage(productName){
-  const cost=parseFloat(document.getElementById('cost-needed-input').value)||0;
-  if(!cost){toast('Enter cost price');return;}
-  const p=DB.products.find(x=>x.name===productName);
-  if(p) p.cost=cost;
-  save();
-  closeModal('modal-cost-needed');
-  // Now open damaged modal
-  showDamagedModal();
-  setTimeout(()=>{const inp=document.getElementById('dmg-product');if(inp)inp.value=productName;},200);
-}
-
-function showDamagedModal(){
-  let m=document.getElementById('modal-damaged');
-  if(!m){m=document.createElement('div');m.id='modal-damaged';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-damaged');});}
-  const cur=DB.settings.currency;
-  m.innerHTML=`<div class="modal" style="max-width:440px">
-    <div class="modal-header"><div class="modal-title">⚠️ Record Damaged Item</div><button class="modal-close" onclick="closeModal('modal-damaged')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-row"><div class="form-label">Product *</div>
-        <input class="form-input" id="dmg-product" placeholder="Product name" list="dmg-product-list">
-        <datalist id="dmg-product-list">${DB.products.map(p=>`<option value="${p.name}">`).join('')}</datalist>
-      </div>
-      <div class="form-row-2">
-        <div class="form-row"><div class="form-label">Quantity *</div><input class="form-input" id="dmg-qty" type="number" placeholder="1" min="1"></div>
-        <div class="form-row"><div class="form-label">Date</div><input class="form-input" id="dmg-date" type="date" value="${todayMinus(0)}"></div>
-      </div>
-      <div class="form-row"><div class="form-label">What happened?</div><input class="form-input" id="dmg-reason" placeholder="e.g. Dropped, water damage..."></div>
-      <div style="font-size:13px;font-weight:600;margin:14px 0 8px">Action:</div>
-      <div style="display:flex;gap:10px;margin-bottom:14px">
-        <label style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius2);padding:10px;cursor:pointer">
-          <input type="radio" name="dmg-type" id="dmg-writeoff" value="writeoff" checked onchange="toggleDamageType()">
-          <div><div style="font-weight:600;font-size:13px">🗑️ Write Off</div><div style="font-size:11px;color:var(--text3)">Remove from stock, record loss</div></div>
-        </label>
-        <label style="flex:1;display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--radius2);padding:10px;cursor:pointer">
-          <input type="radio" name="dmg-type" id="dmg-sell" value="damaged" onchange="toggleDamageType()">
-          <div><div style="font-weight:600;font-size:13px">⚠️ Sell Damaged</div><div style="font-size:11px;color:var(--text3)">Keep in stock at reduced price</div></div>
-        </label>
-      </div>
-      <div id="dmg-reduced-price-row" style="display:none" class="form-row"><div class="form-label">Reduced Sell Price (${cur})</div><input class="form-input" id="dmg-reduced-price" type="number" placeholder="0"></div>
-    </div>
-    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-damaged')">Cancel</button><button class="btn-save" onclick="saveDamagedItem()">Save</button></div>
-  </div>`;
-  openModal('modal-damaged');
-}
-
-function toggleDamageType(){
-  const isSell=document.getElementById('dmg-sell')?.checked;
-  const row=document.getElementById('dmg-reduced-price-row');
-  if(row) row.style.display=isSell?'':'none';
-}
-
-function saveDamagedItem(){
-  const name=document.getElementById('dmg-product').value.trim();
-  const qty=parseInt(document.getElementById('dmg-qty').value)||1;
-  const date=document.getElementById('dmg-date').value||todayMinus(0);
-  const reason=document.getElementById('dmg-reason').value.trim();
-  const type=document.querySelector('input[name="dmg-type"]:checked')?.value||'writeoff';
-  const reducedPrice=parseFloat(document.getElementById('dmg-reduced-price')?.value)||0;
-  if(!name){toast('Enter product name');return;}
-  const p=DB.products.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(!p){toast('Product not found in inventory');return;}
-  if(getTotalStock(p)<qty){toast(`Only ${getTotalStock(p)} ${p.unit} in stock`);return;}
-  // Deduct stock
-  p.stock=Math.max(0,(p.stock||0)-qty);
-  if(p.locations){
-    let rem=qty;
-    for(const loc of p.locations){if(rem<=0)break;const take=Math.min(loc.qty||0,rem);loc.qty-=take;rem-=take;}
-    p.locations=p.locations.filter(l=>(l.qty||0)>0);
-  }
-  // If selling damaged, adjust price
-  if(type==='damaged'&&reducedPrice>0){
-    p.price=reducedPrice;
-    p.damaged=true;
-    p.stock=(p.stock||0)+qty; // keep in stock at reduced price
-    if(!p.locations) p.locations=[];
-    const ul=p.locations.find(l=>l.zone.includes('Unlocated'));
-    if(ul) ul.qty=(ul.qty||0)+qty; else p.locations.push({zone:'⚠ Open / Unlocated',qty});
-  }
-  if(!DB.damagedGoods) DB.damagedGoods=[];
-  DB.damagedGoods.push({id:Date.now(),date,productName:name,productId:p.id,qty,unit:p.unit,reason,type,loss:type==='writeoff'?qty*(p.cost||0):0,reducedPrice,recordedBy:currentUser?currentUser.name:''});
-  logActivity('inventory',`⚠ Damaged goods: ${qty} ${p.unit} of ${name} — ${type==='writeoff'?'written off':'marked as damaged stock at '+DB.settings.currency+' '+reducedPrice}`);
-  save();closeModal('modal-damaged');renderDamaged();filterInventory();toast(`${name} recorded as ${type==='writeoff'?'write-off':'damaged stock'} ✓`);
-}
-
-function deleteDamagedRecord(id){
-  DB.damagedGoods=(DB.damagedGoods||[]).filter(i=>i.id!=id);
-  save();renderDamaged();toast('Record deleted');
-}
-
 // ═══════════════════════════════════════════════
 // ─── STOCK SOURCE POPUP (after sale) ───
 // ═══════════════════════════════════════════════
@@ -7467,29 +7403,29 @@ function showStockSourceModal(pendingItems){
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="skipStockSource()">Resolve Later</button>
-      <button class="btn-save" onclick="confirmStockSource(${JSON.stringify(pendingItems.map(i=>i.name))})">Confirm Sources</button>
+      <button class="btn-save" onclick="confirmStockSource()">Confirm Sources</button>
     </div>
   </div>`;
+  window._pendingStockItems=pendingItems;
   openModal('modal-stock-source');
 }
 
-function confirmStockSource(itemNames){
-  itemNames.forEach((name,i)=>{
+function confirmStockSource(){
+  const pendingItems=window._pendingStockItems||[];
+  pendingItems.forEach((item,i)=>{
     const selected=document.querySelector(`input[name="src-${i}"]:checked`);
     if(!selected) return;
     const zone=selected.value;
-    const p=DB.products.find(x=>x.name===name);
+    const p=DB.products.find(x=>x.name===item.name);
     if(!p) return;
-    const item=document.querySelector(`input[name="src-${i}"]`)?.closest?.('[data-item]');
-    // Find how many needed from this zone
-    const pending=(DB.pendingStockSource||[]).find(x=>x.productName===name)||{remaining:1};
     const loc=p.locations?.find(l=>l.zone===zone);
     if(loc){
-      loc.qty=Math.max(0,(loc.qty||0)-pending.remaining);
+      loc.qty=Math.max(0,(loc.qty||0)-item.remaining);
       p.locations=p.locations.filter(l=>(l.qty||0)>0);
-      logActivity('inventory',`Stock source confirmed: ${pending.remaining} ${p.unit} of ${name} from ${zone.split('›').pop()?.trim()}`);
+      logActivity('inventory',`Stock source confirmed: ${item.remaining} ${p.unit} of ${item.name} from ${zone.split('›').pop()?.trim()}`);
     }
   });
+  window._pendingStockItems=null;
   save();
   closeModal('modal-stock-source');
   toast('Stock sources confirmed ✓');
@@ -7501,7 +7437,7 @@ function skipStockSource(){
 }
 
 // ─── END NEW FEATURES ───
-function logActivity(type, detail, amount=0){
+function logActivity(type, detail, amount=0, undoData=null){
   if(!DB.activityLog) DB.activityLog=[];
   DB.activityLog.push({
     id:Date.now(),
@@ -7509,7 +7445,8 @@ function logActivity(type, detail, amount=0){
     user:currentUser?currentUser.name:'System',
     role:currentUser?currentUser.role:'',
     type, detail,
-    amount:amount||0
+    amount:amount||0,
+    undoData // stores snapshot/undo info
   });
   if(DB.activityLog.length>1000) DB.activityLog=DB.activityLog.slice(-1000);
 }
@@ -7743,6 +7680,8 @@ function renderStockCount(){
           const systemQty=getTotalStock(p);
           const counted=stockCountData[p.id];
           const diff=counted!==undefined?counted-systemQty:null;
+          const diffColor=diff===0?'var(--green)':diff>0?'var(--blue)':'var(--red)';
+          const diffHtml=diff!==null?'<span style="color:'+diffColor+'">'+(diff>0?'+':'')+diff+'</span>':'—';
           return `<tr>
             <td style="font-weight:500;font-size:12px">${p.name}</td>
             <td style="font-size:11px;color:var(--text3)">${p.cat||'—'}</td>
@@ -7752,9 +7691,7 @@ function renderStockCount(){
                 style="width:80px;padding:5px 8px;font-size:13px"
                 oninput="stockCountData['${p.id}']=this.value===''?undefined:parseInt(this.value);updateSCDiff('${p.id}',${systemQty})">
             </td>
-            <td id="sc-diff-${p.id}" style="font-family:var(--font-head);font-size:13px">
-              ${diff!==null?`<span style="color:${diff===0?'var(--green)':diff>0?'var(--blue)':'var(--red)'}">${diff>0?'+':''}${diff}</span>`:'—'}
-            </td>
+            <td id="sc-diff-${p.id}" style="font-family:var(--font-head);font-size:13px">${diffHtml}</td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -7837,6 +7774,41 @@ function logSaleActivity(sale){
   }
 }
 
+function undoActivity(id){
+  const a=(DB.activityLog||[]).find(x=>x.id===id);
+  if(!a||!a.undoData){toast('Nothing to undo');return;}
+  if(a.undone){toast('Already undone');return;}
+  const u=a.undoData;
+  const cur=DB.settings.currency;
+
+  if(u.undoType==='stockAdj'){
+    // Restore product to snapshot state
+    const idx=DB.products.findIndex(x=>x.id===u.productId);
+    if(idx<0){toast('Product not found — cannot undo');return;}
+    DB.products[idx]={...DB.products[idx],...u.snapshot.product,id:DB.products[idx].id};
+    logActivity('inventory',`↩ Undo stock adjustment: ${DB.products[idx].name} restored to previous state`);
+    a.undone=true;
+    save();filterInventory();filterActivity();
+    toast(`Stock adjustment undone ✓`);
+
+  } else if(u.undoType==='productEdit'){
+    const idx=DB.products.findIndex(x=>x.id===u.productId);
+    if(idx<0){toast('Product not found — cannot undo');return;}
+    DB.products[idx]={...u.snapshot,id:DB.products[idx].id};
+    logActivity('inventory',`↩ Undo product edit: ${DB.products[idx].name} restored to previous state`);
+    a.undone=true;
+    save();filterInventory();filterActivity();
+    toast(`Product edit undone ✓`);
+
+  } else if(u.undoType==='supplierPayment'){
+    DB.supplierPayments=(DB.supplierPayments||[]).filter(p=>p.id!==u.paymentId);
+    logActivity('purchase',`↩ Undo supplier payment reversed: ${cur} ${u.amount} to ${u.supplier}`);
+    a.undone=true;
+    save();renderSuppliers();filterActivity();
+    toast(`Supplier payment undone ✓`);
+  }
+}
+
 function filterActivity(){
   if(!DB.activityLog) return;
   const user=(document.getElementById('act-filter-user')||{}).value||'';
@@ -7868,12 +7840,17 @@ function filterActivity(){
         <div style="padding-top:4px;border-top:1px solid var(--border);font-weight:600;color:var(--accent)">Total: ${cur} ${(a.amount||0).toLocaleString()}</div>
       </div>`;
     }
+    const canUndo=a.undoData&&['stockAdj','productEdit','damaged','supplierPayment'].includes(a.undoData.undoType);
     return `<tr>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;vertical-align:top;padding-top:10px">${timeStr}</td>
       <td style="vertical-align:top;padding-top:10px"><span style="font-weight:500">${a.user}</span><br><span style="font-size:10px;color:var(--text3)">${a.role||''}</span></td>
       <td style="vertical-align:top;padding-top:10px"><span class="badge ${typeBadge[a.type]||'gray'}">${typeIcon[a.type]||'•'} ${typeLabel[a.type]||a.type}</span></td>
-      <td style="font-size:12px;color:var(--text2);max-width:340px">${a.detail}${itemsDetail}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:300px">${a.detail}${itemsDetail}</td>
       <td style="font-family:var(--font-head);color:${a.amount?'var(--accent)':'var(--text3)'};vertical-align:top;padding-top:10px;white-space:nowrap">${a.amount?cur+' '+a.amount.toLocaleString():'—'}</td>
+      <td style="vertical-align:top;padding-top:8px;white-space:nowrap">
+        ${canUndo&&!a.undone?`<button class="action-btn" style="font-size:11px;color:var(--orange,#e67e22);border-color:var(--orange,#e67e22)" onclick="undoActivity(${a.id})">↩ Undo</button>`:''}
+        ${a.undone?`<span style="font-size:11px;color:var(--text3)">↩ Undone</span>`:''}
+      </td>
     </tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">No activity recorded yet</td></tr>';
 }
@@ -7914,23 +7891,30 @@ function filterRequests(){
     return (!statusF||r.status===statusF)&&(!typeF||r.type===typeF);
   });
   const cur='NKF';
-  document.getElementById('requests-tbody').innerHTML=filtered.map(r=>`
-    <tr style="${r.status==='pending'?'background:rgba(45,156,219,0.04)':''}">
-      <td style="font-size:12px;color:var(--text3)">${r.date}</td>
-      <td style="font-weight:500">${r.submittedBy}</td>
-      <td><span class="badge ${r.type==='stock'?'green':r.type==='price'?'orange':r.type==='edit'?'blue':r.type==='addproduct'?'green':r.type==='expense'?'orange':'red'}">${r.type==='stock'?'📦 Stock':r.type==='price'?'💰 Price':r.type==='edit'?'✏ Edit':r.type==='addproduct'?'➕ New Product':r.type==='expense'?'💸 Expense':'🗑 Delete'}</span></td>
-      <td>${r.product}</td>
-      <td style="font-size:12px;color:var(--text2)">${r.details}</td>
-      <td style="font-size:12px;color:var(--text3);max-width:150px">${r.reason}</td>
+  document.getElementById('requests-tbody').innerHTML=filtered.map(r=>{
+    const typeLabel={stock:'📦 Stock',price:'💰 Price',edit:'✏ Edit',addproduct:'➕ New Product',expense:'💸 Expense',delete:'🗑 Delete',damaged:'⚠️ Damaged'}[r.type]||r.type;
+    const typeBadge={stock:'green',price:'orange',edit:'blue',addproduct:'green',expense:'orange',delete:'red',damaged:'orange'}[r.type]||'gray';
+    const itemName=r.product||r.item||'—';
+    const details=r.type==='delete'?`Delete: ${itemName}`
+      :r.type==='damaged'?`${itemName} ×${r.qty||1} — ${r.action==='writeoff'?'Write off':'Sell damaged'}`
+      :r.details||'—';
+    return `<tr style="${r.status==='pending'?'background:rgba(45,156,219,0.04)':''}">
+      <td style="font-size:12px;color:var(--text3)">${r.date}${r.time?' '+r.time:''}</td>
+      <td style="font-weight:500">${r.requestedBy||r.submittedBy||'—'}</td>
+      <td><span class="badge ${typeBadge}">${typeLabel}</span></td>
+      <td>${itemName}</td>
+      <td style="font-size:12px;color:var(--text2)">${details}</td>
+      <td style="font-size:12px;color:var(--text3);max-width:150px">${r.reason||'—'}</td>
       <td><span class="badge ${r.status==='pending'?'blue':r.status==='approved'?'green':'red'}">${r.status}</span>
         ${r.managerNote?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${r.managerNote}</div>`:''}</td>
-      <td>
+      <td style="white-space:nowrap">
         ${r.status==='pending'?`
           <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="handleRequest(${r.id},'approved')">✓ Approve</button>
           <button class="action-btn del" onclick="handleRequest(${r.id},'rejected')">✕ Reject</button>
         `:'<span style="font-size:11px;color:var(--text3)">Done</span>'}
       </td>
-    </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No requests found</td></tr>';
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No requests found</td></tr>';
 }
 
 function updateRequestsBadge(){
@@ -7947,6 +7931,72 @@ function setReqStockMode(mode){
   if(addBtn) addBtn.style.cssText=mode==='add'?'padding:8px;border-radius:var(--radius);border:2px solid var(--green);background:rgba(39,174,96,0.15);color:var(--green);font-weight:600;cursor:pointer':'padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-weight:600;cursor:pointer';
   if(remBtn) remBtn.style.cssText=mode==='remove'?'padding:8px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(231,76,60,0.15);color:var(--red);font-weight:600;cursor:pointer':'padding:8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-weight:600;cursor:pointer';
   if(lbl) lbl.textContent=mode==='add'?'Quantity to Add *':'Quantity to Remove *';
+}
+
+function showDeleteRequestModal(type,itemName){
+  let m=document.getElementById('modal-del-request');
+  if(!m){m=document.createElement('div');m.id='modal-del-request';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-del-request');});}
+  const isDamaged=type==='damaged';
+  m.innerHTML=`<div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">${isDamaged?'⚠️ Report Damaged Item':'🗑 Request Deletion'}</div>
+      <button class="modal-close" onclick="closeModal('modal-del-request')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">
+        ${isDamaged?'Report a damaged item to the manager for review and recording.'
+        :'Request to delete an item. A manager will review and action it.'}
+      </div>
+      <div class="form-row"><div class="form-label">${isDamaged?'Product Name':'Item / Record'}</div>
+        <input class="form-input" id="del-req-item" value="${itemName||''}" placeholder="${isDamaged?'Which product is damaged?':'What needs to be deleted?'}">
+      </div>
+      ${isDamaged?`
+      <div class="form-row-2">
+        <div class="form-row"><div class="form-label">Qty Damaged</div><input class="form-input" id="del-req-qty" type="number" placeholder="1" min="1"></div>
+        <div class="form-row"><div class="form-label">Suggested Action</div>
+          <select class="form-select" id="del-req-action">
+            <option value="writeoff">Write off (remove from stock)</option>
+            <option value="damaged">Keep at reduced price</option>
+          </select></div>
+      </div>`:''}
+      <div class="form-row"><div class="form-label">Reason / Notes *</div>
+        <textarea class="form-textarea" id="del-req-reason" placeholder="${isDamaged?'What happened to the item?':'Why should this be deleted?'}" style="height:80px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-del-request')">Cancel</button>
+      <button class="btn-save" onclick="submitDeleteRequest('${type}')">📬 Send Request</button>
+    </div>
+  </div>`;
+  openModal('modal-del-request');
+}
+
+function submitDeleteRequest(type){
+  const item=document.getElementById('del-req-item').value.trim();
+  const reason=document.getElementById('del-req-reason').value.trim();
+  if(!item){toast('Enter item name');return;}
+  if(!reason){toast('Reason is required');return;}
+  const isDamaged=type==='damaged';
+  const qty=isDamaged?(parseInt(document.getElementById('del-req-qty')?.value)||1):0;
+  const action=isDamaged?document.getElementById('del-req-action')?.value:'';
+  if(!DB.requests) DB.requests=[];
+  DB.requests.push({
+    id:Date.now(),
+    type:isDamaged?'damaged':'delete',
+    item,qty,action,reason,
+    requestedBy:currentUser?currentUser.name:'',
+    date:todayMinus(0),
+    time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    status:'pending'
+  });
+  logActivity('request',`${isDamaged?'Damaged item reported':'Delete request'}: ${item} by ${currentUser?currentUser.name:''} — ${reason}`);
+  save();
+  closeModal('modal-del-request');
+  // Update requests badge
+  const pending=(DB.requests||[]).filter(r=>r.status==='pending').length;
+  const badge=document.getElementById('requests-badge');
+  if(badge){badge.style.display=pending?'':'none';badge.textContent=pending;}
+  toast(`Request sent to manager ✓`);
 }
 
 function showRequestModal(type){
@@ -8103,9 +8153,16 @@ function handleRequest(id,action){
         logActivity('inventory',`Expense approved (no session): ${desc} — NKF ${amount}`);
       }
     } else if(r.type==='delete'){
-      sendToRecycleBin('product',r.product,currentUser?currentUser.name:'',`Deleted via request by ${r.submittedBy}`);
-      DB.products=DB.products.filter(x=>x.name!==r.product);
-      logActivity('inventory',`Product deleted (approved): ${r.product} (by ${r.submittedBy})`);
+      const itemName=r.item||r.product;
+      const prod=DB.products.find(x=>x.name===itemName);
+      if(prod){
+        sendToRecycleBin('product',{...prod},currentUser?currentUser.name:'',`Deleted via request by ${r.requestedBy||r.submittedBy}`);
+        DB.products=DB.products.filter(x=>x.name!==itemName);
+        logActivity('inventory',`Product deleted (approved): ${itemName} (requested by ${r.requestedBy||r.submittedBy})`);
+        filterInventory();
+      } else {
+        logActivity('inventory',`Delete approved but product not found: ${itemName}`);
+      }
     } else if(r.type==='addproduct'){
       const d=r.extraData;
       const newProd={id:Date.now(),name:d.name,cat:d.cat||'Other',price:d.price||0,cost:d.cost||0,stock:d.stock||0,unit:d.unit||'pcs',desc:d.desc||'',sku:'',pcsPerBox:0,metersPerRoll:0,needsPrice:!d.price,zone:'',zones:[],locations:[]};
@@ -8578,7 +8635,7 @@ function renderDrawer(){
   }
 
   // Hide financial panels from employees
-  const panelsForManagerOnly=['drawer-session-info','drawer-expenses-list','drawer-eod-summary','drawer-weekly'];
+  const panelsForManagerOnly=['drawer-session-info','drawer-expenses-list','drawer-eod-summary'];
   panelsForManagerOnly.forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.closest('.panel')?el.closest('.panel').style.display=isManager?'':'none':el.style.display=isManager?'':'none';
@@ -8723,7 +8780,7 @@ function renderDrawerHistory(cur,today){
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">No previous sessions</td></tr>';
-  renderWeeklyAnalysis(cur);
+  // weekly analysis removed
 }
 
 function addExpense(){
@@ -9015,19 +9072,6 @@ function exportMonthlyReport(){
     rows.push(['','','From Drawer Total / ካብ ካሳ',drawerTotal.toFixed(0),'','']);
     rows.push(['','','From Safe Total / ካብ ካዝና',safeTotal.toFixed(0),'','']);
     rows.push(['','','GRAND TOTAL / ጠቕላሊ',(drawerTotal+safeTotal).toFixed(0),'','']);
-    rows.push([]);
-  }
-
-  // ── DAMAGED GOODS THIS MONTH ──
-  const monthDamaged=(DB.damagedGoods||[]).filter(d=>d.date&&d.date.startsWith(month));
-  if(monthDamaged.length){
-    const totalLoss=monthDamaged.filter(d=>d.type==='writeoff').reduce((a,d)=>a+(d.loss||0),0);
-    rows.push(['═══ DAMAGED GOODS ═══']);
-    rows.push(['ዝተጎድኤ ዕቃ','']);
-    rows.push(['Date','Product','Qty','Type','Loss ('+cur+')','Reason','Recorded By']);
-    monthDamaged.sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>
-      rows.push([d.date,d.productName,d.qty,d.type==='writeoff'?'Write-off':'Damaged Stock',(d.loss||0).toFixed(0),d.reason||'—',d.recordedBy||'—']));
-    rows.push(['','','','TOTAL LOSS / ጠቕላሊ ክሳራ',totalLoss.toFixed(0),'','']);
     rows.push([]);
   }
 
@@ -9523,11 +9567,18 @@ function updateStockAlertBadge(){
         <div style="color:var(--text3);margin-top:2px">by <em>${a.by}</em> · ${a.date} ${a.time}${a.type!=='product_edit'&&a.type!=='discount'?' · '+a.reason:''}</div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
-        <button onclick="${a.type==='discount'?`nav('reports')`:a.action==='add_request'||a.type==='product_edit'?`nav('requests')`:`nav('inventory')`};markStockAlertSeen(${a.id})" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;white-space:nowrap">${a.type==='discount'?'→ Sales':a.action==='add_request'?'→ Review':'→ View'}</button>
+        <button onclick="alertNav('${a.type}','${a.action||''}',${a.id})" style="background:#9b59b6;border:none;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer;color:#fff;white-space:nowrap">${a.type==='discount'?'→ Sales':a.action==='add_request'?'→ Review':'→ View'}</button>
         <button onclick="markStockAlertSeen(${a.id})" style="background:none;border:1px solid var(--border);border-radius:12px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text3)">✕</button>
       </div>
     </div>`).join('')}
   </div>`:'';
+}
+
+function alertNav(type,action,id){
+  markStockAlertSeen(id);
+  if(type==='discount') nav('reports');
+  else if(action==='add_request'||type==='product_edit') nav('requests');
+  else nav('inventory');
 }
 
 function markStockAlertSeen(id){
@@ -9559,7 +9610,6 @@ if(!DB.supplierPayments) DB.supplierPayments=[];
 if(!DB.expenses) DB.expenses=[];
 if(!DB.shifts) DB.shifts=[];
 if(!DB.transfers) DB.transfers=[];
-if(!DB.damagedGoods) DB.damagedGoods=[];
 if(!DB.pendingStockSource) DB.pendingStockSource=[];
 // Migrate any old "Zone X" named locations to Open/Unlocated
 DB.products.forEach(p=>{
