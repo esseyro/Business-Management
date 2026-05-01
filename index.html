@@ -3292,8 +3292,10 @@ function completeSale(){
   const saleDate=activeDrawerDate||today;
   const isPastDay=saleDate<today;
 
-  if(!isManager&&!session){
-    toast('The manager needs to open the day before sales can be made');return;
+  // Block everyone — no open session at all
+  if(!session){
+    toast('No day is open — the manager must open the cash drawer before any sales can be made');
+    return;
   }
 
   // Past day open — warn before proceeding
@@ -3322,15 +3324,6 @@ function completeSale(){
     return;
   }
 
-  // Warn manager if day is closed or not opened
-  if(isManager&&!session){
-    const todaySession=DB.drawerSessions.find(s=>s.date===today);
-    const msg=todaySession&&todaySession.closed
-      ?'The cash drawer for today is closed. Do you want to continue with the sale?'
-      :'The cash drawer has not been opened today. Do you want to continue with the sale?';
-    showSaleWarning(msg);
-    return;
-  }
   _doCompleteSale();
 }
 
@@ -5434,11 +5427,86 @@ function filterPurchases(){
       <td style="font-size:11px;color:var(--text3)">${i===0?p.recordedBy||'':''}</td>
       <td>${i===0?`<span class="badge ${p.paymentStatus==='paid'?'green':p.paymentStatus==='partial'?'orange':'red'}" style="font-size:10px">${p.paymentStatus==='paid'?'✓ Paid':p.paymentStatus==='partial'?'~ Partial':'⚠ Unpaid'}</span>${p.needsAttention?`<div style="font-size:10px;color:var(--red)">⚠ No due date</div>`:p.dueDate?`<div style="font-size:10px;color:var(--text3)">Due: ${p.dueDate}</div>`:''}`:''}</td>
       <td style="white-space:nowrap;display:flex;gap:4px">${i===0?`
+        ${p.paymentStatus!=='paid'?`<button class="action-btn" style="font-size:11px;color:var(--green);border-color:var(--green)" onclick="showPurchasePaymentModal(${p.id})">💰 Pay</button>`:''}
         ${currentUser&&currentUser.role==='Manager'?`<button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>
         <button class="action-btn del" style="font-size:11px" onclick="deletePurchase(${p.id})">🗑</button>`:`<button class="action-btn" style="font-size:11px" onclick="editPurchase(${p.id})">✏ Edit</button>`}
       `:''}</td>
     </tr>`);
   }).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:30px">No purchases recorded yet</td></tr>';
+}
+
+function showPurchasePaymentModal(purchaseId){
+  const p=(DB.purchases||[]).find(x=>x.id===purchaseId);
+  if(!p) return;
+  const cur=DB.settings.currency;
+  const alreadyPaid=(DB.supplierPayments||[]).filter(sp=>sp.purchaseId===purchaseId).reduce((a,sp)=>a+sp.amount,0);
+  const remaining=Math.max(0,(p.grandTotal||0)-alreadyPaid);
+  let m=document.getElementById('modal-purchase-pay');
+  if(!m){m=document.createElement('div');m.id='modal-purchase-pay';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-purchase-pay');});}
+  m.innerHTML=`<div class="modal" style="max-width:400px">
+    <div class="modal-header"><div class="modal-title">💰 Record Payment</div><button class="modal-close" onclick="closeModal('modal-purchase-pay')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;color:var(--text3)">Supplier</div>
+        <div style="font-weight:600">${p.supplier||'—'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="background:var(--bg3);padding:8px;border-radius:var(--radius2);text-align:center">
+          <div style="font-size:10px;color:var(--text3)">Total Bill</div>
+          <div style="font-family:var(--font-head);font-size:14px">${cur} ${(p.grandTotal||0).toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg3);padding:8px;border-radius:var(--radius2);text-align:center">
+          <div style="font-size:10px;color:var(--text3)">Already Paid</div>
+          <div style="font-family:var(--font-head);font-size:14px;color:var(--green)">${cur} ${alreadyPaid.toLocaleString()}</div>
+        </div>
+        <div style="background:var(--bg3);padding:8px;border-radius:var(--radius2);text-align:center">
+          <div style="font-size:10px;color:var(--text3)">Remaining</div>
+          <div style="font-family:var(--font-head);font-size:14px;color:var(--red)">${cur} ${remaining.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="form-row"><div class="form-label">Amount Paying Now (${cur}) *</div>
+        <input class="form-input" id="pp-pay-amount" type="number" placeholder="${remaining}" value="${remaining}" min="1" max="${remaining}">
+      </div>
+      <div class="form-row"><div class="form-label">Payment Date</div>
+        <input class="form-input" id="pp-pay-date" type="date" value="${todayMinus(0)}">
+      </div>
+      <div class="form-row"><div class="form-label">Notes</div>
+        <input class="form-input" id="pp-pay-notes" placeholder="Optional">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-purchase-pay')">Cancel</button>
+      <button class="btn-save" onclick="savePurchasePayment(${purchaseId},${p.grandTotal||0})">Save Payment</button>
+    </div>
+  </div>`;
+  openModal('modal-purchase-pay');
+}
+
+function savePurchasePayment(purchaseId, grandTotal){
+  const amount=parseFloat(document.getElementById('pp-pay-amount').value)||0;
+  const date=document.getElementById('pp-pay-date').value||todayMinus(0);
+  const notes=document.getElementById('pp-pay-notes').value.trim();
+  if(!amount||amount<=0){toast('Enter payment amount');return;}
+  const p=(DB.purchases||[]).find(x=>x.id===purchaseId);
+  if(!p) return;
+  if(!DB.supplierPayments) DB.supplierPayments=[];
+  const payId=Date.now();
+  DB.supplierPayments.push({id:payId,purchaseId,supplier:p.supplier||'',amount,date,notes,recordedBy:currentUser?currentUser.name:''});
+  // Recalculate payment status
+  const totalPaid=(DB.supplierPayments||[]).filter(sp=>sp.purchaseId===purchaseId).reduce((a,sp)=>a+sp.amount,0);
+  if(totalPaid>=grandTotal){
+    p.paymentStatus='paid';
+    p.needsAttention=false;
+  } else {
+    p.paymentStatus='partial';
+  }
+  const cur=DB.settings.currency;
+  logActivity('purchase',`Supplier payment: ${cur} ${amount} to ${p.supplier||'supplier'} for purchase on ${p.date}${notes?' — '+notes:''}`,0,{undoType:'supplierPayment',paymentId:payId,amount,supplier:p.supplier||''});
+  save();
+  closeModal('modal-purchase-pay');
+  renderPurchases();
+  renderSuppliers();
+  toast(`Payment of ${cur} ${amount} recorded ✓ — ${p.paymentStatus==='paid'?'fully paid!':'partial payment saved'}`);
 }
 
 function editPurchaseSupplier(id){
@@ -5684,7 +5752,7 @@ function renderSupplierView(expandedName){
 
   container.innerHTML=sorted.map(g=>{
     const isExpanded=expandedName===g.name;
-    const allLines=g.records.flatMap(p=>(p.lines||[{item:p.item,cat:p.cat,qty:p.qty,unit:p.unit,unitPrice:p.unitPrice,total:p.total}]).map(l=>({...l,date:p.date,time:p.time,id:p.id})));
+    const allLines=g.records.flatMap(p=>(p.lines||[{item:p.item,cat:p.cat,qty:p.qty,unit:p.unit,unitPrice:p.unitPrice,total:p.total}]).map(l=>({...l,date:p.date,time:p.time,id:p.id}))).sort((a,b)=>b.date.localeCompare(a.date));
 
     // Get unique items bought from this supplier
     const itemMap={};
@@ -5714,7 +5782,7 @@ function renderSupplierView(expandedName){
       ${isExpanded?`
       <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
         ${uniqueItems.map(item=>{
-          const itemRecords=allLines.filter(l=>l.item===item.name);
+          const itemRecords=allLines.filter(l=>l.item===item.name).sort((a,b)=>b.date.localeCompare(a.date)||(b.time||'').localeCompare(a.time||''));
           return `<div style="margin-bottom:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:var(--radius2);margin-bottom:6px">
               <div>
@@ -9595,6 +9663,43 @@ function exportMonthlyReport(){
     rows.push(['','','','TOTAL OUTSTANDING / ጠቕላሊ ዝተረፈ','',totalOutstanding.toFixed(0),'']);
     rows.push([]);
   }
+
+  rows.push([]);
+
+  // ── RETURNS THIS MONTH ──
+  const monthReturns=(DB.returns||[]).filter(r=>r.date&&r.date.startsWith(month)&&r.status!=='pending_approval');
+  rows.push(['═══ RETURNS THIS MONTH ═══']);
+  rows.push(['ናይዚ ወርሒ ምምላስ ዕቃ','']);
+  if(monthReturns.length){
+    const totalRefunded=monthReturns.filter(r=>r.resolution==='refunded').reduce((a,r)=>a+(r.refundAmount||0),0);
+    rows.push(['Date','Customer','Item(s)','Reason','Resolution','Refund Amount ('+cur+')','Source','Submitted By']);
+    monthReturns.sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>{
+      const source=r.saleDate===r.date?'Drawer':'Safe';
+      rows.push([r.date,r.customer,r.item,r.reason||'—',r.resolution||'—',(r.refundAmount||0).toFixed(0),source,r.submittedBy||'—']);
+    });
+    rows.push(['','','','','TOTAL REFUNDED / ጠቕላሊ ዝተመልሰ',totalRefunded.toFixed(0),'','']);
+  } else {
+    rows.push(['No returns this month']);
+  }
+  rows.push([]);
+
+  // ── INVENTORY SNAPSHOT ──
+  rows.push(['═══ CURRENT INVENTORY SNAPSHOT ═══']);
+  rows.push(['ሕጂ ዘሎ ዕቃ (ኩነታት ዕዳጋ)','']);
+  rows.push(['Product','Category','Unit','Current Stock','Low Stock Threshold','Sell Price ('+cur+')','Cost Price ('+cur+')','Est. Value ('+cur+')']);
+  let totalInventoryValue=0;
+  DB.products.filter(p=>p.price>0||getTotalStock(p)>0).sort((a,b)=>a.cat?.localeCompare(b.cat)||a.name.localeCompare(b.name)).forEach(p=>{
+    const stock=p.unit==='rolls'&&p.metersPerRoll
+      ?`${getTotalFullRolls(p)} rolls (${getTotalRollMeters(p)}m)`
+      :`${getTotalStock(p)} ${p.unit}`;
+    const stockNum=getTotalStock(p);
+    const val=(p.cost||0)*stockNum;
+    totalInventoryValue+=val;
+    const threshold=p.lowStockThreshold>0?p.lowStockThreshold:(BULK_CATS.includes(p.cat)?DB.settings.lowStockBig||100:DB.settings.lowStock||10);
+    rows.push([p.name,p.cat||'—',p.unit,stock,threshold,p.price||0,p.cost||0,Math.round(val).toFixed(0)]);
+  });
+  rows.push(['','','','','','','TOTAL INVENTORY VALUE / ጠቕላሊ ዋጋ ዕቃ',totalInventoryValue.toFixed(0)]);
+  rows.push([]);
 
   // ── FULL TIGRINYA SECTION ──
   rows.push([]);
