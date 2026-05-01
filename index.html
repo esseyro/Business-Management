@@ -1500,8 +1500,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     </div>
     <div class="modal-body">
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2)">Record all items bought in one session. Each line is a separate item.</div>
-      <div class="form-row-2">
-        <div class="form-row"><div class="form-label">Supplier / Seller Name</div><input class="form-input" id="pur-supplier" placeholder="Who sold it to you"></div>
+      <div class="form-row">
+        <div class="form-label">Supplier / Seller Name</div>
+        <input class="form-input" id="pur-supplier" placeholder="Type or select supplier..." list="pur-supplier-datalist" autocomplete="off">
+        <datalist id="pur-supplier-datalist"></datalist>
+      </div>
 
         <!-- Payment Terms -->
         <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-top:8px">
@@ -2086,6 +2089,11 @@ function emergencyClearAll(){
 }
 
 
+function normalizeSupplier(name){
+  if(!name||!name.trim()) return '';
+  return name.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+}
+
 function save() {
   try {
     // Strip large undo snapshots from activityLog before saving — store separately
@@ -2151,6 +2159,9 @@ function load() {
     if(p.zones) p.zones=p.zones.map(z=>z.includes('Unlocated Items')?'⚠ Open / Unlocated':z);
   });
   migrateAllRollProducts();
+  // Normalize all supplier names to title case so "noh" and "Noh" are treated as same
+  (DB.purchases||[]).forEach(p=>{if(p.supplier) p.supplier=normalizeSupplier(p.supplier);});
+  (DB.supplierPayments||[]).forEach(p=>{if(p.supplier) p.supplier=normalizeSupplier(p.supplier);});
   // Fix roll product locations missing fullRolls field
   DB.products.forEach(p=>{
     if(p.unit==='rolls'&&p.metersPerRoll&&p.locations){
@@ -5140,18 +5151,34 @@ function showProductDetail(name){
       <span style="color:var(--text3)">${s.date}</span><span>${s.customer}</span>
       <span style="color:var(--text3);font-size:11px">${s.servedBy||''}</span>
       <span style="color:var(--accent)">×${s.items.find(i=>i.name===name)?.qty}</span></div>`).join('')||'<div style="color:var(--text3);font-size:12px;padding:6px 0">No sales yet</div>'}
-    <div style="font-size:12px;font-weight:600;color:var(--text3);margin:12px 0 6px;text-transform:uppercase;letter-spacing:0.5px">Purchase History</div>
-    ${purchaseHistory.length?purchaseHistory.slice(0,5).map(p=>{
-      const line=p.lines.find(l=>l.item?.toLowerCase()===name.toLowerCase());
-      return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
-        <span style="color:var(--text3)">${p.date}</span>
-        <span style="color:var(--text2)">${p.supplier||'—'}</span>
-        <span>×${line?.qty||'?'}</span>
-        <span style="color:var(--accent)">${line?.unitPrice?cur+' '+line.unitPrice+'/unit':'—'}</span>
-      </div>`;
-    }).join(''):`<div style="color:var(--text3);font-size:12px;padding:6px 0">No purchase records</div>`}
+    <div style="font-size:12px;font-weight:600;color:var(--text3);margin:12px 0 6px;text-transform:uppercase;letter-spacing:0.5px">Purchase Price History</div>
+    ${purchaseHistory.length?`
+      ${purchaseHistory.map((p,idx)=>{
+        const line=p.lines.find(l=>l.item?.toLowerCase()===name.toLowerCase());
+        const price=line?.unitPrice||0;
+        const prevP=purchaseHistory[idx+1];
+        const prevLine=prevP?.lines?.find(l=>l.item?.toLowerCase()===name.toLowerCase());
+        const prevPrice=prevLine?.unitPrice||0;
+        const diff=prevPrice&&price?((price-prevPrice)/prevPrice*100):null;
+        const trend=diff===null?''
+          :diff>0?`<span style="color:var(--red);font-size:11px">▲ ${diff.toFixed(0)}%</span>`
+          :diff<0?`<span style="color:var(--green);font-size:11px">▼ ${Math.abs(diff).toFixed(0)}%</span>`
+          :`<span style="color:var(--text3);font-size:11px">= same</span>`;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text3);min-width:82px">${p.date}</span>
+          <span style="color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.supplier||'—'}</span>
+          <span style="color:var(--text3);min-width:30px">×${line?.qty||'?'}</span>
+          <span style="font-family:var(--font-head);color:var(--accent);min-width:70px;text-align:right">${price?cur+' '+price:'—'}</span>
+          <span style="min-width:55px;text-align:right">${trend}</span>
+        </div>`;
+      }).join('')}
+      ${purchaseHistory.length>1?`<div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:right">
+        First: ${cur} ${(purchaseHistory[purchaseHistory.length-1].lines?.find(l=>l.item?.toLowerCase()===name.toLowerCase())?.unitPrice||0)} → 
+        Latest: ${cur} ${(purchaseHistory[0].lines?.find(l=>l.item?.toLowerCase()===name.toLowerCase())?.unitPrice||0)}
+      </div>`:''}
+    `:`<div style="color:var(--text3);font-size:12px;padding:6px 0">No purchase records</div>`}
     ${!lastSupplier?`<div style="background:rgba(231,176,0,0.1);border:1px solid rgba(231,176,0,0.3);border-radius:var(--radius2);padding:8px 12px;font-size:12px;margin-top:8px">
-      💡 No supplier recorded for this product — add one when you next purchase it for better reorder tracking.
+      💡 No supplier recorded — add one on next purchase.
     </div>`:''}`;
   detail.style.display='block';
 }
@@ -5829,6 +5856,10 @@ function showAddPurchaseModal(){
   const dubaiCb=document.getElementById('pur-is-dubai');
   if(dubaiCb){dubaiCb.checked=false;toggleDubaiMode(false);}
   renderPurLines();
+  // Populate supplier datalist with normalized unique names
+  const knownSuppliers=[...new Set((DB.purchases||[]).map(p=>normalizeSupplier(p.supplier)).filter(Boolean))].sort();
+  const dl=document.getElementById('pur-supplier-datalist');
+  if(dl) dl.innerHTML=knownSuppliers.map(s=>`<option value="${s}">`).join('');
   openModal('modal-purchase');
 }
 
@@ -5910,7 +5941,15 @@ function renderPurLines(){
 }
 
 function updatePurLineVariant(i){
-  // no-op — variant name is computed at save time
+  const name=purLines[i].item?.trim();
+  if(!name) return;
+  const existing=DB.products.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(existing&&existing.cat&&existing.cat!==purLines[i].cat){
+    purLines[i].cat=existing.cat;
+    // Update just the category select for this row without re-rendering all lines
+    const catSel=document.querySelector(`#pur-line-${i} select`);
+    if(catSel) catSel.value=existing.cat;
+  }
 }
 
 function getPurLineItemName(l){
@@ -6001,7 +6040,7 @@ function savePurchase(){
   const isDubai=document.getElementById('pur-is-dubai').checked;
   const rate=getExchangeRate();
   const purDate=document.getElementById('pur-date').value||todayMinus(0);
-  const purSupplier=document.getElementById('pur-supplier').value.trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+  const purSupplier=normalizeSupplier(document.getElementById('pur-supplier').value);
   const purNotes=document.getElementById('pur-notes').value;
   const purTime=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   const recordedBy=currentUser?currentUser.name:'';
