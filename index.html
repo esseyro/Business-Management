@@ -695,11 +695,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="dash-grid">
           <div class="panel">
             <div class="panel-title"><span class="dot"></span> Recent Sales</div>
-            <div id="recent-sales-list"></div>
+            <div id="recent-sales-list" style="max-height:300px;overflow-y:auto"></div>
           </div>
           <div class="panel">
             <div class="panel-title"><span class="dot" style="background:var(--red)"></span> Low Stock Alerts</div>
-            <div id="low-stock-list"></div>
+            <div id="low-stock-list" style="max-height:260px;overflow-y:auto"></div>
           </div>
         </div>
         <div class="panel">
@@ -946,7 +946,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         <div class="inv-table-wrap">
           <table class="inv-table">
             <thead><tr>
-              <th>Borrower</th><th>Amount</th><th>Date Given</th><th>Next Follow-up</th><th>Status</th><th>Approved By</th><th>Notes</th><th>Actions</th>
+              <th data-en="Borrower" data-ti="ብዳሪ">Borrower</th><th data-en="Amount" data-ti="ዝተረፈ ዕዳ">Amount</th><th data-en="Date Given" data-ti="ዕለት">Date Given</th><th data-en="Next Follow-up" data-ti="ዝቕጽል ክትትል">Next Follow-up</th><th data-en="Status" data-ti="ኩነታት">Status</th><th data-en="Approved By" data-ti="ዝፈቐደ">Approved By</th><th data-en="Notes" data-ti="ሓሳብ">Notes</th><th data-en="Actions" data-ti="ተግባር">Actions</th>
             </tr></thead>
             <tbody id="loan-tbody"></tbody>
           </table>
@@ -1502,8 +1502,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-radius:var(--radius2)">Record all items bought in one session. Each line is a separate item.</div>
       <div class="form-row">
         <div class="form-label">Supplier / Seller Name</div>
-        <input class="form-input" id="pur-supplier" placeholder="Type or select supplier..." list="pur-supplier-datalist" autocomplete="off">
-        <datalist id="pur-supplier-datalist"></datalist>
+        <div style="position:relative">
+          <input class="form-input" id="pur-supplier" placeholder="Type or click to see past suppliers..." autocomplete="off"
+            onfocus="showSupplierDropdown()" oninput="filterSupplierDropdown(this.value)">
+          <div id="pur-supplier-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);z-index:999;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-top:2px"></div>
+        </div>
       </div>
 
         <!-- Payment Terms -->
@@ -2242,88 +2245,208 @@ const TI = {
   'Customers':'ዓሚልቲ','Staff':'ሰራሕተኛ','Settings':'ምቕናዕ',
   'Cash Drawer':'ካሳ','Requests':'ጠለባት','Returns':'ምምላስ',
   'Suppliers':'ሸቐጥቲ','Expenses':'ወጻኢታት','Shifts':'ሸፍቲ',
-  'Credit & Loans':'ልቓሕ','From Drawer':'ካብ ካሳ','From Safe':'ካብ ካዝና',
-  'Write Off':'ሰርዝ','Damaged Stock':'ዝተጎድአ ዕቃ ንሽያጥ',
+  'Active':'ንጡፍ','Paid':'ተኸፊሉ','Checked':'ተፈቲሹ',
+  'Payment History':'ታሪኽ ክፍሊት','No loans recorded':'ምዝገባ ልቓሕ የልቦን',
+  'Awaiting manager':'ናይ ኣካያዲ ትጽቢት',
+  'of total':'ካብ ጠቕላሊ','paid':'ዝተኸፍለ',
+  'Unpaid & partial supplier purchases':'ዘይተኸፍለን ከፊልን ምዕዳግ',
+  'Net Position':'ናይ ሓቂ ኩነታት',
+  'What\'s owed minus what you owe':'ዝርከብካ ድኻ ዝኸፍሎ',
+  'What you\'re owed minus what you owe':'ዝርከብካ ድኻ ዝኸፍሎ',
+  'Cost of Goods':'ዋጋ ፍርያት',
+  'Safe Expenses':'ወጻኢ ካብ ካዝና',
+  'Gross Profit':'ጠቕላሊ ትርፊ',
+  'Sales (period)':'ሽያጥ (period)',
+  'Write Off':'ሰርዝ','Damaged Stock':'ዝተጎድአ ዕቃ',
   'Add Supplier':'ሸቐጣዪ ወሲኽ','Supplier Debt':'ዕዳ ሸቐጣዪ',
   'Record Payment':'ክፍሊት መዝግብ','Full Day':'ሙሉእ መዓልቲ','Half Day':'ፍርቂ መዓልቲ',
   'New Transfer':'ሓዲሽ ምርቃቕ','Transfer From':'ካብ','Transfer To':'ናብ',
-  'Partial Payment':'ከፊል ክፍሊት','Remaining Balance':'ዝተረፈ',
-  'Activity Log':'ናይ ስርሒት ቅዳሕ','Recycle Bin':'ቆሻሻ',
-  // Dashboard
+  'Partial Payment':'ከፊል ክፍሊት','Remaining Balance':'ዝተረፈ ሕዳር',
+  'Activity Log':'ናይ ስርሒት መዝገብ','Recycle Bin':'ቆሻሻ',
+  'Stock Count':'ቁጽሪ ክምችት','Stock Transfers':'ምንቅስቓስ ዕቃ',
+
+  // Dashboard headers
   "Today's Revenue":"ናይ ሎሚ እቶት","Total Products":"ጠቕላሊ ፍርያት",
   "Total Revenue":"ጠቕላሊ እቶት","Est. Profit":"ግምት ትርፊ",
-  "Recent Sales":"ዝሓለፈ ሽያጥ","Low Stock Alerts":"ትሑት ክምችት ማጠንቀቂ",
+  "Recent Sales":"ናይ ቀረባ ሽያጥ","Low Stock Alerts":"ማጠንቀቂ ትሑት ክምችት",
   "Sales This Week":"ሽያጥ ናይዛ ሰሙን","All time":"ኩሉ ግዜ",
   "sales today":"ሽያጥ ሎሚ","low stock":"ትሑት ክምችት",
   "All stock levels OK":"✓ ኩሉ ክምችት ጽቡቕ ኣሎ","No sales yet":"ሽያጥ የልቦን",
   "Customers Today":"ዓሚልቲ ሎሚ","Day Status":"ኩነታት መዓልቲ",
-  "served today":"ሎሚ ዝተገልገሉ","low stock":"ትሑት ክምችት",
+  "served today":"ሎሚ ዝተገልገሉ",
   "Open":"ክፉት","Closed":"ዝተዓጸወ","Not Opened":"ዘይተኸፍተ",
+  "Open Today":"ሎሚ ክፉት","Open (Past Day)":"ዝሓለፈ ዕለት ክፉት",
+  "Needs Attention":"ቆላሕታ ይደሊ","items need attention":"ቆላሕታ ዘድሊዮ ኣሎ",
+  "Manager opens the day":"ኣካያዲ መዓልቲ ይኸፍት","Day is closed":"መዓልቲ ዓጺዩ",
+  "Outstanding Balance":"ዝተረፈ ዕዳ","Active Credits":"ንጡፍ ልቓሕ",
+  "Customers with balance":"ዕዳ ዘለዎም ዓሚልቲ","Not yet paid":"ገና ዘይተኸፍለ",
+  "Paid back":"ዝተመልሰ",
+
   // Dashboard alerts
-  "items need attention":"ዝሓልፍ ናይ ኣካያዲ ቆላሕታ ዘድልዮ","need attention":"ቆላሕታ ዘድልዮ",
-  "product changes to review":"ናይ ፍርያት ለውጢ ክርአ","Dismiss all changes":"ኩሎም ዝርአ ምባሃሃል",
+  "items need attention":"ቆላሕታ ዘድሊዮ ኣሎ","need attention":"ቆላሕታ ዘድሊ",
+  "product changes to review":"ናይ ፍርያት ለውጢ ዝርአ","Dismiss all changes":"ኩሎም ምዝጋብ",
   "loan follow-up overdue":"ናይ ልቓሕ ክትትል ዝሓለፈ","Go to Loans":"ናብ ልቓሕ ኪድ",
-  "→ Review":"→ ርአ","→ View":"→ ርአ","→ Sales":"→ ሽያጥ",
+  "→ Review":"→ ርአ","→ View":"→ ርአ","→ Sales":"→ ሽያጥ","→ Pay":"→ ክፈል",
+  "→ Assign":"→ ሃብ","→ Fix":"→ ኣቕሕ","→ Approve":"→ ፍቓድ ሃብ",
+  "Open Day →":"ዕለት ክፈት →",
+  "overdue":"ዝሓለፈ ግዜ","due within 7 days":"ኣብ 7 መዓልቲ ዝኸፈልዎ",
+  "low on stock":"ትሑት ክምชት","completely out of stock":"ክምችት ወዲኡ",
+  "No supplier — add one on next purchase":"ሸቐጣዪ የልቦን — ኣብ ዝቕጽል ምዕዳግ ወሲኽ",
+  "No due date":"ዕለት ኣይተቐምጠን",
+
   // POS
   "Current Sale":"ሕጂ ዘሎ ሽያጥ","Add products to start a sale":"ፍርያት ወሲኽካ ሽያጥ ጀምር",
   "Subtotal":"ንኡስ ድምር","Discount":"ቅናሽ","Total":"ጠቕላሊ",
   "Discount on bill":"ቅናሽ ካብ ጠቕላሊ","Per item discount":"ቅናሽ ንነፍሲ ወከፍ ፍርያት",
   "Customer name":"ሽም ዓሚል",
   "⚡ COMPLETE SALE":"⚡ ሽያጥ ወዳእ","in stock":"ኣብ ክምችት","Out of stock!":"ክምችት ወዲኡ!",
-  "Max stock reached":"ዝለዓለ ክምችት በጺሕካ","Cart is empty":"ዝሽየጥ የልቦን",
-  "Walk-in":"ዝኣተወ ዓሚል",
+  "Walk-in":"ዝኣተወ ዓሚል","No day is open":"ዕለት ዘይተኸፍተ",
+  "💳 Partial Payment":"💳 ከፊል ክፍሊት",
+  "Paying Now":"ሕጂ ዝኸፍሎ","Still owed":"ዝተረፈ ዕዳ",
+  "Sale will be saved under":"ሽያጥ ክቕመጥ ናብ","past day":"ዝሓለፈ ዕለት",
+
   // Inventory
   "Products & Inventory":"ክምችት ፍርያት","Add Product":"ፍርያት ወሲኽ",
   "All Categories":"ኩሎም ዓይነት","Search products...":"ፍርያት ድለ...",
   "Product":"ፍርያት","Category":"ዓይነት","Price":"ዋጋ","Cost":"ዋጋ ምዕዳግ",
   "Stock":"ክምችት","Storage":"ዕቃ ቤት","Actions":"ተግባር",
   "Edit":"ምምሕያሽ","Delete":"ሰርዝ","± Stock":"ክምችት ምምሕያሽ",
-  // Reports
+  "Low Stock Alert — when below":"ማጠንቀቂ ትሑት ክምችት — ኣብ ትሕቲ",
+  "Leave blank to use global threshold":"ባዶ ሓደጎ ናይ ሓፈሻ መጠን ንምጥቃም",
+  "Purchase Price History":"ታሪኽ ዋጋ ምዕዳግ","First":"ቀዳሞት","Latest":"ናይ ሕጂ",
+
+  // Reports headers
+  "Reports & Analytics":"ጸብጻብን ትንታነን",
+  "Profit & Loss":"ትርፍን ክሳራን",
+  "Gross Sales":"ጠቕላሊ ሽያጥ","Returns":"ምምላስ","Net Revenue":"ጽሩይ እቶት",
+  "Cost of Goods":"ዋጋ ፍርያት","Gross Profit":"ጠቕላሊ ትርፊ",
+  "Drawer Expenses":"ወጻኢ ካብ ካሳ","Safe Expenses":"ወጻኢ ካብ ካዝና",
+  "Net Profit":"ጽሩይ ትርፊ","Outstanding Balances":"ዘይተኸፍለ ሕዳር",
+  "Customers owe you":"ዓሚልቲ ዝኽፈሉኻ","You owe suppliers":"ንሸቐጥቲ ዝኽፈሎም",
+  "Top Products":"ዝበዝሐ ዝሽየጥ ፍርያት","Sales History":"ታሪኽ ሽያጥ",
+  "Daily Revenue (Last 7 Days)":"ናይ 7 መዓልቲ እቶት","Profit Breakdown":"ዝርዝር ትርፊ",
+  "Revenue":"እቶት","Profit":"ትርፊ","Margin":"ወሰን ትርፊ","Units Sold":"ዝተሸጠ",
   "Today":"ሎሚ","Total Sales":"ጠቕላሊ ሽያጥ","Date":"ዕለት",
-  "Customer":"ዓሚል","Items":"ፍርያት","Sales History":"ታሪኽ ሽያጥ",
-  "Top Selling Products":"ዝበዝሐ ዝሽየጥ","Daily Revenue (Last 7 Days)":"ናይ 7 መዓልቲ እቶት",
-  "Profit Breakdown":"ናይ ትርፊ ዝርዝር","Revenue":"እቶት","Profit":"ትርፊ",
-  "Margin":"ትርፊ ዕቐባ","Units Sold":"ዝተሸጠ","Est. Cost":"ግምት ዋጋ",
-  "Est. Profit":"ግምት ትርፊ",
-  // Cash Drawer
+  "7 days":"7 መዓልቲ","30 days":"30 መዓልቲ","90 days":"90 መዓልቲ",
+  "This Month":"ናይዚ ወርሒ","All Time":"ኩሉ ግዜ",
+
+  // Cash Drawer headers & details
   "Today's Session":"ናይ ሎሚ ሰሽን","End of Day Summary":"ናይ ዕለት መወዳእታ ጸብጻብ",
   "Expenses Paid From Drawer":"ካብ ካሳ ዝወጽአ ወጻኢ","Starting float":"ናይ መጀመርታ ገንዘብ",
   "Expected in Drawer":"ዝጽበ ኣብ ካሳ","Sales Revenue":"ናይ ሽያጥ እቶት",
-  "Expenses":"ወጻኢ","Close Day":"ዕለት ዓጹ","Switch Day":"ዕለት ቀይር",
-  "Open Day":"ዕለት ክፈት","Starting Cash":"ናይ መጀመርታ ገንዘብ",
+  "Close Day":"ዕለት ዓጹ","Open Day":"ዕለት ክፈት","Switch Day":"ዕለት ቀይር",
+  "Starting Cash":"ናይ መጀመርታ ገንዘብ",
   "Previous Days":"ዝሓለፈ ዕለታት","Actual Cash Counted":"ዝተቖጸረ ናይ ሓቂ ገንዘብ",
   "Save Count":"ቁጽሪ ዕቀብ","Export to Excel":"ናብ ኤክሰል ኣውጽእ",
-  "Monthly Report":"ወርሓዊ ጸብጻብ",
-  // Purchases
-  "Purchases & Stock Bought":"ምዕዳግ ፍርያት","Record Purchase":"ምዕዳግ መዝግብ",
-  "Total Purchases":"ጠቕላሊ ምዕዳግ","Total Spent":"ጠቕላሊ ዝወጽአ","This Month":"ናይዚ ወርሒ",
-  "Item / Description":"ፍርያት / መግለጺ","Supplier":"ሸማቲ","Qty":"ቁጽሪ",
-  "Unit Price":"ዋጋ ንሓደ","Notes":"ሓሳብ",
-  // Loans
-  "Loans & Credit":"ልቓሕ","New Loan":"ሓድሽ ልቓሕ",
-  "Active Loans":"ንጡፍ ልቓሕ","Total Out":"ዝወጽአ ልቓሕ",
-  "Pending Approval":"ፍቓድ ትጽቢት","Follow-ups Due":"ክትክተሉ ዘሎ",
+  "Monthly Report":"ወርሓዊ ጸብጻብ","View Details":"ዝርዝር ርአ",
+  "Opened by":"ዝኸፈቶ","Closed by":"ዝዓጸዎ","Transfer to Safe":"ናብ ካዝና ዘዋውር",
+  "Net Cash for Safe":"ናብ ካዝና ዝኸይድ ኣጠቓሊሉ",
+  "Same-day sale — refund from drawer":"ናይ ሎሚ ሽያጥ — ካብ ካሳ ዝምለስ",
+  "Previous sale — refund from safe":"ዝሓለፈ ሽያጥ — ካብ ካዝና ዝምለስ",
+  "Does not affect today's drawer":"ናይ ሎሚ ካሳ ኣይትንክፍን",
+
+  // Recycle Bin reasons
+  "Deleted from customers":"ካብ ዓሚልቲ ዝተሰርዘ",
+  "Deleted from loans":"ካብ ልቓሕ ዝተሰርዘ",
+  "Deleted from inventory":"ካብ ክምችት ዝተሰርዘ",
+  "Deleted from purchases":"ካብ ምዕዳግ ዝተሰርዘ",
+  "Removed from Credit & Loans":"ካብ ልቓሕ ዝተኣልዬ",
+  "Moved to Recycle Bin":"ናብ ቆሻሻ ዝኸደ",
+  "Restore":"መልስ","Permanently Delete":"ንዘለዓለም ሰርዝ",
+  "Deleted":"ዝተሰርዘ","Restored":"ዝተመልሰ","by":"ብ",
+  "item(s) in bin":"ዕቃ ኣብ ቆሻሻ",
+
+  // Activity Log details
+  "Sale to":"ሽያጥ ናብ","item(s)":"ዕቃ","Discount":"ቅናሽ",
+  "Stock added":"ክምችት ወሲኽና","Stock removed":"ክምችት ኣልዒልና",
+  "Product added":"ፍርያት ወሲኽና","Product edited":"ፍርያት ምምሕያሽ",
+  "Product deleted":"ፍርያት ሰሪዝና","Return submitted":"ምምላስ ቀሪቡ",
+  "Return approved":"ምምላስ ፈቒዱ","Return rejected":"ምምላስ ነጺጉ",
+  "Customer added":"ዓሚል ወሲኽና","Customer deleted":"ዓሚል ሰሪዝና",
+  "Day opened":"መዓልቲ ተኸፊቱ","Day closed":"መዓልቲ ተዓጺዩ",
+  "Day reopened":"መዓልቲ ተኸፊቱ ደጊም","Saved under":"ተቐሚጡ ኣብ",
+  "past day, not today":"ዝሓለፈ ዕለት፡ ሎሚ ኣይኮነን",
+  "Supplier payment":"ናይ ሸቐጣዪ ክፍሊት","Payment corrected":"ክፍሊት ተኸሊሱ",
+  "Restocked":"ናብ ክምችት ተመሊሱ","Moved":"ዝተቐዳቐደ",
+  "Credit record moved to Recycle Bin":"ናይ ልቓሕ ሰነድ ናብ ቆሻሻ ኸዱ",
+  "Credit record restored":"ናይ ልቓሕ ሰነድ ተመሊሱ",
+  "Damaged return":"ዝተጎድኤ ምምላስ","items removed from inventory":"ፍርያት ካብ ክምችት ወጺኦም",
+
+  // Returns & Refunds
+  "Record Return":"ምምላስ መዝግብ","Returns & Refunds":"ምምላስን ካሕሳን",
+  "Customer Name":"ሽም ዓሚል","Select the sale being returned":"ዝምለሰሉ ሽያጥ ምረጽ",
+  "Sale not in system":"ሽያጥ ኣብ ስርዓት የልቦን",
+  "When was the sale?":"ሽያጥ ሓደ ዕለት ዝነበረ?",
+  "Select items to return":"ዝምለሱ ፍርያት ምረጽ","Return qty":"ዝምለስ ቁጽሪ",
+  "Estimated refund":"ግምታዊ ካሕሳ","Actual Refund":"ናይ ሓቂ ካሕሳ",
+  "Reason for Return":"ምኽንያት ምምላስ","Resolution":"ፍታሕ",
+  "Refund given":"ካሕሳ ተዋሂቡ","Exchanged":"ተቐያዪሩ","Pending manager decision":"ናይ ኣካያዲ ውሳነ ትጽቢት",
+  "Good condition — add back to Open/Unlocated":"ጽቡቕ ኩነታት — ናብ ክምችት ተመለስ",
+  "Damaged / Dispose — do not restock":"ዝተጎድኤ — ናብ ክምችት ኣይምለስ",
+  "Defective / Not working":"ጉድለት ዘለዎ / ዘይሰርሕ",
+  "Wrong item":"ጌጋ ፍርያት","Damaged on delivery":"ኣብ ምብጻሕ ዝተጎድኤ",
+  "Customer changed mind":"ዓሚል ሓሳቡ ቐይሩ",
+  "Duplicate purchase":"ብጊዜ ዝተሸጠ","Other":"ካልእ",
+  "Same-day sale":"ናይ ሎሚ ሽያጥ","from drawer":"ካብ ካሳ",
+  "Previous sale":"ዝሓለፈ ሽያጥ","from safe":"ካብ ካዝና",
+  "Returns need manager approval":"ምምላስ ናይ ኣካያዲ ፍቓድ ይደሊ",
+  "Max returnable":"ዝለዓለ ዝምለስ","Approved":"ፈቒዱ","Rejected":"ነጺጉ",
+  "Pending Approval":"ፍቓድ ትጽቢት",
+
+  // Loans & Credit notes/headers
+  "Active Credits":"ንጡፍ ልቓሕ","Outstanding Balance":"ዝተረፈ ዕዳ",
+  "Pending Approval":"ፍቓድ ትጽቢት","Follow-ups Due":"ክትትል ዘድሊ",
+  "Active Loans":"ንጡፍ ልቓሕ","New Loan":"ሓድሽ ልቓሕ",
   "Borrower":"ብዳሪ","Amount":"መጠን","Date Given":"ዕለት ዝተዋህበ",
   "Next Follow-up":"ዝቕጽል ክትትል","Status":"ኩነታት","Approved By":"ዝፈቐደ",
-  // Activity Log
-  "Activity Log":"ናይ ስርሒት ቅዳሕ","All Staff":"ኩሎም ሰራሕተኛ",
-  "All Types":"ኩሎም ዓይነት","All Actions":"ኩሎም ተግባር",
-  "sale":"ሽያጥ","purchase":"ምዕዳግ","return":"ምምላስ",
-  "loan":"ልቓሕ","inventory":"ክምችት","login":"ምእታው",
+  "Partial payment — paid":"ከፊል ክፍሊት — ዝተኸፍለ",
+  "Initial partial payment at POS":"ናይ መጀመርታ ከፊል ክፍሊት ኣብ ሽያጥ",
+  "of total":"ካብ ጠቕላሊ","paid":"ዝተኸፍለ",
+  "Still owed":"ዝተረፈ ዕዳ","Payment History":"ናይ ክፍሊት ታሪኽ",
+  "Record a payment":"ክፍሊት መዝግብ","Save Payment":"ክፍሊት ዕቀብ",
+  "Loan cancelled":"ልቓሕ ተሰሪዙ","Item returned":"ፍርያት ተመሊሱ",
+  "overdue for follow-up":"ናይ ክትትል ግዜ ሓሊፉ",
+  "Total Bill":"ጠቕላሊ ሕሳብ","Already Paid":"ዝተኸፍለ","Remaining":"ዝተረፈ",
+
+  // Purchases
+  "Purchases & Stock Bought":"ምዕዳግ ፍርያት","Record Purchase":"ምዕዳግ መዝግብ",
+  "Total Purchases":"ጠቕላሊ ምዕዳግ","Total Spent":"ጠቕላሊ ዝወጽአ",
+  "Item / Description":"ፍርያት / መግለጺ","Supplier":"ሸቐጣዪ","Qty":"ቁጽሪ",
+  "Unit Price":"ዋጋ ንሓደ","Notes":"ሓሳብ",
+  "Paid in Full":"ምሉእ ተኸፊሉ","Partial Payment":"ከፊል ክፍሊት",
+  "Full Credit":"ምሉእ ልቓሕ","Due Date":"ዕለት ምኽፋል",
+  "✓ Paid":"✓ ተኸፊሉ","~ Partial":"~ ከፊል","⚠ Unpaid":"⚠ ዘይተኸፍለ",
+  "💰 Pay":"💰 ክፈል","Add another payment":"ካልእ ክፍሊት ወሲኽ",
+  "Fully paid":"ምሉእ ተኸፊሉ","Supplier / Seller Name":"ሽም ሸቐጣዪ",
+  "Type or click to see past suppliers":"ሸቐጥቲ ምረጽ ወይ ሓዲሽ ጽሓፍ",
+  "Past Suppliers":"ዝሓለፈ ሸቐጥቲ",
+
   // Requests
   "Requests":"ጠለባት","All Requests":"ኩሎም ጠለባት",
   "All Statuses":"ኩሎም ኩነታት","pending":"ትጽቢት",
   "approved":"ፈቒዱ","rejected":"ነጺጉ","Approve":"ፍቓድ ሃብ","Reject":"ኣብ ነጻ",
-  // Returns
-  "Returns":"ምምላስ","Record Return":"ምምላስ መዝግብ",
-  "Awaiting Approval":"ፍቓድ ትጽቢት","Refunded":"ገንዘብ ተመሊሱ","Exchanged":"ተቐያዪሩ",
+  "Stock Change":"ናይ ክምችት ምምሕያሽ","Price Change":"ናይ ዋጋ ምምሕያሽ",
+  "New Product":"ሓዲሽ ፍርያት","Delete Request":"ናይ ምስራዝ ጠለብ",
+  "External Purchase":"ካብ ወጻኢ ምዕዳግ","Request sent":"ጠለብ ተላኢኹ",
+  "Request submitted":"ጠለብ ቀሪቡ","Manager will review":"ኣካያዲ ክርኢ",
+
   // Customers
-  "Customers":"ዓሚልቲ","Add Customer":"ዓሚል ወሲኽ","visits":"ምብጻሕ",
-  "No customers yet":"ዓሚልቲ የልቦኑ",
+  "Add Customer":"ዓሚል ወሲኽ","visits":"ምብጻሕ","No customers yet":"ዓሚልቲ የልቦኑ",
+  "Phone":"ስልኪ","Notes":"ሓሳባት",
+  "Request to remove":"ምስራዝ ጠሊቡ","Delete customer":"ዓሚል ሰርዝ",
+
+  // Activity Log types
+  "sale":"ሽያጥ","purchase":"ምዕዳግ","return":"ምምላስ",
+  "loan":"ልቓሕ","inventory":"ክምችት","login":"ምእታው",
+  "All Staff":"ኩሎም ሰራሕተኛ","All Types":"ኩሎም ዓይነት",
+
   // Staff
-  "Staff":"ሰራሕተኛ","Add Staff":"ሰራሕተኛ ወሲኽ",
+  "Add Staff":"ሰራሕተኛ ወሲኽ",
   "Manager Access Only":"ናይ ኣካያዲ ብቕዓት ጥራሕ",
   "Only managers can view and manage staff accounts.":"ኣካያዲ ጥራሕ ሰራሕተኛ ምቁጽጻር ይኽእሉ።",
+  "Salesperson":"ሸያጢ","Cashier":"ካሸር","Storekeeper":"ሓላዊ ዕቃ",
+  "Technician":"ተክኒሽያን","Manager":"ኣካያዲ",
+
   // Settings
   "⚡ Shop Settings":"⚡ ናይ ድኳን ምቕናዕ",
   "Shop Name":"ሽም ድኳን","Currency":"ባጤራ","Language":"ቋንቋ",
@@ -2333,18 +2456,21 @@ const TI = {
   "📱 Data & Transfer":"📱 ዳታ ምልውዋጥ",
   "Export All Data":"ዳታ ኣውጽእ","Import Data":"ዳታ የእቱ","Clear All Data":"ዳታ ሕደግ",
   "⬇ Export JSON":"⬇ ዳታ ኣውጽእ","⬆ Import JSON":"⬆ ዳታ የእቱ",
+  "🚨 Emergency Recovery":"🚨 ህጹጽ ምሕዳስ",
+  "Clear Undo Cache":"ናይ ምምላስ ካሽ ሓሲ",
+
   // Common
-  "Cancel":"ሰርዝ","Save":"ዕቀብ","Edit":"ምምሕያሽ","Delete":"ሰርዝ",
+  "Cancel":"ሰርዝ","Save":"ዕቀብ","Close":"ዕጸው",
   "All":"ኩሉ","Search":"ድለ","No products found":"ፍርያት ዝርከብ የልቦን",
   "units":"ዓቐን","Sale Complete ✓":"ሽያጥ ተዛዚሙ ✓",
   "Thank you for choosing Weyni Electric!":"ዌይኒ ኤለክትሪክ ስለ ዝመረጽካ የቐንየልና!",
   "Come back soon ⚡":"ቀልጢፍካ ተመለስ ⚡",
-  "Bulbs, switches, small parts — alert below":"ቡልቦ፡ ቀያሪ፡ ናእሽቶ ቁሳቁስ — ማጠንቀቂ ኣብ ትሕቲ",
-  "Cable (meters), conduit, bulk stock — alert below":"ካብሎ (ሜትር)፡ ቆሎፕ፡ ብዙሕ ክምችት — ማጠንቀቂ ኣብ ትሕቲ",
   "App display language":"ቋንቋ ናይ ኣፕ",
   "First time? Go to Staff page to set up accounts":"ቀዳማይ ግዜ? ናብ ሰራሕተኛ ገጽ ኬድካ ሕሳብ ምህናጽ",
   "Select your account":"ሕሳብካ ምረጽ","Welcome, ":"እስዓብካ፡ ","Enter PIN":"PIN ኣእቱ",
   "Incorrect PIN. Try again.":"PIN ጌጋ ኣሎ። ደጊምካ ፈትን።",
+  "Bulbs, switches, small parts — alert below":"ቡልቦ፡ ቀያሪ፡ ናእሽቶ ቁሳቁስ — ማጠንቀቂ ኣብ ትሕቲ",
+  "Cable (meters), conduit, bulk stock — alert below":"ካብሎ (ሜትር)፡ ቆሎፕ፡ ብዙሕ ክምችት — ማጠንቀቂ ኣብ ትሕቲ",
 };
 
 function t(key){ // translate
@@ -2809,10 +2935,15 @@ function renderDashboard(){
     const namedCustomers=new Set(daySales.filter(s=>s.customer&&s.customer!=='Walk-in').map(s=>s.customer)).size;
     const walkIns=daySales.filter(s=>!s.customer||s.customer==='Walk-in').length;
     const uniqueCustomers=namedCustomers+walkIns;
+    const today2=todayMinus(0);
+    const openDate=todaySession&&!todaySession.closed?todaySession.date:'';
+    const isOpenPastDay=openDate&&openDate!==today2;
+    const dayStatusLabel=todaySession?todaySession.closed?'Closed':isOpenPastDay?'Open':'Open Today':'Not Opened';
+    const dayStatusSub=openDate?isOpenPastDay?`📅 ${openDate}`:`by ${todaySession.openedBy||'manager'}`:(todaySession?'':'Manager opens the day');
     document.getElementById('dash-stats').innerHTML=`
       <div class="stat-card blue"><div class="stat-icon">📦</div><div class="stat-label">Total Products</div><div class="stat-value">${DB.products.length}</div><div class="stat-sub">${lowStock.length} low stock</div></div>
       <div class="stat-card green"><div class="stat-icon">👥</div><div class="stat-label">Customers Today</div><div class="stat-value">${uniqueCustomers}</div><div class="stat-sub">served today</div></div>
-      <div class="stat-card ${dayStatusColor}"><div class="stat-icon">🏪</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:20px">${dayStatus}</div><div class="stat-sub">${todaySession?todaySession.openedBy?'by '+todaySession.openedBy:'':''}</div></div>`;
+      <div class="stat-card ${dayStatusColor}"><div class="stat-icon">🏪</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:${isOpenPastDay?'16px':'20px'}">${dayStatusLabel}</div><div class="stat-sub">${dayStatusSub}</div></div>`;
 
     document.getElementById('recent-sales-list').innerHTML=`
       ${dayPickerHtml}
@@ -2836,7 +2967,7 @@ function renderDashboard(){
       <div class="stat-card orange"><div class="stat-icon">💰</div><div class="stat-label">${dayLabel} Sales</div><div class="stat-value">${cur} ${dayRev.toLocaleString()}</div><div class="stat-sub">${daySales.length} transactions</div></div>
       <div class="stat-card blue"><div class="stat-icon">🧾</div><div class="stat-label">Items Sold</div><div class="stat-value">${daySales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0)}</div><div class="stat-sub">Units today</div></div>
       <div class="stat-card green"><div class="stat-icon">👥</div><div class="stat-label">Customers</div><div class="stat-value">${daySales.length}</div><div class="stat-sub">Served today</div></div>
-      <div class="stat-card ${!session?'blue':session.closed?'red':'green'}"><div class="stat-icon">${!session?'⏳':session.closed?'🔒':'🟢'}</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:16px">${!session?'Not opened':session.closed?'Closed':'Open'}</div><div class="stat-sub">${session?'Opened by '+session.openedBy:'Manager opens the day'}</div></div>`;
+      <div class="stat-card ${!session?'blue':session.closed?'red':'green'}"><div class="stat-icon">${!session?'⏳':session.closed?'🔒':'🟢'}</div><div class="stat-label">Day Status</div><div class="stat-value" style="font-size:${session&&!session.closed&&session.date!==todayMinus(0)?'15px':'16px'}">${!session?'Not Opened':session.closed?'Closed':session.date!==todayMinus(0)?'Open':'Open Today'}</div><div class="stat-sub">${session&&!session.closed?session.date!==todayMinus(0)?`📅 ${session.date}`:`by ${session.openedBy||''}`:session?'Day is closed':'Manager opens the day'}</div></div>`;
 
     document.getElementById('recent-sales-list').innerHTML=`
       ${dayPickerHtml}
@@ -2856,7 +2987,7 @@ function renderDashboard(){
   const loanBadge=document.getElementById('loan-due-badge');
   if(loanBadge){loanBadge.style.display=dueLoanCount?'inline':'none';loanBadge.textContent=dueLoanCount;}
   if(isManager) updateStockAlertBadge();
-  document.getElementById('low-stock-list').innerHTML=lowStock.length?lowStock.slice(0,6).map(p=>{
+  document.getElementById('low-stock-list').innerHTML=lowStock.length?lowStock.map(p=>{
     const lastPurchase=(DB.purchases||[]).filter(pur=>pur.lines?.some(l=>l.item===p.name)).sort((a,b)=>b.date.localeCompare(a.date))[0];
     const lastSupplier=lastPurchase?.supplier;
     const lastPrice=lastPurchase?.lines?.find(l=>l.item===p.name)?.unitPrice;
@@ -3850,7 +3981,8 @@ function saveProduct(){
       }
       const snapshot=JSON.parse(JSON.stringify(old));
       DB.products[idx]={...old,...data};
-      const changeStr=changes.length?changes.join(' | '):'No field changes detected';
+      const changeStr=changes.length?changes.join(' | '):'';
+      if(!changeStr){toast('No changes detected — nothing to save');return;}
       const who=currentUser?currentUser.name:'Manager';
       logActivity('inventory',`✏ Product edited by ${who}: ${name} — ${changeStr}`,0,{undoType:'productEdit',productId:id,snapshot});
       // Notify employees of price changes
@@ -4878,61 +5010,59 @@ function renderReports(){
     return a+Math.max(0,(p.grandTotal||0)-payments);
   },0);
 
-  // Stat cards
   document.getElementById('report-stats').innerHTML=`
-    <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-label">Today</div><div class="stat-value">${cur} ${todayRev.toLocaleString()}</div></div>
-    <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">Sales (${label})</div><div class="stat-value">${sales.length}</div></div>
-    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Net Revenue</div><div class="stat-value">${cur} ${Math.round(netRevenue).toLocaleString()}</div></div>
-    <div class="stat-card ${netProfit>=0?'green':'red'}"><div class="stat-icon">💹</div><div class="stat-label">Net Profit</div><div class="stat-value">${cur} ${Math.round(netProfit).toLocaleString()}</div></div>`;
+    <div class="stat-card orange"><div class="stat-icon">📅</div><div class="stat-label">${t('Today')}</div><div class="stat-value">${cur} ${todayRev.toLocaleString()}</div></div>
+    <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">${t('Sales (period)').replace('(period)','('+label+')')}</div><div class="stat-value">${sales.length}</div></div>
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">${t('Net Revenue')}</div><div class="stat-value">${cur} ${Math.round(netRevenue).toLocaleString()}</div></div>
+    <div class="stat-card ${netProfit>=0?'green':'red'}"><div class="stat-icon">💹</div><div class="stat-label">${t('Net Profit')}</div><div class="stat-value">${cur} ${Math.round(netProfit).toLocaleString()}</div></div>`;
 
-  // ── P&L PANEL ──
   const plEl=document.getElementById('pl-panel');
   if(plEl) plEl.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Profit & Loss — ${label}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">${t('Profit & Loss')} — ${label}</div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span>Gross Sales</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(totalRev).toLocaleString()}</span>
+          <span>${t('Gross Sales')}</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(totalRev).toLocaleString()}</span>
         </div>
         ${totalReturns>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--text3)">− Returns/Refunds</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalReturns).toLocaleString()}</span>
+          <span style="color:var(--text3)">− ${t('Returns')}</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalReturns).toLocaleString()}</span>
         </div>`:''}
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;font-weight:600">
-          <span>Net Revenue</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(netRevenue).toLocaleString()}</span>
+          <span>${t('Net Revenue')}</span><span style="font-family:var(--font-head);color:var(--accent)">${cur} ${Math.round(netRevenue).toLocaleString()}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--text3)">− Cost of Goods Sold</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalCOGS).toLocaleString()}</span>
+          <span style="color:var(--text3)">− ${t('Cost of Goods')}</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(totalCOGS).toLocaleString()}</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:2px solid var(--border);font-size:13px;font-weight:600">
-          <span>Gross Profit</span><span style="font-family:var(--font-head);color:${grossProfit>=0?'var(--green)':'var(--red)'}">${cur} ${Math.round(grossProfit).toLocaleString()}</span>
+          <span>${t('Gross Profit')}</span><span style="font-family:var(--font-head);color:${grossProfit>=0?'var(--green)':'var(--red)'}">${cur} ${Math.round(grossProfit).toLocaleString()}</span>
         </div>
         ${drawerExpenses>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--text3)">− Drawer Expenses</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(drawerExpenses).toLocaleString()}</span>
+          <span style="color:var(--text3)">− ${t('Drawer Expenses')}</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(drawerExpenses).toLocaleString()}</span>
         </div>`:''}
         ${safeExpenses>0?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <span style="color:var(--text3)">− Safe Expenses (Rent etc.)</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(safeExpenses).toLocaleString()}</span>
+          <span style="color:var(--text3)">− ${t('Safe Expenses')}</span><span style="font-family:var(--font-head);color:var(--red)">−${cur} ${Math.round(safeExpenses).toLocaleString()}</span>
         </div>`:''}
         <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;margin-top:4px">
-          <span>Net Profit</span>
+          <span>${t('Net Profit')}</span>
           <span style="font-family:var(--font-head);color:${netProfit>=0?'var(--green)':'var(--red)'};font-size:18px">${cur} ${Math.round(netProfit).toLocaleString()}</span>
         </div>
       </div>
       <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Outstanding Balances</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">${t('Outstanding Balances')}</div>
         <div style="background:rgba(46,213,115,0.08);border:1px solid rgba(46,213,115,0.3);border-radius:var(--radius2);padding:12px;margin-bottom:8px">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">💚 Customers owe you</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">💚 ${t('Customers owe you')}</div>
           <div style="font-family:var(--font-head);font-size:20px;color:var(--green)">${cur} ${Math.round(customerCreditOwed).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">Credit & partial payments outstanding</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${t('Credit & partial payments outstanding')}</div>
         </div>
         <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:var(--radius2);padding:12px;margin-bottom:8px">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">❤ You owe suppliers</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">❤ ${t('You owe suppliers')}</div>
           <div style="font-family:var(--font-head);font-size:20px;color:var(--red)">${cur} ${Math.round(supplierDebtOwed).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">Unpaid & partial supplier purchases</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${t('Unpaid & partial supplier purchases')}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:12px">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">📊 Net Position</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:4px">📊 ${t('Net Position')}</div>
           <div style="font-family:var(--font-head);font-size:20px;color:${customerCreditOwed-supplierDebtOwed>=0?'var(--green)':'var(--red)'}">${cur} ${Math.round(customerCreditOwed-supplierDebtOwed).toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">What you're owed minus what you owe</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${t('What you\'re owed minus what you owe')}</div>
         </div>
       </div>
     </div>`;
@@ -5466,15 +5596,16 @@ function showPurchasePaymentModal(purchaseId){
   const p=(DB.purchases||[]).find(x=>x.id===purchaseId);
   if(!p) return;
   const cur=DB.settings.currency;
-  const alreadyPaid=(DB.supplierPayments||[]).filter(sp=>sp.purchaseId===purchaseId).reduce((a,sp)=>a+sp.amount,0);
+  const allPayments=(DB.supplierPayments||[]).filter(sp=>sp.purchaseId===purchaseId);
+  const alreadyPaid=allPayments.reduce((a,sp)=>a+sp.amount,0);
   const remaining=Math.max(0,(p.grandTotal||0)-alreadyPaid);
   let m=document.getElementById('modal-purchase-pay');
   if(!m){m=document.createElement('div');m.id='modal-purchase-pay';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-purchase-pay');});}
-  m.innerHTML=`<div class="modal" style="max-width:400px">
-    <div class="modal-header"><div class="modal-title">💰 Record Payment</div><button class="modal-close" onclick="closeModal('modal-purchase-pay')">✕</button></div>
+  m.innerHTML=`<div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title">💰 Supplier Payment</div><button class="modal-close" onclick="closeModal('modal-purchase-pay')">✕</button></div>
     <div class="modal-body">
       <div style="margin-bottom:12px">
-        <div style="font-size:13px;color:var(--text3)">Supplier</div>
+        <div style="font-size:12px;color:var(--text3)">Supplier</div>
         <div style="font-weight:600">${p.supplier||'—'}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
@@ -5483,7 +5614,7 @@ function showPurchasePaymentModal(purchaseId){
           <div style="font-family:var(--font-head);font-size:14px">${cur} ${(p.grandTotal||0).toLocaleString()}</div>
         </div>
         <div style="background:var(--bg3);padding:8px;border-radius:var(--radius2);text-align:center">
-          <div style="font-size:10px;color:var(--text3)">Already Paid</div>
+          <div style="font-size:10px;color:var(--text3)">Paid</div>
           <div style="font-family:var(--font-head);font-size:14px;color:var(--green)">${cur} ${alreadyPaid.toLocaleString()}</div>
         </div>
         <div style="background:var(--bg3);padding:8px;border-radius:var(--radius2);text-align:center">
@@ -5491,22 +5622,61 @@ function showPurchasePaymentModal(purchaseId){
           <div style="font-family:var(--font-head);font-size:14px;color:var(--red)">${cur} ${remaining.toLocaleString()}</div>
         </div>
       </div>
-      <div class="form-row"><div class="form-label">Amount Paying Now (${cur}) *</div>
-        <input class="form-input" id="pp-pay-amount" type="number" placeholder="${remaining}" value="${remaining}" min="1" max="${remaining}">
+      ${allPayments.length?`<div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px">Payment History</div>
+        ${allPayments.map(sp=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text3);flex:1">${sp.date}</span>
+          <span style="font-family:var(--font-head);color:var(--green)">${cur} ${sp.amount.toLocaleString()}</span>
+          <span style="color:var(--text3);font-size:11px">${sp.notes||''}</span>
+          <button class="action-btn" style="font-size:10px;padding:2px 7px" onclick="editPurchasePayment(${sp.id},${purchaseId},${p.grandTotal||0})">✏</button>
+        </div>`).join('')}
+      </div>`:''}
+      ${remaining>0?`
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">${alreadyPaid>0?'Add another payment:':'Record payment:'}</div>
+      <div class="form-row"><div class="form-label">Amount (${cur})</div>
+        <input class="form-input" id="pp-pay-amount" type="number" placeholder="${remaining}" value="${remaining}" min="1">
       </div>
-      <div class="form-row"><div class="form-label">Payment Date</div>
+      <div class="form-row"><div class="form-label">Date</div>
         <input class="form-input" id="pp-pay-date" type="date" value="${todayMinus(0)}">
       </div>
       <div class="form-row"><div class="form-label">Notes</div>
         <input class="form-input" id="pp-pay-notes" placeholder="Optional">
-      </div>
+      </div>`:`<div style="background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);border-radius:var(--radius2);padding:10px 12px;font-size:13px;color:var(--green);text-align:center">✓ Fully paid</div>`}
     </div>
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('modal-purchase-pay')">Cancel</button>
-      <button class="btn-save" onclick="savePurchasePayment(${purchaseId},${p.grandTotal||0})">Save Payment</button>
+      <button class="btn-cancel" onclick="closeModal('modal-purchase-pay')">Close</button>
+      ${remaining>0?`<button class="btn-save" onclick="savePurchasePayment(${purchaseId},${p.grandTotal||0})">Save Payment</button>`:''}
     </div>
   </div>`;
   openModal('modal-purchase-pay');
+}
+
+function editPurchasePayment(paymentId,purchaseId,grandTotal){
+  const sp=(DB.supplierPayments||[]).find(x=>x.id===paymentId);
+  if(!sp) return;
+  const cur=DB.settings.currency;
+  let m=document.getElementById('modal-edit-sup-pay');
+  if(!m){m=document.createElement('div');m.id='modal-edit-sup-pay';m.className='modal-overlay';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('modal-edit-sup-pay');});}
+  m.innerHTML=`<div class="modal" style="max-width:360px">
+    <div class="modal-header"><div class="modal-title">✏ Edit Payment</div><button class="modal-close" onclick="closeModal('modal-edit-sup-pay')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Any change will be logged in activity with old and new values.</div>
+      <div class="form-row"><div class="form-label">Amount (${cur})</div>
+        <input class="form-input" id="esp-amount" type="number" value="${sp.amount}" min="1">
+      </div>
+      <div class="form-row"><div class="form-label">Date</div>
+        <input class="form-input" id="esp-date" type="date" value="${sp.date}">
+      </div>
+      <div class="form-row"><div class="form-label">Notes</div>
+        <input class="form-input" id="esp-notes" value="${sp.notes||''}">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-edit-sup-pay')">Cancel</button>
+      <button class="btn-save" onclick="saveSupplierPaymentEdit(${paymentId},${purchaseId},${grandTotal})">Save Changes</button>
+    </div>
+  </div>`;
+  openModal('modal-edit-sup-pay');
 }
 
 function savePurchasePayment(purchaseId, grandTotal){
@@ -5528,7 +5698,7 @@ function savePurchasePayment(purchaseId, grandTotal){
     p.paymentStatus='partial';
   }
   const cur=DB.settings.currency;
-  logActivity('purchase',`Supplier payment: ${cur} ${amount} to ${p.supplier||'supplier'} for purchase on ${p.date}${notes?' — '+notes:''}`,0,{undoType:'supplierPayment',paymentId:payId,amount,supplier:p.supplier||''});
+  logActivity('purchase',`Supplier payment: ${cur} ${amount} to ${p.supplier||'supplier'} for purchase on ${p.date}${notes?' — '+notes:''}`,amount);
   save();
   closeModal('modal-purchase-pay');
   renderPurchases();
@@ -5848,6 +6018,38 @@ function togglePurPaymentType(){
   if(paidNowRow) paidNowRow.style.display=type==='partial'?'':'none';
 }
 
+let _supplierList=[];
+function showSupplierDropdown(){
+  filterSupplierDropdown(document.getElementById('pur-supplier')?.value||'');
+}
+function hideSupplierDropdown(){
+  const dd=document.getElementById('pur-supplier-dropdown');
+  if(dd) dd.style.display='none';
+}
+function filterSupplierDropdown(q){
+  const dd=document.getElementById('pur-supplier-dropdown');
+  if(!dd) return;
+  const filtered=q?_supplierList.filter(s=>s.toLowerCase().includes(q.toLowerCase())):_supplierList;
+  if(!filtered.length){
+    dd.style.display='none';return;
+  }
+  dd.innerHTML=filtered.map(s=>`
+    <div onmousedown="selectSupplier('${s.replace(/'/g,"\\'")}')" style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      ${s}
+    </div>`).join('');
+  dd.style.display='block';
+}
+function selectSupplier(name){
+  const inp=document.getElementById('pur-supplier');
+  if(inp) inp.value=name;
+  hideSupplierDropdown();
+}
+// Close dropdown when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#pur-supplier')&&!e.target.closest('#pur-supplier-dropdown')) hideSupplierDropdown();
+});
+
 function showAddPurchaseModal(){
   purLines = [{item:'',cat:'Bulbs & Lighting',qty:'',unit:'pcs',unitPrice:'',total:0,zone:''}];
   document.getElementById('pur-supplier').value='';
@@ -5856,10 +6058,18 @@ function showAddPurchaseModal(){
   const dubaiCb=document.getElementById('pur-is-dubai');
   if(dubaiCb){dubaiCb.checked=false;toggleDubaiMode(false);}
   renderPurLines();
-  // Populate supplier datalist with normalized unique names
-  const knownSuppliers=[...new Set((DB.purchases||[]).map(p=>normalizeSupplier(p.supplier)).filter(Boolean))].sort();
-  const dl=document.getElementById('pur-supplier-datalist');
-  if(dl) dl.innerHTML=knownSuppliers.map(s=>`<option value="${s}">`).join('');
+  // Populate supplier list for dropdown
+  _supplierList=[...new Set((DB.purchases||[]).map(p=>normalizeSupplier(p.supplier)).filter(Boolean))].sort();
+  const sidebar=document.getElementById('pur-supplier-sidebar');
+  if(sidebar){
+    sidebar.innerHTML=_supplierList.length
+      ?_supplierList.map(s=>`<div onclick="document.getElementById('pur-supplier').value='${s.replace(/'/g,"\\'")}';this.parentNode.querySelectorAll('div').forEach(d=>d.style.background='');this.style.background='var(--accent20,rgba(155,89,182,0.15))';" 
+        style="padding:8px 10px;font-size:13px;cursor:pointer;border-radius:var(--radius2);margin-bottom:4px;color:var(--text2)"
+        onmouseover="this.style.background='var(--bg4,rgba(255,255,255,0.05))'" onmouseout="if(document.getElementById('pur-supplier').value!=='${s.replace(/'/g,"\\'")}')this.style.background=''">
+        🏭 ${s}
+      </div>`).join('')
+      :`<div style="font-size:12px;color:var(--text3);padding:6px 0">No past suppliers yet</div>`;
+  }
   openModal('modal-purchase');
 }
 
@@ -6384,14 +6594,19 @@ function renderLoans(){
   }
   const active=(DB.loans||[]).filter(l=>l.status==='active');
   const pending=(DB.loans||[]).filter(l=>l.status==='pending');
-  const totalOut=active.reduce((a,l)=>a+l.amount,0);
+  const totalOwed=active.reduce((a,l)=>{
+    const paid=(l.repayments||[]).reduce((s,r)=>s+r.amount,0);
+    return a+Math.max(0,l.amount-paid);
+  },0);
+  const totalOriginal=active.reduce((a,l)=>a+l.amount,0);
+  const totalPaidSoFar=totalOriginal-totalOwed;
   const loanBadge=document.getElementById('loan-due-badge');
   if(loanBadge){loanBadge.style.display=due.length+pending.length?'inline':'none';loanBadge.textContent=due.length+pending.length;}
   document.getElementById('loan-stats').innerHTML=`
-    <div class="stat-card red"><div class="stat-icon">💳</div><div class="stat-label">Active Loans</div><div class="stat-value">${active.length}</div><div class="stat-sub">Outstanding</div></div>
-    <div class="stat-card orange"><div class="stat-icon">💸</div><div class="stat-label">Total Out</div><div class="stat-value">${cur} ${totalOut.toLocaleString()}</div><div class="stat-sub">Lent out</div></div>
-    <div class="stat-card blue"><div class="stat-icon">⏳</div><div class="stat-label">Pending Approval</div><div class="stat-value">${pending.length}</div><div class="stat-sub">Awaiting manager</div></div>
-    <div class="stat-card green"><div class="stat-icon">🔔</div><div class="stat-label">Follow-ups Due</div><div class="stat-value" style="${due.length?'color:var(--red)':''}">${due.length}</div><div class="stat-sub">Today</div></div>`;
+    <div class="stat-card red"><div class="stat-icon">💳</div><div class="stat-label">${t('Active Credits')}</div><div class="stat-value">${active.length}</div><div class="stat-sub">${t('Customers with balance')}</div></div>
+    <div class="stat-card orange"><div class="stat-icon">💸</div><div class="stat-label">${t('Outstanding Balance')}</div><div class="stat-value" style="font-size:16px">${cur} ${totalOwed.toLocaleString()}</div><div class="stat-sub">${totalPaidSoFar>0?t('Paid back')+': '+cur+' '+totalPaidSoFar.toLocaleString():t('Not yet paid')}</div></div>
+    <div class="stat-card blue"><div class="stat-icon">⏳</div><div class="stat-label">${t('Pending Approval')}</div><div class="stat-value">${pending.length}</div><div class="stat-sub">${t('Awaiting manager')}</div></div>
+    <div class="stat-card green"><div class="stat-icon">🔔</div><div class="stat-label">${t('Follow-ups Due')}</div><div class="stat-value" style="${due.length?'color:var(--red)':''}">${due.length}</div><div class="stat-sub">${t('Today')}</div></div>`;
   filterLoans();
 }
 
@@ -6415,30 +6630,31 @@ function filterLoans(){
     const isDue=l.status==='active'&&l.nextFollowup&&l.nextFollowup<=today;
     const totalPaid=(l.repayments||[]).reduce((a,r)=>a+r.amount,0);
     const remaining=Math.max(0,l.amount-totalPaid);
+    const statusLabel={active:t('Active'),pending:t('pending'),overdue:t('overdue for follow-up'),paid:t('Paid'),rejected:t('rejected')}[l.status]||l.status.toUpperCase();
     return `<tr style="${isDue?'background:rgba(231,76,60,0.05)':''}">
       <td><div style="font-weight:500">${l.borrower}</div><div style="font-size:11px;color:var(--text3)">${l.phone||''}</div></td>
       <td>
         <div style="font-family:var(--font-head);font-size:15px;color:${l.status==='paid'?'var(--green)':'var(--red)'}">${cur} ${remaining.toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--text3)">of ${cur} ${l.amount.toLocaleString()} total${totalPaid>0?' · paid '+cur+' '+totalPaid.toLocaleString():''}</div>
+        <div style="font-size:10px;color:var(--text3)">${t('of total').replace('total',cur+' '+l.amount.toLocaleString())}${totalPaid>0?' · '+t('paid')+' '+cur+' '+totalPaid.toLocaleString():''}</div>
       </td>
       <td>${l.date}</td>
       <td style="${isDue?'color:var(--red);font-weight:600':'color:var(--text2)'}">${l.nextFollowup||'—'} ${isDue?'⚠':''}
         ${l.interval?`<div style="font-size:10px;color:var(--text3)">every ${l.interval} days</div>`:''}
       </td>
-      <td><span class="badge ${sc}">${l.status.toUpperCase()}</span></td>
+      <td><span class="badge ${sc}">${statusLabel}</span></td>
       <td style="font-size:12px;color:var(--text3)">${l.approvedBy||'—'}</td>
       <td style="font-size:12px;color:var(--text3);max-width:120px">${l.notes||'—'}</td>
       <td style="white-space:nowrap">
-        ${l.status==='pending'?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="openApproveModal(${l.id})">✓ Approve</button>`:''}
+        ${l.status==='pending'?`<button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="openApproveModal(${l.id})">✓ ${t('Approve')}</button>`:''}
         ${(l.status==='active'||l.status==='overdue')?`
-          <button class="action-btn" onclick="markFollowupDone(${l.id})">✓ Checked</button>
-          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="showLoanRepaymentModal(${l.id})">💰 Payment</button>
+          <button class="action-btn" onclick="markFollowupDone(${l.id})">✓ ${t('Checked')||'Checked'}</button>
+          <button class="action-btn" style="color:var(--green);border-color:var(--green)" onclick="showLoanRepaymentModal(${l.id})">💰 ${t('Record Payment')}</button>
         `:''}
-        ${l.status==='paid'?`<button class="action-btn" style="font-size:11px" onclick="showLoanRepaymentModal(${l.id})">📋 History</button>`:''}
+        ${l.status==='paid'?`<button class="action-btn" style="font-size:11px" onclick="showLoanRepaymentModal(${l.id})">📋 ${t('Payment History')}</button>`:''}
         <button class="action-btn del" onclick="deleteLoan(${l.id})">✕</button>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No loans recorded</td></tr>';
+  }).join('')||`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">${t('No loans recorded')||'No loans recorded'}</td></tr>`;
 }
 
 function showAddLoanModal(){
@@ -6589,7 +6805,7 @@ function deleteLoan(id){
   sendToRecycleBin('loan',{...l},currentUser?currentUser.name:'','Deleted from loans');
   logActivity('loan',`Loan record deleted: ${l.borrower}`);
   DB.loans=DB.loans.filter(x=>x.id!==id);
-  save(); renderLoans(); toast('Loan moved to Recycle Bin');
+  save();renderLoans();toast('Loan moved to Recycle Bin');
 }
 
 // ─── LOAN NOTIFICATION CHECK ───
@@ -8274,6 +8490,45 @@ function logSaleActivity(sale){
   }
 }
 
+function editSupplierPaymentFromLog(activityId){
+  const a=(DB.activityLog||[]).find(x=>x.id===activityId);
+  if(!a||!a.undoData) return;
+  const {paymentId}=a.undoData;
+  const payment=(DB.supplierPayments||[]).find(p=>p.id===paymentId);
+  if(!payment){toast('Payment record not found');return;}
+  const purchase=(DB.purchases||[]).find(p=>p.id===payment.purchaseId);
+  editPurchasePayment(paymentId,payment.purchaseId||0,purchase?.grandTotal||0);
+}
+
+function saveSupplierPaymentEdit(paymentId,purchaseId,grandTotal){
+  const payment=(DB.supplierPayments||[]).find(p=>p.id===paymentId);
+  if(!payment){toast('Payment not found');return;}
+  const newAmount=parseFloat(document.getElementById('esp-amount').value)||0;
+  const newDate=document.getElementById('esp-date').value;
+  const newNotes=document.getElementById('esp-notes').value.trim();
+  if(!newAmount){toast('Enter a valid amount');return;}
+  const cur=DB.settings.currency;
+  const changes=[];
+  if(newAmount!==payment.amount) changes.push(`amount: ${cur} ${payment.amount} → ${cur} ${newAmount}`);
+  if(newDate!==payment.date) changes.push(`date: ${payment.date} → ${newDate}`);
+  if(newNotes!==(payment.notes||'')) changes.push('notes updated');
+  if(!changes.length){toast('No changes made');return;}
+  payment.amount=newAmount;
+  payment.date=newDate;
+  payment.notes=newNotes;
+  payment.lastEditedBy=currentUser?currentUser.name:'';
+  if(purchaseId){
+    const p=(DB.purchases||[]).find(x=>x.id===purchaseId);
+    if(p){
+      const totalPaid=(DB.supplierPayments||[]).filter(sp=>sp.purchaseId===purchaseId).reduce((a,sp)=>a+sp.amount,0);
+      p.paymentStatus=totalPaid>=(grandTotal||0)?'paid':totalPaid>0?'partial':'unpaid';
+    }
+  }
+  logActivity('purchase',`✏ Payment corrected: ${payment.supplier} — ${changes.join(', ')} (by ${currentUser?currentUser.name:''})`,newAmount);
+  save();closeModal('modal-edit-sup-pay');closeModal('modal-purchase-pay');renderPurchases();renderSuppliers();
+  toast(`Payment updated ✓`);
+}
+
 function undoActivity(id){
   const a=(DB.activityLog||[]).find(x=>x.id===id);
   if(!a||!a.undoData){toast('Nothing to undo');return;}
@@ -8309,6 +8564,62 @@ function undoActivity(id){
   }
 }
 
+// Translate activity log detail string phrase by phrase
+function translateDetail(detail){
+  if(!detail||DB.settings.lang!=='ti') return detail;
+  const phrases=[
+    ['Sale to','ሽያጥ ናብ'],['item(s)','ፍርያት'],['Discount:','ቅናሽ:'],
+    ['Saved under','ተቐሚጡ ኣብ'],['past day, not today','ዝሓለፈ ዕለት፡ ሎሚ ኣይኮነን'],
+    ['New product added by','ሓዲሽ ፍርያት ወሲኹ'],['price:','ዋጋ:'],['unit:','ዓቐን:'],
+    ['Product edited by','ፍርያት ምምሕያሽ ብ'],['Product deleted:','ፍርያት ሰሪዙ:'],
+    ['Stock added by','ክምችት ወሲኹ ብ'],['Stock removed by','ክምችት ኣልዒሉ ብ'],
+    ['system: ','ናይ ስርዓት: '],['physical: ','ናይ ሓቂ: '],
+    ['Stock count adjustment:','ናይ ቁጽሪ ምምሕያሽ:'],['adjusted','ተኸሊሱ'],
+    ['Moved:','ዝተቐዳቐደ:'],['from','ካብ'],['→','→'],
+    ['Customer added:','ዓሚል ወሲኹ:'],['Customer deleted:','ዓሚል ሰሪዙ:'],
+    ['by ','ብ '],['requested by','ዝጠለቦ'],['Delete customer request:','ናይ ምስራዝ ዓሚል ጠለብ:'],
+    ['New staff added:','ሓዲሽ ሰራሕተኛ ወሲኹ:'],
+    ['Supplier payment:','ናይ ሸቐጣዪ ክፍሊት:'],['to ','ናብ '],['for purchase on','ናይ ምዕዳግ ዕለት'],
+    ['Payment corrected:','ክፍሊት ተኸሊሱ:'],['Payment edited:','ክፍሊት ተኸሊሱ:'],
+    ['amount:','መጠን:'],['date:','ዕለት:'],['notes updated','ሓሳብ ተቐይሩ'],
+    ['Purchased','ዝተዓደገ'],['item(s) from','ፍርያት ካብ'],
+    ['unnamed supplier','ዘይተጸውዐ ሸቐጣዪ'],['New product from purchase:','ሓዲሽ ፍርያት ካብ ምዕዳግ:'],
+    ['Category updated:','ዓይነት ተቐይሩ:'],
+    ['Stored','ተቐሚጡ'],['roll(s)','ቆቢቕ'],['of ','ናይ '],['in ','ኣብ '],
+    ['Partial payment:','ከፊል ክፍሊት:'],['paid ','ከፊሉ '],['owes ','ዕዳ '],
+    ['Loan issued for','ልቓሕ ተዋሂቡ ናብ'],['Loan submitted for','ልቓሕ ቀሪቡ ናብ'],
+    ['approved by','ፈቒዱ ብ'],['pending approval','ፍቓድ ትጽቢት'],
+    ['Loan fully paid:','ልቓሕ ምሉእ ተኸፊሉ:'],['total','ጠቕላሊ'],['last payment:','ናይ መወዳእታ ክፍሊት:'],
+    ['Partial repayment:','ከፊል ምምላስ:'],['paid ','ከፊሉ '],['still owed','ገና ዕዳ'],
+    ['Loan cancelled:','ልቓሕ ተሰሪዙ:'],["'s credit of","ናይ ልቓሕ"],['cancelled due to return of','ምስ ምምላስ ተሰሪዙ'],
+    ['Return submitted:','ምምላስ ቀሪቡ:'],['from ','ካብ '],['sale:','ሽያጥ:'],
+    ['auto-approved','ኣካያዲ ቀዲሙ ፈቒዱ'],['awaiting approval','ፍቓድ ትጽቢት'],
+    ['Return approved by','ምምላስ ፈቒዱ ብ'],['refund','ካሕሳ'],['from drawer','ካብ ካሳ'],['from safe','ካብ ካዝና'],
+    ['Return rejected by','ምምላስ ነጺጉ ብ'],
+    ['Same-day refund:','ናይ ሎሚ ካሕሳ:'],['deducted from drawer','ካብ ካሳ ወጺኡ'],
+    ['Different-day refund:','ናይ ዝሓለፈ ካሕሳ:'],['paid from safe to','ካብ ካዝና ተኸፊሉ ናብ'],
+    ['Restocked:','ናብ ክምችት ተመሊሱ:'],['Exchange:','ምቅይያር:'],['given to','ተዋሂቡ ናብ'],
+    ['⚠ Damaged return:','⚠ ዝተጎድኤ ምምላስ:'],['removed from system (not restocked)','ካብ ስርዓት ወጺኡ'],
+    ['Expense:','ወጻኢ:'],['from drawer','ካብ ካሳ'],['from safe','ካብ ካዝና'],
+    ['logged in','ኣትዩ'],['logged out','ወጺኡ'],
+    ['Day reopened by','መዓልቲ ተኸፊቱ ደጊም ብ'],['Day opened','መዓልቲ ተኸፊቱ'],['Day closed','መዓልቲ ተዓጺዩ'],
+    ['Transfer:','ምንቅስቓስ:'],['Shifts recorded for','ሸፍቲ ተመዝጊቡ ናይ'],
+    ['Credit record moved to Recycle Bin:','ናይ ልቓሕ ሰነድ ናብ ቆሻሻ ኸዱ:'],
+    ['Credit record restored from Recycle Bin:','ናይ ልቓሕ ሰነድ ካብ ቆሻሻ ተመሊሱ:'],
+    ['⚠ Damaged return from','⚠ ዝተጎድኤ ምምላስ ካብ'],['items removed from inventory','ፍርያት ካብ ክምችት ወጺኦም'],
+    ['✏ Payment corrected:','✏ ክፍሊት ተኸሊሱ:'],['edited by','ዝኸሊሶ'],
+    ['Purchase edited:','ምዕዳግ ተኸሊሱ:'],['Purchase deleted + stock reversed:','ምዕዳግ ሰሪዙ ክምችት ተቐዲሑ:'],
+    ['Reason:','ምኽንያት:'],['— ','— '],['| ','| '],
+  ];
+  let result=detail;
+  if(DB.settings.lang==='ti'){
+    phrases.forEach(([en,ti])=>{
+      result=result.split(en).join(ti);
+    });
+  }
+  return result;
+}
+
 function filterActivity(){
   if(!DB.activityLog) return;
   const user=(document.getElementById('act-filter-user')||{}).value||'';
@@ -8340,16 +8651,16 @@ function filterActivity(){
         <div style="padding-top:4px;border-top:1px solid var(--border);font-weight:600;color:var(--accent)">Total: ${cur} ${(a.amount||0).toLocaleString()}</div>
       </div>`;
     }
-    const canUndo=a.undoData&&['stockAdj','productEdit','damaged','supplierPayment'].includes(a.undoData.undoType);
+    const canUndo=a.undoData&&['stockAdj','productEdit'].includes(a.undoData.undoType);
+    const isSupPay=a.undoData?.undoType==='supplierPayment';
     return `<tr>
       <td style="font-size:12px;color:var(--text3);white-space:nowrap;vertical-align:top;padding-top:10px">${timeStr}</td>
       <td style="vertical-align:top;padding-top:10px"><span style="font-weight:500">${a.user}</span><br><span style="font-size:10px;color:var(--text3)">${a.role||''}</span></td>
       <td style="vertical-align:top;padding-top:10px"><span class="badge ${typeBadge[a.type]||'gray'}">${typeIcon[a.type]||'•'} ${typeLabel[a.type]||a.type}</span></td>
-      <td style="font-size:12px;color:var(--text2);max-width:300px">${a.detail}${itemsDetail}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:300px">${translateDetail(a.detail)}${itemsDetail}</td>
       <td style="font-family:var(--font-head);color:${a.amount?'var(--accent)':'var(--text3)'};vertical-align:top;padding-top:10px;white-space:nowrap">${a.amount?cur+' '+a.amount.toLocaleString():'—'}</td>
       <td style="vertical-align:top;padding-top:8px;white-space:nowrap">
-        ${canUndo&&!a.undone?`<button class="action-btn" style="font-size:11px;color:var(--orange,#e67e22);border-color:var(--orange,#e67e22)" onclick="undoActivity(${a.id})">↩ Undo</button>`:''}
-        ${a.undone?`<span style="font-size:11px;color:var(--text3)">↩ Undone</span>`:''}
+        ${isSupPay?`<button class="action-btn" style="font-size:11px" onclick="editSupplierPaymentFromLog(${a.id})">✏ Edit</button>`:''}
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">No activity recorded yet</td></tr>';
@@ -10129,7 +10440,7 @@ function restoreFromBin(id){
 }
 
 function doRestoreFromBin(id){
-  closeModal('modal-restore-note');
+  if(document.getElementById('modal-restore-note')) closeModal('modal-restore-note');
   if(!DB.recycleBin) return;
   const item=DB.recycleBin.find(x=>x.id===id);
   if(!item) return;
@@ -10173,7 +10484,9 @@ function doRestoreFromBin(id){
   } else if(item.type==='loan'){
     if(!DB.loans) DB.loans=[];
     DB.loans.push(item.data);
-    toast('Loan restored');
+    logActivity('loan',`Credit record restored from Recycle Bin: ${item.data.borrower}`);
+    toast(`"${item.data.borrower}" credit record restored ✓`);
+    renderLoans();
   }
   DB.recycleBin=DB.recycleBin.filter(x=>x.id!==id);
   save(); renderRecycle();
